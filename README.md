@@ -1,0 +1,2 @@
+# historial-clinico-hexagonal
+
