@@ -1,0 +1,19 @@
+node_modules/
+dist/
+
+# Secretos: nunca al repo
+.env
+.env.*
+!.env.example
+certs/
+*.pem
+*-firebase-adminsdk-*.json
+serviceAccount*.json
+
+# Sistema / editores
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.log

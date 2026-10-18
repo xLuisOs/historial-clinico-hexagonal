@@ -1,0 +1,45 @@
+# Pruebas manuales de la API con la extensión "REST Client" de VS Code
+# (humao.rest-client). Clic en "Send Request" encima de cada petición.
+# Primero ejecuta el login: el token se reutiliza en las demás.
+
+@api = http://localhost:4000/api
+
+### Instituciones y motor de cada una
+GET {{api}}/instituciones
+
+### Login como médica
+# @name login
+POST {{api}}/auth/login
+Content-Type: application/json
+
+{ "correo": "dra.morales@pediatrico.gt", "password": "Pediatrico#2026" }
+
+###
+@token = {{login.response.body.token}}
+
+### Buscar pacientes
+GET {{api}}/pacientes?q=Pérez
+Authorization: Bearer {{token}}
+
+### Historial completo (consultas, diagnósticos, recetas, crecimiento, vacunas)
+GET {{api}}/pacientes/1/historial
+Authorization: Bearer {{token}}
+
+### Registrar consulta con diagnóstico y receta (una sola transacción)
+POST {{api}}/pacientes/2/consultas
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "motivo": "Tos de 2 días",
+  "diagnosticos": [{ "codigoCie10": "J06.9", "descripcion": "Infección respiratoria alta" }],
+  "datosEspecificos": { "pesoKg": 16.5, "tallaCm": 102 },
+  "receta": {
+    "indicaciones": "Abundantes líquidos",
+    "items": [{ "medicamentoId": 3, "dosis": "7.5 mL", "frecuencia": "cada 6 horas", "duracionDias": 3 }]
+  }
+}
+
+### Catálogo de medicamentos
+GET {{api}}/catalogos/medicamentos
+Authorization: Bearer {{token}}

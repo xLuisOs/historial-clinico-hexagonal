@@ -1,0 +1,42 @@
+# Bases locales para desarrollar sin internet (opcional: en la nube se usa
+# Aiven para MySQL y Atlas para MongoDB). Puertos distintos a los de por
+# defecto para no chocar con instalaciones locales.
+#
+#   docker compose up -d      levantar
+#   docker compose down       apagar (los datos se conservan en los volúmenes)
+
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: hc-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root_local
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_datos:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot_local"]
+      interval: 5s
+      retries: 20
+
+  # Replica set de un solo nodo: MongoDB solo permite transacciones de
+  # varios documentos dentro de un replica set (Atlas ya lo es).
+  mongo:
+    image: mongo:8
+    container_name: hc-mongo
+    command: ["--replSet", "rs0", "--bind_ip_all"]
+    ports:
+      - "27018:27017"
+    volumes:
+      - mongo_datos:/data/db
+    healthcheck:
+      test: >
+        mongosh --quiet --eval
+        "try { rs.status().ok } catch (e) { rs.initiate({ _id: 'rs0', members: [{ _id: 0, host: 'localhost:27017' }] }).ok }"
+      interval: 5s
+      retries: 20
+
+volumes:
+  mysql_datos:
+  mongo_datos:
