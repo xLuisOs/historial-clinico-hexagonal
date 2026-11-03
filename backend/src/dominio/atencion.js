@@ -7,7 +7,7 @@ import { Validador } from './validacion.js';
 //   medico:       { id, nombre },
 //   diagnosticos: [{ id, codigoCie10, descripcion, tipo }],
 //   receta:       null | { id, fechaEmision, indicaciones, items: [ItemReceta] },
-//   datosEspecificos: { ... }   // propio de cada institución (crecimiento, pieza dental, etc.)
+//   datosEspecificos: { ... }   // propio de cada institución (crecimiento, procedimientos por pieza dental, etc.)
 // }
 // ItemReceta = { medicamentoId, medicamento, dosis, frecuencia, duracionDias, via, indicaciones }
 
@@ -48,6 +48,14 @@ function validarItemsRecetaEn(v, prefijo, items) {
   });
 }
 
+// Notación FDI: cuadrante 1-4 con piezas 1-8 (permanentes) o 5-8 con piezas 1-5 (temporales).
+function esPiezaFdi(n) {
+  const cuadrante = Math.floor(n / 10);
+  const pieza = n % 10;
+  return (cuadrante >= 1 && cuadrante <= 4 && pieza >= 1 && pieza <= 8)
+    || (cuadrante >= 5 && cuadrante <= 8 && pieza >= 1 && pieza <= 5);
+}
+
 // Datos propios de cada institución. Dependen de la institución, no del motor.
 const VALIDADORES_ESPECIFICOS = {
   pediatrico(v, d = {}) {
@@ -55,6 +63,26 @@ const VALIDADORES_ESPECIFICOS = {
       pesoKg: v.numero('datosEspecificos.pesoKg', d.pesoKg, { min: 0.3, max: 150 }),
       tallaCm: v.numero('datosEspecificos.tallaCm', d.tallaCm, { min: 20, max: 220 }),
       perimetroCefalicoCm: v.numero('datosEspecificos.perimetroCefalicoCm', d.perimetroCefalicoCm, { min: 20, max: 70 }),
+    };
+  },
+
+  // Procedimientos realizados en la consulta. El precio no lo manda el
+  // cliente: el adaptador lo toma del catálogo al momento de guardar.
+  odontologica(v, d = {}) {
+    const procedimientos = Array.isArray(d.procedimientos) ? d.procedimientos : [];
+    return {
+      procedimientos: procedimientos.map((p = {}, i) => {
+        const prefijo = `datosEspecificos.procedimientos[${i}]`;
+        const piezaDental = v.numero(`${prefijo}.piezaDental`, p.piezaDental, { entero: true });
+        if (piezaDental !== null && !esPiezaFdi(piezaDental)) {
+          v.error(`${prefijo}.piezaDental`, 'Pieza inválida (notación FDI: 11-48 permanentes, 51-85 temporales)');
+        }
+        return {
+          procedimientoId: v.texto(`${prefijo}.procedimientoId`, p.procedimientoId == null ? null : String(p.procedimientoId), { requerido: true }),
+          piezaDental,
+          observaciones: v.texto(`${prefijo}.observaciones`, p.observaciones, { max: 300 }),
+        };
+      }),
     };
   },
 };
