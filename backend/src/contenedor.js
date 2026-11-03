@@ -17,12 +17,14 @@ import { crearAdaptadorPediatricoMysql } from './adaptadores/salida/mysql/pediat
 import { crearClienteMongo } from './adaptadores/salida/mongo/conexion.js';
 import { crearAdaptadorLaboratorioMongo } from './adaptadores/salida/mongo/laboratorio/index.js';
 import { crearAdaptadorHospitalPostgres } from './adaptadores/salida/postgres/hospital/index.js';
+import { crearFirestore } from './adaptadores/salida/firebase/conexion.js';
 import { crearAdaptadorOdontologicaFirebase } from './adaptadores/salida/firebase/odontologica/index.js';
 
 // Conexiones compartidas, creadas bajo demanda.
 const conexiones = {};
 const mysqlPool = () => (conexiones.mysql ??= crearPoolMysql(entorno.mysql));
 const mongoCliente = () => (conexiones.mongo ??= crearClienteMongo(entorno.mongo));
+const firestore = () => (conexiones.firebase ??= crearFirestore(entorno.firebase));
 
 // "institución:motor" → fábrica del adaptador. Cada esquema/modelo
 // pertenece a una institución, por eso la clave combina ambos.
@@ -30,7 +32,7 @@ const FABRICAS = {
   'pediatrico:mysql': () => crearAdaptadorPediatricoMysql(mysqlPool()),
   'laboratorio:mongodb': () => crearAdaptadorLaboratorioMongo(mongoCliente(), entorno.mongo.db),
   'hospital:postgresql': () => crearAdaptadorHospitalPostgres(entorno.postgres),
-  'odontologica:firebase': () => crearAdaptadorOdontologicaFirebase(entorno.firebase),
+  'odontologica:firebase': () => crearAdaptadorOdontologicaFirebase(firestore(), entorno.firebase.zonaHoraria),
 };
 
 const adaptadores = new Map();
@@ -49,5 +51,5 @@ export function repositoriosDe(claveInstitucion) {
 }
 
 export async function cerrarConexiones() {
-  await Promise.allSettled([conexiones.mysql?.end(), conexiones.mongo?.close()]);
+  await Promise.allSettled([conexiones.mysql?.end(), conexiones.mongo?.close(), conexiones.firebase?.terminate()]);
 }

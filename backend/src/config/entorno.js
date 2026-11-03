@@ -29,5 +29,6 @@ export const entorno = {
   firebase: {
     projectId: process.env.FIREBASE_PROJECT_ID,
     credenciales: process.env.FIREBASE_CREDENTIALS,
+    zonaHoraria: process.env.ZONA_HORARIA ?? '-06:00',
   },
 };

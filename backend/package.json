@@ -10,7 +10,8 @@
     "start": "node src/servidor.js",
     "db:probar": "node scripts/probar-conexiones.js",
     "db:mysql": "node scripts/mysql-aplicar.js",
-    "db:mysql:semilla": "node scripts/mysql-aplicar.js --semilla"
+    "db:mysql:semilla": "node scripts/mysql-aplicar.js --semilla",
+    "db:firebase:semilla": "node scripts/firebase-semilla.js"
   },
   "engines": {
     "node": ">=20"
@@ -20,6 +21,7 @@
     "cors": "^2.8.6",
     "dotenv": "^18.0.8",
     "express": "^5.3.0",
+    "firebase-admin": "^13.10.0",
     "jsonwebtoken": "^9.0.3",
     "mongodb": "^7.7.0",
     "mysql2": "^3.24.6"

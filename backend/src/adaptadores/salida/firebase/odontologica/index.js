@@ -1,11 +1,55 @@
-// Adaptador Firebase (Firestore) de la Clínica Odontológica.
-// TODO (Fer): implementar los puertos de puertos/repositorios.js.
-// Referencia: adaptadores/salida/mysql/pediatrico/ ya implementa el contrato completo.
-// Driver sugerido: `firebase-admin` (npm install firebase-admin) con las
-// credenciales de cuenta de servicio indicadas en FIREBASE_CREDENTIALS.
+// Adaptador Firebase (Firestore) de la Clínica Odontológica: implementa los
+// puertos de puertos/repositorios.js sobre el modelo documental de modelo.js.
 
-import { adaptadorPendiente } from '../../pendiente.js';
+import { FieldValue } from 'firebase-admin/firestore';
+import { crearRepositorioAtenciones } from './atenciones.js';
+import { COLECCIONES, nombreCompleto, ROLES } from './modelo.js';
+import { crearRepositorioPacientes } from './pacientes.js';
 
-export function crearAdaptadorOdontologicaFirebase() {
-  return adaptadorPendiente('Clínica Odontológica (Firebase)');
+const ordenarPorApellido = (a, b) => (a.get('apellidos') ?? '').localeCompare(b.get('apellidos') ?? '', 'es');
+
+export function crearAdaptadorOdontologicaFirebase(db, zonaHoraria) {
+  const col = (nombre) => db.collection(COLECCIONES[nombre]);
+
+  return {
+    usuarios: {
+      async buscarPorCorreo(correo) {
+        const snap = await col('usuarios').where('correo', '==', correo).limit(1).get();
+        const u = snap.docs[0];
+        return u && {
+          id: u.id,
+          correo: u.get('correo'),
+          passwordHash: u.get('password_hash'),
+          nombre: nombreCompleto(u.data()),
+          // Los roles de la clínica se traducen a los comunes de casos-uso.js.
+          rol: ROLES[u.get('rol')] ?? u.get('rol'),
+          medicoId: u.get('odontologo_id') ?? null,
+          activo: Boolean(u.get('activo')),
+        };
+      },
+      async registrarAcceso(usuarioId) {
+        await col('usuarios').doc(usuarioId).update({ ultimo_acceso: FieldValue.serverTimestamp() });
+      },
+    },
+
+    pacientes: crearRepositorioPacientes(db, zonaHoraria),
+    atenciones: crearRepositorioAtenciones(db, zonaHoraria),
+
+    catalogos: {
+      async listarMedicos() {
+        const snap = await col('odontologos').where('activo', '==', true).get();
+        return snap.docs.sort(ordenarPorApellido).map((d) => ({
+          id: d.id,
+          nombre: nombreCompleto(d.data()),
+          especialidad: 'Odontología',
+        }));
+      },
+      async listarMedicamentos() {
+        const snap = await col('medicamentos').where('activo', '==', true).get();
+        return snap.docs
+          .map((d) => ({ id: d.id, nombre: d.get('nombre'), presentacion: d.get('presentacion') }))
+          .sort((a, b) => (a.nombre ?? '').localeCompare(b.nombre ?? '', 'es') || (a.presentacion ?? '').localeCompare(b.presentacion ?? '', 'es'));
+      },
+    },
+  };
 }
