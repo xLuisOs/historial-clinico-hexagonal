@@ -5,6 +5,8 @@ import dotenv from 'dotenv';
 import mysql from 'mysql2/promise';
 import { MongoClient } from 'mongodb';
 import { configDesdeUrl } from '../src/adaptadores/salida/mysql/conexion.js';
+import { crearFirestore } from '../src/adaptadores/salida/firebase/conexion.js';
+import { COLECCIONES } from '../src/adaptadores/salida/firebase/odontologica/modelo.js';
 
 dotenv.config({ quiet: true });
 
@@ -41,7 +43,20 @@ const pruebas = {
   },
 
   async 'Firebase (odontológica)'() {
-    return process.env.FIREBASE_PROJECT_ID ? 'configurado (prueba pendiente: adaptador de Fer)' : 'sin configurar (FIREBASE_PROJECT_ID)';
+    if (!process.env.FIREBASE_CREDENTIALS && !process.env.FIRESTORE_EMULATOR_HOST) {
+      return 'sin configurar (FIREBASE_CREDENTIALS)';
+    }
+    const db = crearFirestore({
+      projectId: process.env.FIREBASE_PROJECT_ID,
+      credenciales: process.env.FIREBASE_CREDENTIALS,
+    });
+    try {
+      const conteo = await db.collection(COLECCIONES.pacientes).count().get();
+      const destino = process.env.FIRESTORE_EMULATOR_HOST ? `emulador ${process.env.FIRESTORE_EMULATOR_HOST}` : `proyecto ${db.projectId}`;
+      return `Firestore (${destino}) · ${conteo.data().count} pacientes`;
+    } finally {
+      await db.terminate();
+    }
   },
 };
 

@@ -30,7 +30,7 @@ backend/
     │       ├── mysql/pediatrico/        ✅ implementado
     │       ├── mongo/laboratorio/       ⏳ pendiente (Luis)
     │       ├── postgres/hospital/       ⏳ pendiente (Fer)
-    │       └── firebase/odontologica/   ⏳ pendiente (Fer)
+    │       └── firebase/odontologica/   ✅ implementado
     ├── contenedor.js          Elige el adaptador según la institución del usuario
     └── servidor.js
 ```
@@ -76,10 +76,23 @@ npm run dev                                   # API en http://localhost:4000/api
    (o la IP de cada compañero).
 3. En *Connect* → *Drivers*, copiar la cadena `mongodb+srv://…` y ponerla en `MONGO_URL`.
 
-### Recrear la base MySQL desde cero
+**Firebase (Firestore)**
+1. En la consola de Firebase: *Configuración del proyecto* → *Cuentas de servicio* →
+   **Generar nueva clave privada**. Guardar el JSON en `backend/certs/` (no se sube al repo)
+   y compartirlo por privado.
+2. En `.env`, llenar `FIREBASE_PROJECT_ID` y `FIREBASE_CREDENTIALS` (ruta al JSON).
+3. Ejecutar `npm run db:firebase:semilla`. No borra nada: solo agrega lo que falte y
+   reutiliza lo que ya se creó a mano en la consola.
+
+Las reglas de Firestore quedan en `allow read, write: if false`: nadie entra directo
+desde un navegador; el backend entra con la clave de la cuenta de servicio, que no
+pasa por las reglas.
+
+### Recrear las bases desde cero
 
 ```bash
 npm run db:mysql:semilla -- --reiniciar       # ⚠ borra todos los datos del pediátrico
+npm run db:firebase:semilla -- --reiniciar    # ⚠ borra todas las colecciones de la odontológica
 ```
 
 ## Usuarios de prueba (pediátrico)
@@ -92,6 +105,28 @@ Contraseña de todos: `Pediatrico#2026`
 | `dr.castillo@pediatrico.gt` | médico    | ídem                                         |
 | `recepcion@pediatrico.gt`   | recepción | registrar pacientes y actualizar contactos   |
 | `admin@pediatrico.gt`       | admin     | dar de baja (archivar) historiales           |
+
+## Usuarios de prueba (odontológica)
+
+Contraseña de todos: `Odonto#2026` (los crea `npm run db:firebase:semilla`)
+
+| Correo                  | Rol           | Puede…                                       |
+|-------------------------|---------------|----------------------------------------------|
+| `dra.ramirez@odonto.gt` | odontóloga    | registrar consultas, diagnósticos y recetas  |
+| `dr.estrada@odonto.gt`  | odontólogo    | ídem                                         |
+| `recepcion@odonto.gt`   | recepcionista | registrar pacientes y actualizar contactos   |
+| `admin@odonto.gt`       | administrador | dar de baja (archivar) historiales           |
+
+En la consulta, los procedimientos van en `datosEspecificos`:
+
+```json
+"datosEspecificos": {
+  "procedimientos": [{ "procedimientoId": "…", "piezaDental": 36, "observaciones": "Cara oclusal" }]
+}
+```
+
+`piezaDental` usa notación FDI (11–48 permanentes, 51–85 temporales) y es opcional.
+El precio no se envía: se copia del catálogo al guardar.
 
 ## API
 
