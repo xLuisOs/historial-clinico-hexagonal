@@ -28,7 +28,7 @@ const mongoCliente = () => (conexiones.mongo ??= crearClienteMongo(entorno.mongo
 // pertenece a una institución, por eso la clave combina ambos.
 const FABRICAS = {
   'pediatrico:mysql': () => crearAdaptadorPediatricoMysql(mysqlPool()),
-  'laboratorio:mongodb': () => crearAdaptadorLaboratorioMongo(mongoCliente(), entorno.mongo.db),
+  'laboratorio:mongodb': () => crearAdaptadorLaboratorioMongo(mongoCliente(), entorno.mongo.db, entorno.mongo.zonaHoraria),
   'hospital:postgresql': () => crearAdaptadorHospitalPostgres(entorno.postgres),
   'odontologica:firebase': () => crearAdaptadorOdontologicaFirebase(entorno.firebase),
 };

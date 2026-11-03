@@ -28,7 +28,7 @@ backend/
     │   ├── entrada/http/      API REST (Express) + sesión JWT
     │   └── salida/            Un adaptador por motor
     │       ├── mysql/pediatrico/        ✅ implementado
-    │       ├── mongo/laboratorio/       ⏳ pendiente (Luis)
+    │       ├── mongo/laboratorio/       ✅ implementado
     │       ├── postgres/hospital/       ⏳ pendiente (Fer)
     │       └── firebase/odontologica/   ⏳ pendiente (Fer)
     ├── contenedor.js          Elige el adaptador según la institución del usuario
@@ -55,6 +55,7 @@ cp .env.example .env        # y llenar los valores (pedírselos al compañero)
 docker compose up -d                          # desde la raíz del repo
 cd backend
 npm run db:mysql:semilla                      # crea la base pediatrico con datos de prueba
+npm run db:mongo:semilla                      # crea las colecciones del laboratorio con datos de prueba
 npm run db:probar                             # verifica las conexiones
 npm run dev                                   # API en http://localhost:4000/api
 ```
@@ -72,14 +73,23 @@ npm run dev                                   # API en http://localhost:4000/api
 
 **MongoDB en Atlas**
 1. Crear la cuenta en mongodb.com/atlas y un clúster **M0 (Free)**.
-2. En *Database Access*, crear un usuario. En *Network Access*, agregar `0.0.0.0/0`
-   (o la IP de cada compañero).
-3. En *Connect* → *Drivers*, copiar la cadena `mongodb+srv://…` y ponerla en `MONGO_URL`.
+2. En *Network Access*, agregar `0.0.0.0/0` (o la IP de cada compañero).
+3. En *Database Access* → *Custom Roles*, crear el rol **`lab_app`** con las acciones
+   `find`, `insert` y `update` sobre la base `laboratorio`. Sin `remove` ni
+   `dropCollection`: la aplicación no puede borrar historiales (mínimo privilegio,
+   igual que `pedi_app` en MySQL).
+4. Crear dos usuarios de base de datos:
+   - `lab_app`, con el rol `lab_app`. Va en `MONGO_URL`.
+   - Un usuario con rol *Atlas admin*, que solo se usa para crear las colecciones.
+     Va en `MONGO_ADMIN_URL`.
+5. En *Connect* → *Drivers*, copiar la cadena `mongodb+srv://…` para cada usuario.
+6. Ejecutar `npm run db:mongo:semilla` **una sola vez**.
 
-### Recrear la base MySQL desde cero
+### Recrear las bases desde cero
 
 ```bash
 npm run db:mysql:semilla -- --reiniciar       # ⚠ borra todos los datos del pediátrico
+npm run db:mongo:semilla -- --reiniciar       # ⚠ borra todas las colecciones del laboratorio
 ```
 
 ## Usuarios de prueba (pediátrico)
@@ -92,6 +102,31 @@ Contraseña de todos: `Pediatrico#2026`
 | `dr.castillo@pediatrico.gt` | médico    | ídem                                         |
 | `recepcion@pediatrico.gt`   | recepción | registrar pacientes y actualizar contactos   |
 | `admin@pediatrico.gt`       | admin     | dar de baja (archivar) historiales           |
+
+## Usuarios de prueba (laboratorio)
+
+Contraseña de todos: `Laboratorio#2026` (los crea `npm run db:mongo:semilla`)
+
+| Correo              | Rol             | Puede…                                                  |
+|---------------------|-----------------|---------------------------------------------------------|
+| `qb.lopez@lab.gt`   | químico biólogo | crear órdenes, registrar y validar resultados           |
+| `qb.mendez@lab.gt`  | químico biólogo | ídem                                                    |
+| `recepcion@lab.gt`  | recepción       | registrar pacientes y actualizar contactos              |
+| `admin@lab.gt`      | admin           | dar de baja (archivar) historiales y anular órdenes     |
+
+En el laboratorio, las reglas comunes se traducen así:
+
+| Regla común           | En el laboratorio                                                        |
+|-----------------------|--------------------------------------------------------------------------|
+| Registrar consulta    | Crear una **orden de examen** (médico referente + exámenes)              |
+| Agregar diagnóstico   | Diagnóstico **presuntivo** que acompaña la orden                         |
+| Recetar medicamento   | **Medicación actual** del paciente (puede alterar los resultados)        |
+
+Los datos propios van en `datosEspecificos`:
+
+```json
+"datosEspecificos": { "medicoReferenteId": "…", "examenes": ["<id tipo examen>", "…"] }
+```
 
 ## API
 
@@ -111,3 +146,12 @@ Todas las rutas (salvo login) requieren `Authorization: Bearer <token>`.
 | POST   | `/api/consultas/:id/recetas`       | Recetar medicamento(s)                               |
 | GET    | `/api/catalogos/medicos`           | Catálogo de médicos                                  |
 | GET    | `/api/catalogos/medicamentos`      | Catálogo de medicamentos                             |
+
+Exclusivas del laboratorio (`:id` es el de la orden):
+
+| Método | Ruta                                                     | Descripción                                    |
+|--------|----------------------------------------------------------|------------------------------------------------|
+| GET    | `/api/laboratorio/tipos-examen`                          | Catálogo de exámenes con sus parámetros        |
+| POST   | `/api/laboratorio/ordenes/:id/examenes/:codigo/resultados` | `{ resultados: [{ parametro, valor, observacion }] }` |
+| POST   | `/api/laboratorio/ordenes/:id/examenes/:codigo/validacion` | Firma el examen; al validar el último, la orden se completa |
+| PATCH  | `/api/laboratorio/ordenes/:id/estado`                    | `{ estado }`: `en_proceso` o `anulada`         |

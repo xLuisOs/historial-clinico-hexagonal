@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import * as casos from '../../../aplicacion/casos-uso.js';
+import * as laboratorio from '../../../aplicacion/laboratorio.js';
 import { iniciarSesion } from '../../../aplicacion/autenticacion.js';
 import { INSTITUCIONES } from '../../../config/instituciones.js';
 import { repositoriosDe } from '../../../contenedor.js';
@@ -60,4 +61,19 @@ rutas.get('/catalogos/medicos', async (req, res) => {
 });
 rutas.get('/catalogos/medicamentos', async (req, res) => {
   res.json(await casos.listarMedicamentos(req.contexto));
+});
+
+// ------------------------------------------- exclusivas del laboratorio clínico
+// En el laboratorio, la "consulta" es una orden de examen: :id es el de la orden.
+rutas.get('/laboratorio/tipos-examen', async (req, res) => {
+  res.json(await laboratorio.listarTiposExamen(req.contexto));
+});
+rutas.post('/laboratorio/ordenes/:id/examenes/:codigo/resultados', async (req, res) => {
+  res.json(await laboratorio.registrarResultados(req.contexto, req.params.id, req.params.codigo, req.body));
+});
+rutas.post('/laboratorio/ordenes/:id/examenes/:codigo/validacion', async (req, res) => {
+  res.json(await laboratorio.validarExamen(req.contexto, req.params.id, req.params.codigo));
+});
+rutas.patch('/laboratorio/ordenes/:id/estado', async (req, res) => {
+  res.json(await laboratorio.cambiarEstadoOrden(req.contexto, req.params.id, req.body));
 });
