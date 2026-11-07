@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import mysql from 'mysql2/promise';
 import { MongoClient } from 'mongodb';
 import { configDesdeUrl } from '../src/adaptadores/salida/mysql/conexion.js';
+import { crearPoolPostgres } from '../src/adaptadores/salida/postgres/conexion.js';
 import { crearFirestore } from '../src/adaptadores/salida/firebase/conexion.js';
 import { COLECCIONES } from '../src/adaptadores/salida/firebase/odontologica/modelo.js';
 
@@ -39,7 +40,21 @@ const pruebas = {
   },
 
   async 'PostgreSQL (hospital)'() {
-    return process.env.POSTGRES_URL ? 'configurado (prueba pendiente: adaptador de Fer)' : 'sin configurar (POSTGRES_URL)';
+    if (!process.env.POSTGRES_URL) return 'sin configurar (POSTGRES_URL)';
+    const pool = crearPoolPostgres({
+      url: process.env.POSTGRES_URL,
+      ca: process.env.POSTGRES_SSL_CA,
+      zonaHoraria: 'America/Guatemala',
+    });
+    try {
+      const { rows: [v] } = await pool.query(
+        `SELECT split_part(version(), ' ', 2) AS version, current_user AS usuario, current_schema() AS esquema`,
+      );
+      const { rows: [p] } = await pool.query('SELECT COUNT(*) AS n FROM paciente');
+      return `PostgreSQL ${v.version} como ${v.usuario} (esquema ${v.esquema}) · ${p.n} pacientes`;
+    } finally {
+      await pool.end();
+    }
   },
 
   async 'Firebase (odontológica)'() {
@@ -68,7 +83,12 @@ for (const [nombre, probar] of Object.entries(pruebas)) {
     fallo = true;
     console.log(`✘ ${nombre.padEnd(24)} ${error.message}`);
     if (/self[- ]signed|certificate/i.test(error.message)) {
-      console.log('    → Descarga el CA certificate de Aiven y pon su ruta en MYSQL_SSL_CA');
+      console.log(nombre.startsWith('PostgreSQL')
+        ? '    → Descarga el certificado SSL de Supabase y pon su ruta en POSTGRES_SSL_CA'
+        : '    → Descarga el CA certificate de Aiven y pon su ruta en MYSQL_SSL_CA');
+    }
+    if (/relation "paciente" does not exist/.test(error.message)) {
+      console.log('    → El usuario no ve el esquema del hospital: conéctate como hospital_app (ver README)');
     }
   }
 }

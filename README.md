@@ -19,6 +19,7 @@ todas las operaciones del usuario van al motor de esa institución.
 ```
 backend/
 ├── db/mysql/                  Scripts SQL del pediátrico (esquema, triggers, usuarios, semilla)
+├── db/postgres/               Scripts SQL del hospital (esquema + seguridad, semilla)
 ├── scripts/                   Utilidades: aplicar esquema MySQL, probar conexiones
 └── src/
     ├── dominio/               Modelo común (Paciente, Consulta) y sus validaciones
@@ -29,7 +30,7 @@ backend/
     │   └── salida/            Un adaptador por motor
     │       ├── mysql/pediatrico/        ✅ implementado
     │       ├── mongo/laboratorio/       ⏳ pendiente (Luis)
-    │       ├── postgres/hospital/       ⏳ pendiente (Fer)
+    │       ├── postgres/hospital/       ✅ implementado
     │       └── firebase/odontologica/   ✅ implementado
     ├── contenedor.js          Elige el adaptador según la institución del usuario
     └── servidor.js
@@ -76,6 +77,19 @@ npm run dev                                   # API en http://localhost:4000/api
    (o la IP de cada compañero).
 3. En *Connect* → *Drivers*, copiar la cadena `mongodb+srv://…` y ponerla en `MONGO_URL`.
 
+**PostgreSQL en Supabase**
+1. En el proyecto de Supabase: *SQL Editor* → *New query*. Pegar
+   `backend/db/postgres/01_esquema.sql`, cambiar `CAMBIA_ESTA_CLAVE` por una contraseña
+   (solo letras y números) y ejecutarlo. Si avisa que las tablas no tienen RLS, elegir
+   *Run without RLS*: el propio script lo activa al final.
+2. En otra consulta, ejecutar `backend/db/postgres/02_semilla.sql` (datos de prueba).
+3. *Connect* → **Session pooler**: copiar la cadena, cambiar `postgres.<ref>` por
+   `hospital_app.<ref>` y poner la contraseña del paso 1. Va en `POSTGRES_URL`.
+
+Las tablas viven en el esquema `hospital01`, que la API automática de Supabase no expone;
+además tienen RLS activado. El backend entra como `hospital_app`, que solo puede leer,
+insertar y actualizar en ese esquema (no puede borrar historiales).
+
 **Firebase (Firestore)**
 1. En la consola de Firebase: *Configuración del proyecto* → *Cuentas de servicio* →
    **Generar nueva clave privada**. Guardar el JSON en `backend/certs/` (no se sube al repo)
@@ -95,6 +109,14 @@ npm run db:mysql:semilla -- --reiniciar       # ⚠ borra todos los datos del pe
 npm run db:firebase:semilla -- --reiniciar    # ⚠ borra todas las colecciones de la odontológica
 ```
 
+Para el hospital, en el SQL Editor de Supabase (⚠ borra todos sus datos) y luego volver
+a ejecutar los dos scripts:
+
+```sql
+DROP SCHEMA IF EXISTS hospital01 CASCADE;
+DROP ROLE IF EXISTS hospital_app;
+```
+
 ## Usuarios de prueba (pediátrico)
 
 Contraseña de todos: `Pediatrico#2026`
@@ -105,6 +127,29 @@ Contraseña de todos: `Pediatrico#2026`
 | `dr.castillo@pediatrico.gt` | médico    | ídem                                         |
 | `recepcion@pediatrico.gt`   | recepción | registrar pacientes y actualizar contactos   |
 | `admin@pediatrico.gt`       | admin     | dar de baja (archivar) historiales           |
+
+## Usuarios de prueba (hospital)
+
+Contraseña de todos: `Hospital#2026` (los crea `db/postgres/02_semilla.sql`)
+
+| Correo                   | Rol       | Puede…                                       |
+|--------------------------|-----------|----------------------------------------------|
+| `dra.lopez@hospital.gt`  | médico    | registrar consultas, diagnósticos y recetas  |
+| `dr.herrera@hospital.gt` | médico    | ídem                                         |
+| `recepcion@hospital.gt`  | recepción | registrar pacientes y actualizar contactos   |
+| `admin@hospital.gt`      | admin     | dar de baja (archivar) historiales           |
+
+En la consulta, los tratamientos y si fue una emergencia van en `datosEspecificos`:
+
+```json
+"datosEspecificos": {
+  "esEmergencia": true,
+  "tratamientos": [{ "descripcion": "Reposo e hidratación", "fechaInicio": "2026-11-07", "indicaciones": "3 días" }]
+}
+```
+
+`fechaInicio` es opcional (por defecto, hoy). El historial incluye además internamientos,
+facturas con su saldo y próximas citas.
 
 ## Usuarios de prueba (odontológica)
 
