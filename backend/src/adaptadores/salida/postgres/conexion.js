@@ -32,12 +32,12 @@ export function configDesdeUrl(url, ca) {
   };
 }
 
-export function crearPoolPostgres({ url, ca, zonaHoraria }) {
+// localtimestamp y current_date quedan en hora de Guatemala porque el usuario
+// hospital_app tiene la zona horaria configurada (ALTER ROLE ... SET timezone
+// en db/postgres/01_esquema.sql).
+export function crearPoolPostgres({ url, ca }) {
   if (!url) throw new NoDisponible('PostgreSQL no está configurado (falta POSTGRES_URL)');
-  const pool = new pg.Pool({ ...configDesdeUrl(url, ca), max: 5, types });
-  // localtimestamp y current_date deben quedar en hora de Guatemala.
-  pool.on('connect', (cliente) => cliente.query(`SET timezone = '${zonaHoraria}'`));
-  return pool;
+  return new pg.Pool({ ...configDesdeUrl(url, ca), max: 5, types });
 }
 
 /** Ejecuta `fn(cliente)` dentro de una transacción; si algo falla, hace ROLLBACK. */

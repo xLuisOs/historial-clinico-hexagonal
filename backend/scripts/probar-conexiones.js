@@ -44,7 +44,6 @@ const pruebas = {
     const pool = crearPoolPostgres({
       url: process.env.POSTGRES_URL,
       ca: process.env.POSTGRES_SSL_CA,
-      zonaHoraria: 'America/Guatemala',
     });
     try {
       const { rows: [v] } = await pool.query(

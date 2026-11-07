@@ -26,7 +26,6 @@ export const entorno = {
   postgres: {
     url: process.env.POSTGRES_URL,
     ca: process.env.POSTGRES_SSL_CA,
-    zonaHoraria: 'America/Guatemala', // PostgreSQL usa nombres de zona, no desfases
   },
   firebase: {
     projectId: process.env.FIREBASE_PROJECT_ID,
