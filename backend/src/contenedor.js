@@ -16,6 +16,7 @@ import { crearPoolMysql } from './adaptadores/salida/mysql/conexion.js';
 import { crearAdaptadorPediatricoMysql } from './adaptadores/salida/mysql/pediatrico/index.js';
 import { crearClienteMongo } from './adaptadores/salida/mongo/conexion.js';
 import { crearAdaptadorLaboratorioMongo } from './adaptadores/salida/mongo/laboratorio/index.js';
+import { crearPoolPostgres } from './adaptadores/salida/postgres/conexion.js';
 import { crearAdaptadorHospitalPostgres } from './adaptadores/salida/postgres/hospital/index.js';
 import { crearFirestore } from './adaptadores/salida/firebase/conexion.js';
 import { crearAdaptadorOdontologicaFirebase } from './adaptadores/salida/firebase/odontologica/index.js';
@@ -24,6 +25,7 @@ import { crearAdaptadorOdontologicaFirebase } from './adaptadores/salida/firebas
 const conexiones = {};
 const mysqlPool = () => (conexiones.mysql ??= crearPoolMysql(entorno.mysql));
 const mongoCliente = () => (conexiones.mongo ??= crearClienteMongo(entorno.mongo));
+const postgresPool = () => (conexiones.postgres ??= crearPoolPostgres(entorno.postgres));
 const firestore = () => (conexiones.firebase ??= crearFirestore(entorno.firebase));
 
 // "institución:motor" → fábrica del adaptador. Cada esquema/modelo
@@ -31,7 +33,7 @@ const firestore = () => (conexiones.firebase ??= crearFirestore(entorno.firebase
 const FABRICAS = {
   'pediatrico:mysql': () => crearAdaptadorPediatricoMysql(mysqlPool()),
   'laboratorio:mongodb': () => crearAdaptadorLaboratorioMongo(mongoCliente(), entorno.mongo.db),
-  'hospital:postgresql': () => crearAdaptadorHospitalPostgres(entorno.postgres),
+  'hospital:postgresql': () => crearAdaptadorHospitalPostgres(postgresPool()),
   'odontologica:firebase': () => crearAdaptadorOdontologicaFirebase(firestore(), entorno.firebase.zonaHoraria),
 };
 
@@ -51,5 +53,5 @@ export function repositoriosDe(claveInstitucion) {
 }
 
 export async function cerrarConexiones() {
-  await Promise.allSettled([conexiones.mysql?.end(), conexiones.mongo?.close(), conexiones.firebase?.terminate()]);
+  await Promise.allSettled([conexiones.mysql?.end(), conexiones.mongo?.close(), conexiones.postgres?.end(), conexiones.firebase?.terminate()]);
 }
