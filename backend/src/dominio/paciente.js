@@ -16,7 +16,8 @@ export const SEXOS = ['M', 'F'];
 export const TIPOS_SANGRE = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 export const MOTIVOS_BAJA = ['traslado', 'fallecimiento', 'mayoria_edad', 'administrativo', 'otro'];
 export const PARENTESCOS = [
-  'madre', 'padre', 'abuela', 'abuelo', 'tia', 'tio', 'hermana', 'hermano', 'tutor_legal', 'otro',
+  'madre', 'padre', 'abuela', 'abuelo', 'tia', 'tio', 'hermana', 'hermano',
+  'conyuge', 'hija', 'hijo', 'tutor_legal', 'otro',
 ];
 
 const CUI = /^\d{13}$/;

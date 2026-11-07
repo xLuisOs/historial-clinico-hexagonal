@@ -7,7 +7,7 @@ import { Validador } from './validacion.js';
 //   medico:       { id, nombre },
 //   diagnosticos: [{ id, codigoCie10, descripcion, tipo }],
 //   receta:       null | { id, fechaEmision, indicaciones, items: [ItemReceta] },
-//   datosEspecificos: { ... }   // propio de cada institución (crecimiento, procedimientos por pieza dental, etc.)
+//   datosEspecificos: { ... }   // propio de cada institución (crecimiento, tratamientos, procedimientos por pieza dental, etc.)
 // }
 // ItemReceta = { medicamentoId, medicamento, dosis, frecuencia, duracionDias, via, indicaciones }
 
@@ -63,6 +63,31 @@ const VALIDADORES_ESPECIFICOS = {
       pesoKg: v.numero('datosEspecificos.pesoKg', d.pesoKg, { min: 0.3, max: 150 }),
       tallaCm: v.numero('datosEspecificos.tallaCm', d.tallaCm, { min: 20, max: 220 }),
       perimetroCefalicoCm: v.numero('datosEspecificos.perimetroCefalicoCm', d.perimetroCefalicoCm, { min: 20, max: 70 }),
+    };
+  },
+
+  // Tratamientos indicados en la consulta y si se atendió por emergencia.
+  hospital(v, d = {}) {
+    if (d.esEmergencia !== undefined && typeof d.esEmergencia !== 'boolean') {
+      v.error('datosEspecificos.esEmergencia', 'Debe ser true o false');
+    }
+    const tratamientos = Array.isArray(d.tratamientos) ? d.tratamientos : [];
+    return {
+      esEmergencia: d.esEmergencia === true,
+      tratamientos: tratamientos.map((t = {}, i) => {
+        const prefijo = `datosEspecificos.tratamientos[${i}]`;
+        const fechaInicio = v.fecha(`${prefijo}.fechaInicio`, t.fechaInicio);
+        const fechaFin = v.fecha(`${prefijo}.fechaFin`, t.fechaFin);
+        if (fechaInicio && fechaFin && fechaFin < fechaInicio) {
+          v.error(`${prefijo}.fechaFin`, 'No puede ser anterior a la fecha de inicio');
+        }
+        return {
+          descripcion: v.texto(`${prefijo}.descripcion`, t.descripcion, { requerido: true, max: 300 }),
+          fechaInicio,
+          fechaFin,
+          indicaciones: v.texto(`${prefijo}.indicaciones`, t.indicaciones, { max: 500 }),
+        };
+      }),
     };
   },
 
