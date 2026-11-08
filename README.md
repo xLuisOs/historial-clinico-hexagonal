@@ -297,3 +297,9 @@ Exclusivas del laboratorio (`:id` es el de la orden):
 | POST   | `/api/laboratorio/ordenes/:id/examenes/:codigo/resultados` | `{ resultados: [{ parametro, valor, observacion }] }` |
 | POST   | `/api/laboratorio/ordenes/:id/examenes/:codigo/validacion` | Firma el examen; al validar el último, la orden se completa |
 | PATCH  | `/api/laboratorio/ordenes/:id/estado`                    | `{ estado }`: `en_proceso` o `anulada`         |
+
+Exclusivas del pediátrico:
+
+| Método | Ruta                          | Descripción                                                        |
+|--------|-------------------------------|--------------------------------------------------------------------|
+| POST   | `/api/pacientes/:id/vacunas`  | Registrar dosis aplicada `{ vacunaId, numeroDosis, lote, fechaAplicacion?, consultaId? }` (médico). Las dosis van en orden y no se repiten. Devuelve el esquema actualizado |

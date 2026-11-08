@@ -3,6 +3,7 @@ import * as casos from '../../../aplicacion/casos-uso.js';
 import * as hospital from '../../../aplicacion/hospital.js';
 import * as odontologica from '../../../aplicacion/odontologica.js';
 import * as laboratorio from '../../../aplicacion/laboratorio.js';
+import * as pediatrico from '../../../aplicacion/pediatrico.js';
 import { iniciarSesion } from '../../../aplicacion/autenticacion.js';
 import { INSTITUCIONES } from '../../../config/instituciones.js';
 import { repositoriosDe } from '../../../contenedor.js';
@@ -131,4 +132,9 @@ rutas.post('/laboratorio/ordenes/:id/examenes/:codigo/validacion', async (req, r
 });
 rutas.patch('/laboratorio/ordenes/:id/estado', async (req, res) => {
   res.json(await laboratorio.cambiarEstadoOrden(req.contexto, req.params.id, req.body));
+});
+
+// ---------------------------------------- exclusivas del centro médico pediátrico
+rutas.post('/pacientes/:id/vacunas', async (req, res) => {
+  res.status(201).json(await pediatrico.aplicarVacuna(req.contexto, req.params.id, req.body));
 });

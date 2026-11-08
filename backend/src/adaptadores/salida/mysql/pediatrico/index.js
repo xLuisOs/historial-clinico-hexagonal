@@ -4,6 +4,7 @@
 import { crearRepositorioAgenda } from './agenda.js';
 import { crearRepositorioAtenciones } from './atenciones.js';
 import { crearRepositorioPacientes } from './pacientes.js';
+import { crearRepositorioVacunas } from './vacunas.js';
 
 export function crearAdaptadorPediatricoMysql(pool) {
   return {
@@ -32,6 +33,11 @@ export function crearAdaptadorPediatricoMysql(pool) {
 
     // Puerto opcional (fuera del contrato común): citas.
     agenda: crearRepositorioAgenda(pool),
+
+    // Puerto propio del pediátrico: vacunación (y más adelante cobros).
+    pediatrico: {
+      ...crearRepositorioVacunas(pool),
+    },
 
     pacientes: crearRepositorioPacientes(pool),
     atenciones: crearRepositorioAtenciones(pool),

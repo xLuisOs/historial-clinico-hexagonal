@@ -94,7 +94,7 @@ async function obtenerConsulta(cx, consultaId) {
 }
 
 /** Esquema de vacunación del paciente: cada dosis aplicada, pendiente o próxima. */
-async function cargarEsquemaVacunas(cx, pacienteId) {
+export async function cargarEsquemaVacunas(cx, pacienteId) {
   const [filas] = await cx.query(
     `SELECT v.id_vacuna, v.nombre, ed.numero_dosis, v.dosis_total, ed.edad_recomendada_meses,
             va.fecha_aplicacion, va.lote,
@@ -112,6 +112,7 @@ async function cargarEsquemaVacunas(cx, pacienteId) {
   return filas.map((f) => ({
     vacunaId: String(f.id_vacuna),
     vacuna: f.nombre,
+    numeroDosis: f.numero_dosis,
     dosis: `${f.numero_dosis} de ${f.dosis_total}`,
     edadRecomendadaMeses: f.edad_recomendada_meses,
     estado: f.fecha_aplicacion ? 'aplicada' : f.edad_meses >= f.edad_recomendada_meses ? 'pendiente' : 'proxima',
