@@ -72,6 +72,10 @@ export const api = {
   recetar: (consultaId, datos) => pedir('POST', `/consultas/${q(consultaId)}/recetas`, datos),
 
   agenda: (fecha) => pedir('GET', `/agenda?fecha=${q(fecha)}`),
+  citasDelPaciente: (pacienteId) => pedir('GET', `/pacientes/${q(pacienteId)}/citas`),
+  agendarCita: (pacienteId, datos) => pedir('POST', `/pacientes/${q(pacienteId)}/citas`, datos),
+  reprogramarCita: (citaId, datos) => pedir('PATCH', `/citas/${q(citaId)}`, datos),
+  cancelarCita: (citaId) => pedir('POST', `/citas/${q(citaId)}/cancelacion`),
 
   medicos: () => pedir('GET', '/catalogos/medicos'),
   medicamentos: () => pedir('GET', '/catalogos/medicamentos'),

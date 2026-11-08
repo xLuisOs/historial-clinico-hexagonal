@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { api } from '../api.js';
 import { Campo, Selector } from '../componentes/ui.jsx';
 import { dinero, fecha } from '../formato.js';
-import { ProximasCitas, Quitar } from './comun.jsx';
+import { Quitar } from './comun.jsx';
 
 const PROCEDIMIENTO = { procedimientoId: '', piezaDental: '', observaciones: '' };
 
@@ -85,7 +85,6 @@ function Extras({ extras }) {
           </div>
         </section>
       )}
-      <ProximasCitas citas={extras.proximasCitas} />
       {extras.procedimientos?.length > 0 && (
         <section className="panel vidrio">
           <h2>Historial dental</h2>

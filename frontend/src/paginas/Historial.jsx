@@ -6,6 +6,7 @@ import { Alerta, Cargando, iniciales } from '../componentes/ui.jsx';
 import { edad, etiqueta, fecha, fechaHora, MOTIVOS_BAJA, nombreCompleto, SEXO } from '../formato.js';
 import { vistaDe } from '../instituciones/index.js';
 import { puede, useSesion } from '../sesion.jsx';
+import { DialogoAgendar, DialogoCancelarCita, DialogoReprogramar, PanelCitas } from './Citas.jsx';
 import { DialogoBaja, DialogoContacto, DialogoDiagnostico, DialogoReceta } from './Dialogos.jsx';
 
 const Dato = ({ titulo, children }) => (
@@ -71,7 +72,8 @@ export function Historial() {
   const vista = vistaDe(usuario.institucion);
   const [historial, setHistorial] = useState(null);
   const [error, setError] = useState(null);
-  const [dialogo, setDialogo] = useState(null); // { tipo, consulta? }
+  const [dialogo, setDialogo] = useState(null); // { tipo, consulta?, cita? }
+  const [versionCitas, setVersionCitas] = useState(0);
 
   const cargar = useCallback(() => {
     api.historial(id).then((h) => { setHistorial(h); setError(null); }).catch(setError);
@@ -87,7 +89,9 @@ export function Historial() {
   const { paciente, consultas, extras } = historial;
   const activo = paciente.estado.activo;
   const puedeAtender = activo && puede(usuario, 'atender');
-  const alListo = () => { setDialogo(null); cargar(); };
+  const alListo = () => { setDialogo(null); cargar(); setVersionCitas((v) => v + 1); };
+  const conAgenda = usuario.institucion !== 'laboratorio'; // el laboratorio trabaja con órdenes
+  const puedeAgendar = activo && conAgenda && puede(usuario, 'agendar');
   const { Extras } = vista;
 
   return (
@@ -109,6 +113,9 @@ export function Historial() {
             <div className="acciones">
               {puedeAtender && (
                 <Link to={`/pacientes/${id}/consulta`} className="boton boton-primario"><IconoMas tam={18} /> Nueva consulta</Link>
+              )}
+              {puedeAgendar && (
+                <button type="button" className="boton boton-primario" onClick={() => setDialogo({ tipo: 'agendar' })}><IconoMas tam={18} /> Agendar cita</button>
               )}
               {activo && puede(usuario, 'actualizarContacto') && (
                 <button type="button" className="boton boton-secundario" onClick={() => setDialogo({ tipo: 'contacto' })}>Actualizar contacto</button>
@@ -173,6 +180,11 @@ export function Historial() {
         </section>
 
         <div className="pila">
+          {conAgenda && (
+            <PanelCitas pacienteId={id} puedeAgendar={puedeAgendar} version={versionCitas}
+              onReprogramar={(cita) => setDialogo({ tipo: 'reprogramar', cita })}
+              onCancelar={(cita) => setDialogo({ tipo: 'cancelarCita', cita })} />
+          )}
           <Extras extras={extras ?? {}} />
         </div>
       </div>
@@ -180,6 +192,9 @@ export function Historial() {
       {dialogo?.tipo === 'contacto' && <DialogoContacto paciente={paciente} onCerrar={() => setDialogo(null)} onListo={alListo} />}
       {dialogo?.tipo === 'baja' && <DialogoBaja paciente={paciente} onCerrar={() => setDialogo(null)} onListo={alListo} />}
       {dialogo?.tipo === 'diagnostico' && <DialogoDiagnostico consulta={dialogo.consulta} onCerrar={() => setDialogo(null)} onListo={alListo} />}
+      {dialogo?.tipo === 'agendar' && <DialogoAgendar paciente={paciente} institucion={usuario.institucion} onCerrar={() => setDialogo(null)} onListo={alListo} />}
+      {dialogo?.tipo === 'reprogramar' && <DialogoReprogramar cita={dialogo.cita} institucion={usuario.institucion} onCerrar={() => setDialogo(null)} onListo={alListo} />}
+      {dialogo?.tipo === 'cancelarCita' && <DialogoCancelarCita cita={dialogo.cita} onCerrar={() => setDialogo(null)} onListo={alListo} />}
       {dialogo?.tipo === 'receta' && <DialogoReceta consulta={dialogo.consulta} onCerrar={() => setDialogo(null)} onListo={alListo} />}
     </>
   );

@@ -37,6 +37,7 @@ export const PERMISOS = {
   registrarPaciente: ['recepcion', 'medico', 'admin'],
   actualizarContacto: ['recepcion', 'admin'],
   darDeBaja: ['admin'],
+  agendar: ['recepcion', 'admin'],
   atender: ['medico'],
 };
 

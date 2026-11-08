@@ -1,25 +1,3 @@
-import { fechaHora } from '../formato.js';
-
-/** Próximas citas (hospital y odontológica las devuelven en extras.proximasCitas). */
-export function ProximasCitas({ citas }) {
-  if (!citas) return null;
-  return (
-    <section className="panel vidrio">
-      <h2>Próximas citas</h2>
-      {citas.length === 0 ? <p className="vacio">Sin citas programadas.</p> : (
-        <ul className="items">
-          {citas.map((c) => (
-            <li key={c.id}>
-              <strong>{fechaHora(c.fechaHora)}</strong>
-              <small>{[c.medico ?? c.odontologo, c.motivo].filter(Boolean).join(' · ')}</small>
-            </li>
-          ))}
-        </ul>
-      )}
-    </section>
-  );
-}
-
 /**
  * Para una institución sin vista propia: muestra los datos tal como llegan,
  * así la interfaz sigue funcionando aunque cambie lo que devuelve su adaptador.

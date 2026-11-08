@@ -3,7 +3,7 @@
 
 import { Campo } from '../componentes/ui.jsx';
 import { dinero, fecha, fechaHora } from '../formato.js';
-import { ProximasCitas, Quitar } from './comun.jsx';
+import { Quitar } from './comun.jsx';
 
 const TRATAMIENTO = { descripcion: '', fechaInicio: '', fechaFin: '', indicaciones: '' };
 
@@ -70,7 +70,6 @@ function DetalleConsulta({ datos }) {
 function Extras({ extras }) {
   return (
     <>
-      <ProximasCitas citas={extras.proximasCitas} />
 
       {extras.internamientos?.length > 0 && (
         <section className="panel vidrio">
