@@ -303,3 +303,7 @@ Exclusivas del pediátrico:
 | Método | Ruta                          | Descripción                                                        |
 |--------|-------------------------------|--------------------------------------------------------------------|
 | POST   | `/api/pacientes/:id/vacunas`  | Registrar dosis aplicada `{ vacunaId, numeroDosis, lote, fechaAplicacion?, consultaId? }` (médico). Las dosis van en orden y no se repiten. Devuelve el esquema actualizado |
+| GET    | `/api/pediatrico/servicios`   | Catálogo de servicios facturables con su precio vigente            |
+| POST   | `/api/consultas/:id/cobro`    | Generar el cobro de la consulta `{ items: [{ servicioId, cantidad }] }` (recepción/admin). El precio se copia del catálogo; un solo cobro por consulta, a nombre del encargado |
+
+El historial del pediátrico incluye en `extras.cobros` cada cobro con su detalle, pagos y saldo.

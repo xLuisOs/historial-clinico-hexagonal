@@ -1,5 +1,6 @@
 import { Conflicto, NoEncontrado } from '../../../../dominio/errores.js';
 import { enTransaccion, traducirError } from '../conexion.js';
+import { cargarCobros } from './cobros.js';
 import { exigirPacienteActivo, filaAPaciente, SELECT_PACIENTE } from './pacientes.js';
 
 const MENSAJES_RECETA = {
@@ -248,6 +249,7 @@ export function crearRepositorioAtenciones(pool) {
         extras: {
           crecimiento,
           vacunas: await cargarEsquemaVacunas(pool, pacienteId),
+          cobros: await cargarCobros(pool, pacienteId),
         },
       };
     },

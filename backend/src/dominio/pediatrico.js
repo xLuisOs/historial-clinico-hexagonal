@@ -24,3 +24,24 @@ export function validarVacunaAplicada(datos = {}) {
   v.lanzarSiHayErrores();
   return vacuna;
 }
+
+/**
+ * Cobro de una consulta = { items: [{ servicioId, cantidad }] }
+ * El precio NO lo manda el cliente: se copia del catálogo de servicios al
+ * guardar (precio vigente en ese momento).
+ */
+export function validarCobro(datos = {}) {
+  const v = new Validador();
+  const items = Array.isArray(datos.items) ? datos.items : [];
+  if (items.length === 0) v.error('items', 'Agrega al menos un servicio');
+  const cobro = {
+    items: items.map((item = {}, i) => ({
+      servicioId: v.texto(`items[${i}].servicioId`, item.servicioId == null ? null : String(item.servicioId), { requerido: true }),
+      cantidad: v.numero(`items[${i}].cantidad`, item.cantidad ?? 1, { entero: true, min: 1, max: 20 }),
+    })),
+  };
+  const ids = cobro.items.map((i) => i.servicioId);
+  if (new Set(ids).size !== ids.length) v.error('items', 'Hay servicios repetidos: usa la cantidad');
+  v.lanzarSiHayErrores();
+  return cobro;
+}

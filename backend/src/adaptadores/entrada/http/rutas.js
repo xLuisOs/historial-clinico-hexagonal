@@ -138,3 +138,9 @@ rutas.patch('/laboratorio/ordenes/:id/estado', async (req, res) => {
 rutas.post('/pacientes/:id/vacunas', async (req, res) => {
   res.status(201).json(await pediatrico.aplicarVacuna(req.contexto, req.params.id, req.body));
 });
+rutas.get('/pediatrico/servicios', async (req, res) => {
+  res.json(await pediatrico.listarServicios(req.contexto));
+});
+rutas.post('/consultas/:id/cobro', async (req, res) => {
+  res.status(201).json(await pediatrico.generarCobro(req.contexto, req.params.id, req.body));
+});
