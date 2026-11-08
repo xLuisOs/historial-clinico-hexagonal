@@ -399,6 +399,33 @@ export function crearRepositorioOrdenes(cliente, db, zonaHoraria) {
       });
     },
 
+    /**
+     * Agrega exámenes a una orden existente (Entrega I, operación 4). Cada
+     * examen copia la definición vigente del catálogo, igual que al crear la
+     * orden. El filtro del update repite las condiciones (editable y sin esos
+     * exámenes): si otra petición cambió la orden a la vez, no se aplica.
+     */
+    agregarExamenes(ordenId, idsTipos) {
+      return enTransaccionMongo(cliente, async (session) => {
+        const orden = await exigirOrdenEditable(ordenId, session);
+        const tipos = await leerCatalogo(col('tipos_examen'), idsTipos, 'Tipo de examen', session);
+
+        const yaIncluidos = idsTipos.filter((id) => orden.examenes.some((e) => e.tipo_examen_id.toHexString() === id));
+        if (yaIncluidos.length > 0) {
+          throw new Conflicto(`La orden ya incluye: ${yaIncluidos.map((id) => tipos.get(id).nombre).join(', ')}`);
+        }
+
+        const objectIds = idsTipos.map((id) => tipos.get(id)._id);
+        const { matchedCount } = await col('ordenes').updateOne(
+          { _id: orden._id, estado: { $in: ['pendiente', 'en_proceso'] }, 'examenes.tipo_examen_id': { $nin: objectIds } },
+          { $push: { examenes: { $each: idsTipos.map((id) => examenDesdeCatalogo(tipos.get(id))) } } },
+          { session },
+        );
+        if (matchedCount === 0) throw new Conflicto('La orden cambió mientras se agregaban los exámenes; vuelve a intentarlo');
+        return aConsulta(await leerOrden(ordenId, session));
+      });
+    },
+
     cambiarEstadoOrden(ordenId, estado) {
       return enTransaccionMongo(cliente, async (session) => {
         const orden = await leerOrden(ordenId, session);

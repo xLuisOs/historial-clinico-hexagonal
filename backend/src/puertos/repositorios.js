@@ -70,6 +70,8 @@ export const PUERTO_LABORATORIO = {
     cambiarEstadoOrden: '(ordenId, estado)',
     // → { id, nombre, numeroColegiado, especialidad, institucionProcedencia }
     registrarMedicoReferente: '(medico)',
+    // → Consulta (orden). No repite exámenes ni toca órdenes cerradas.
+    agregarExamenes: '(ordenId, idsTiposExamen)',
   },
 };
 

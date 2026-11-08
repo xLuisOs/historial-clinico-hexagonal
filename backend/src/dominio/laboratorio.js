@@ -87,3 +87,15 @@ export function validarMedicoReferente(datos = {}) {
   v.lanzarSiHayErrores();
   return medico;
 }
+
+/** Exámenes que se agregan a una orden existente: { examenes: [idTipoExamen, …] } sin repetir. */
+export function validarExamenesNuevos(datos = {}) {
+  const v = new Validador();
+  const lista = Array.isArray(datos.examenes) ? datos.examenes : [];
+  if (lista.length === 0) v.error('examenes', 'Elige al menos un examen');
+  const ids = lista.map((id) => (id == null ? '' : String(id)));
+  if (ids.some((id) => !id)) v.error('examenes', 'Hay un examen sin elegir');
+  if (new Set(ids).size !== ids.length) v.error('examenes', 'Hay exámenes repetidos');
+  v.lanzarSiHayErrores();
+  return ids;
+}

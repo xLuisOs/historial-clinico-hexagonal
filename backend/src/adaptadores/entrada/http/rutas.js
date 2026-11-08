@@ -127,6 +127,9 @@ rutas.get('/laboratorio/tipos-examen', async (req, res) => {
 rutas.post('/laboratorio/medicos-referentes', async (req, res) => {
   res.status(201).json(await laboratorio.registrarMedicoReferente(req.contexto, req.body));
 });
+rutas.post('/laboratorio/ordenes/:id/examenes', async (req, res) => {
+  res.json(await laboratorio.agregarExamenes(req.contexto, req.params.id, req.body));
+});
 rutas.post('/laboratorio/ordenes/:id/examenes/:codigo/resultados', async (req, res) => {
   res.json(await laboratorio.registrarResultados(req.contexto, req.params.id, req.params.codigo, req.body));
 });
