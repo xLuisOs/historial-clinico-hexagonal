@@ -11,6 +11,8 @@
     "db:probar": "node scripts/probar-conexiones.js",
     "db:mysql": "node scripts/mysql-aplicar.js",
     "db:mysql:semilla": "node scripts/mysql-aplicar.js --semilla",
+    "db:mongo": "node scripts/mongo-aplicar.js",
+    "db:mongo:semilla": "node scripts/mongo-aplicar.js --semilla",
     "db:firebase:semilla": "node scripts/firebase-semilla.js"
   },
   "engines": {

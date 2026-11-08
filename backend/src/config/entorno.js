@@ -22,6 +22,7 @@ export const entorno = {
   mongo: {
     url: process.env.MONGO_URL,
     db: process.env.MONGO_DB ?? 'laboratorio',
+    zonaHoraria: process.env.ZONA_HORARIA ?? '-06:00',
   },
   postgres: {
     url: process.env.POSTGRES_URL,

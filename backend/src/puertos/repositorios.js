@@ -56,10 +56,26 @@ export const PUERTOS = {
   },
 };
 
+// Puerto adicional, solo para el adaptador del Laboratorio Clínico (sea cual
+// sea su motor). Si un adaptador trae `laboratorio`, debe implementarlo completo.
+export const PUERTO_LABORATORIO = {
+  laboratorio: {
+    // → [{ id, codigo, nombre, categoria, muestra, parametros: [...] }]
+    listarTiposExamen: '()',
+    // → Consulta (orden). Guarda valores y marca los que están fuera de rango.
+    registrarResultados: '(ordenId, codigoExamen, resultados, usuario)',
+    // → Consulta (orden). Exige todos los parámetros con valor.
+    validarExamen: '(ordenId, codigoExamen, usuario)',
+    // → Consulta (orden)
+    cambiarEstadoOrden: '(ordenId, estado)',
+  },
+};
+
 /** Revisa al arrancar que un adaptador implemente todo el contrato. */
 export function verificarAdaptador(nombre, repositorios) {
   const faltantes = [];
-  for (const [repo, metodos] of Object.entries(PUERTOS)) {
+  const contrato = repositorios?.laboratorio ? { ...PUERTOS, ...PUERTO_LABORATORIO } : PUERTOS;
+  for (const [repo, metodos] of Object.entries(contrato)) {
     for (const metodo of Object.keys(metodos)) {
       if (typeof repositorios?.[repo]?.[metodo] !== 'function') faltantes.push(`${repo}.${metodo}`);
     }

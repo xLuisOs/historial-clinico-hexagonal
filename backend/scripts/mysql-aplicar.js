@@ -1,5 +1,5 @@
 // Crea la base del pediátrico ejecutando los scripts de db/mysql/ en orden.
-// Funciona igual contra el MySQL de Docker y contra Aiven, sin instalar el
+// Funciona igual contra el MySQL de Docker y contra Azure, sin instalar el
 // cliente de MySQL.
 //
 //   npm run db:mysql                    esquema + triggers + usuarios

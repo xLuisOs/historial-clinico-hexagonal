@@ -58,6 +58,19 @@ function esPiezaFdi(n) {
 
 // Datos propios de cada institución. Dependen de la institución, no del motor.
 const VALIDADORES_ESPECIFICOS = {
+  // En el laboratorio la "consulta" es una orden de examen: quién la refiere
+  // y qué exámenes incluye.
+  laboratorio(v, d = {}) {
+    const examenes = Array.isArray(d.examenes) ? d.examenes : [];
+    if (examenes.length === 0) v.error('datosEspecificos.examenes', 'Incluye al menos un examen');
+    const ids = examenes.map((id) => (id == null ? '' : String(id)));
+    if (new Set(ids).size !== ids.length) v.error('datosEspecificos.examenes', 'Hay exámenes repetidos');
+    return {
+      medicoReferenteId: v.texto('datosEspecificos.medicoReferenteId', d.medicoReferenteId == null ? null : String(d.medicoReferenteId), { requerido: true }),
+      examenes: ids,
+    };
+  },
+
   pediatrico(v, d = {}) {
     return {
       pesoKg: v.numero('datosEspecificos.pesoKg', d.pesoKg, { min: 0.3, max: 150 }),

@@ -9,7 +9,7 @@ arquitectura hexagonal, la lógica de negocio no depende del motor.
 | Hospital General         | PostgreSQL | Supabase       | Fer         | `@hospital.gt`      |
 | Clínica Odontológica     | Firebase   | Firestore      | Fer         | `@odonto.gt`        |
 | Laboratorio Clínico      | MongoDB    | MongoDB Atlas  | Luis        | `@lab.gt`           |
-| Centro Médico Pediátrico | MySQL      | Aiven          | Luis        | `@pediatrico.gt`    |
+| Centro Médico Pediátrico | MySQL      | Azure Database for MySQL | Luis | `@pediatrico.gt` |
 
 Al iniciar sesión, el dominio del correo decide la institución. Desde ese momento
 todas las operaciones del usuario van al motor de esa institución.
@@ -29,7 +29,7 @@ backend/
     │   ├── entrada/http/      API REST (Express) + sesión JWT
     │   └── salida/            Un adaptador por motor
     │       ├── mysql/pediatrico/        ✅ implementado
-    │       ├── mongo/laboratorio/       ⏳ pendiente (Luis)
+    │       ├── mongo/laboratorio/       ✅ implementado
     │       ├── postgres/hospital/       ✅ implementado
     │       └── firebase/odontologica/   ✅ implementado
     ├── contenedor.js          Elige el adaptador según la institución del usuario
@@ -64,26 +64,42 @@ cp .env.example .env        # y llenar los valores (pedírselos al compañero)
 docker compose up -d                          # desde la raíz del repo
 cd backend
 npm run db:mysql:semilla                      # crea la base pediatrico con datos de prueba
+npm run db:mongo:semilla                      # crea las colecciones del laboratorio con datos de prueba
 npm run db:probar                             # verifica las conexiones
 npm run dev                                   # API en http://localhost:4000/api
 ```
 
 ### Opción B: bases en la nube (compartidas entre las dos computadoras)
 
-**MySQL en Aiven**
-1. Crear la cuenta en aiven.io, luego *Create service* → **MySQL** → plan **Free**.
-2. En la página del servicio, copiar *Host*, *Port* y la clave de `avnadmin`, y
-   descargar el **CA certificate** en `backend/certs/aiven-ca.pem` (no se sube al repo).
-3. En `.env`, llenar `MYSQL_ADMIN_URL`, `MYSQL_URL` y `MYSQL_SSL_CA` como indica
-   `.env.example`. Usar contraseñas fuertes en `MYSQL_APP_PASSWORD` y `MYSQL_LECTURA_PASSWORD`.
-4. Ejecutar `npm run db:mysql:semilla` **una sola vez** (lo hace una persona; la otra
+**MySQL en Azure** (servidor flexible, con el beneficio Azure for Students)
+1. Crear un *Azure Database for MySQL – Servidor flexible*: nivel **Ampliable B1ms**,
+   20 GB, sin alta disponibilidad ni crecimiento automático (entra en las 750 h/mes
+   gratuitas), MySQL 8.4, región permitida por la suscripción (usamos *West US 2*; *Mexico Central* la bloquea la directiva de Azure for Students).
+2. En *Redes*: acceso público y regla de firewall `0.0.0.0 – 255.255.255.255`
+   (la conexión exige TLS 1.2 y contraseña).
+3. En *Parámetros del servidor*: `log_bin_trust_function_creators = ON`. Sin esto
+   el administrador (que no tiene SUPER) no puede crear los triggers.
+4. En `.env`, llenar `MYSQL_ADMIN_URL` (usuario administrador del servidor) y
+   `MYSQL_URL` como indica `.env.example`. Usar contraseñas fuertes en
+   `MYSQL_APP_PASSWORD` y `MYSQL_LECTURA_PASSWORD`.
+5. Ejecutar `npm run db:mysql:semilla` **una sola vez** (lo hace una persona; la otra
    solo necesita el `.env`).
+
+> Para ahorrar crédito, el servidor se puede **Detener** desde el portal cuando no se usa.
 
 **MongoDB en Atlas**
 1. Crear la cuenta en mongodb.com/atlas y un clúster **M0 (Free)**.
-2. En *Database Access*, crear un usuario. En *Network Access*, agregar `0.0.0.0/0`
-   (o la IP de cada compañero).
-3. En *Connect* → *Drivers*, copiar la cadena `mongodb+srv://…` y ponerla en `MONGO_URL`.
+2. En *Network Access*, agregar `0.0.0.0/0` (o la IP de cada compañero).
+3. En *Database Access* → *Custom Roles*, crear el rol **`lab_app`** con las acciones
+   `find`, `insert` y `update` sobre la base `laboratorio`. Sin `remove` ni
+   `dropCollection`: la aplicación no puede borrar historiales (mínimo privilegio,
+   igual que `pedi_app` en MySQL).
+4. Crear dos usuarios de base de datos:
+   - `lab_app`, con el rol `lab_app`. Va en `MONGO_URL`.
+   - Un usuario con rol *Atlas admin*, que solo se usa para crear las colecciones.
+     Va en `MONGO_ADMIN_URL`.
+5. En *Connect* → *Drivers*, copiar la cadena `mongodb+srv://…` para cada usuario.
+6. Ejecutar `npm run db:mongo:semilla` **una sola vez**.
 
 **PostgreSQL en Supabase**
 1. En el proyecto de Supabase: *SQL Editor* → *New query*. Pegar
@@ -145,6 +161,7 @@ ocultan los botones que no le corresponden (el backend igual lo verifica):
 
 ```bash
 npm run db:mysql:semilla -- --reiniciar       # ⚠ borra todos los datos del pediátrico
+npm run db:mongo:semilla -- --reiniciar       # ⚠ borra todas las colecciones del laboratorio
 npm run db:firebase:semilla -- --reiniciar    # ⚠ borra todas las colecciones de la odontológica
 ```
 
@@ -212,6 +229,31 @@ En la consulta, los procedimientos van en `datosEspecificos`:
 `piezaDental` usa notación FDI (11–48 permanentes, 51–85 temporales) y es opcional.
 El precio no se envía: se copia del catálogo al guardar.
 
+## Usuarios de prueba (laboratorio)
+
+Contraseña de todos: `Laboratorio#2026` (los crea `npm run db:mongo:semilla`)
+
+| Correo              | Rol             | Puede…                                                  |
+|---------------------|-----------------|---------------------------------------------------------|
+| `qb.lopez@lab.gt`   | químico biólogo | crear órdenes, registrar y validar resultados           |
+| `qb.mendez@lab.gt`  | químico biólogo | ídem                                                    |
+| `recepcion@lab.gt`  | recepción       | registrar pacientes y actualizar contactos              |
+| `admin@lab.gt`      | admin           | dar de baja (archivar) historiales y anular órdenes     |
+
+En el laboratorio, las reglas comunes se traducen así:
+
+| Regla común           | En el laboratorio                                                        |
+|-----------------------|--------------------------------------------------------------------------|
+| Registrar consulta    | Crear una **orden de examen** (médico referente + exámenes)              |
+| Agregar diagnóstico   | Diagnóstico **presuntivo** que acompaña la orden                         |
+| Recetar medicamento   | **Medicación actual** del paciente (puede alterar los resultados)        |
+
+Los datos propios van en `datosEspecificos`:
+
+```json
+"datosEspecificos": { "medicoReferenteId": "…", "examenes": ["<id tipo examen>", "…"] }
+```
+
 ## API
 
 Todas las rutas (salvo login) requieren `Authorization: Bearer <token>`.
@@ -246,3 +288,12 @@ Todas las rutas (salvo login) requieren `Authorization: Bearer <token>`.
 | POST   | `/api/pacientes/:id/facturas`      | Facturar `{ consultaId \| internamientoId, items: [{ descripcion, cantidad, precioUnitario }] }` |
 | POST   | `/api/facturas/:id/pagos`          | Pago `{ monto, metodoPago, referencia? }` (efectivo, tarjeta, transferencia, seguro) |
 | POST   | `/api/facturas/:id/anulacion`      | Anular una factura sin pagos (admin)                 |
+
+Exclusivas del laboratorio (`:id` es el de la orden):
+
+| Método | Ruta                                                     | Descripción                                    |
+|--------|----------------------------------------------------------|------------------------------------------------|
+| GET    | `/api/laboratorio/tipos-examen`                          | Catálogo de exámenes con sus parámetros        |
+| POST   | `/api/laboratorio/ordenes/:id/examenes/:codigo/resultados` | `{ resultados: [{ parametro, valor, observacion }] }` |
+| POST   | `/api/laboratorio/ordenes/:id/examenes/:codigo/validacion` | Firma el examen; al validar el último, la orden se completa |
+| PATCH  | `/api/laboratorio/ordenes/:id/estado`                    | `{ estado }`: `en_proceso` o `anulada`         |

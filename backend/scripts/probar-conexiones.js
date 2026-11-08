@@ -8,6 +8,7 @@ import { configDesdeUrl } from '../src/adaptadores/salida/mysql/conexion.js';
 import { crearPoolPostgres } from '../src/adaptadores/salida/postgres/conexion.js';
 import { crearFirestore } from '../src/adaptadores/salida/firebase/conexion.js';
 import { COLECCIONES } from '../src/adaptadores/salida/firebase/odontologica/modelo.js';
+import { prepararDns } from '../src/adaptadores/salida/mongo/conexion.js';
 
 dotenv.config({ quiet: true });
 
@@ -26,6 +27,7 @@ const pruebas = {
 
   async 'MongoDB (laboratorio)'() {
     if (!process.env.MONGO_URL) return 'sin configurar (MONGO_URL)';
+    prepararDns(process.env.MONGO_URL);
     const cliente = new MongoClient(process.env.MONGO_URL, { serverSelectionTimeoutMS: 8000 });
     try {
       await cliente.connect();
@@ -84,7 +86,7 @@ for (const [nombre, probar] of Object.entries(pruebas)) {
     if (/self[- ]signed|certificate/i.test(error.message)) {
       console.log(nombre.startsWith('PostgreSQL')
         ? '    → Descarga el certificado SSL de Supabase y pon su ruta en POSTGRES_SSL_CA'
-        : '    → Descarga el CA certificate de Aiven y pon su ruta en MYSQL_SSL_CA');
+        : '    → Revisa el certificado del servidor (MYSQL_SSL_CA) o la regla de firewall en Azure');
     }
     if (/relation "paciente" does not exist/.test(error.message)) {
       console.log('    → El usuario no ve el esquema del hospital: conéctate como hospital_app (ver README)');
