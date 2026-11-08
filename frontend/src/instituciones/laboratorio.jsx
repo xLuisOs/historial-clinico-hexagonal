@@ -5,6 +5,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api.js';
 import { Alerta, Campo, Dialogo, erroresDe, Selector } from '../componentes/ui.jsx';
+import { GraficaLinea } from '../componentes/GraficaLinea.jsx';
 import { fecha } from '../formato.js';
 import { puede } from '../sesion.jsx';
 import { DialogoResultados, TablaResultados } from './resultados.jsx';
@@ -331,15 +332,60 @@ function DetalleConsulta({ datos, consulta, usuario, recargar }) {
   );
 }
 
-function Extras({ extras }) {
-  if (!extras.ordenesEnCurso) return null;
+/**
+ * Evolución de un parámetro numérico en las órdenes del paciente (la calcula
+ * MongoDB con un pipeline de agregación). Un parámetro a la vez: glucosa,
+ * colesterol o leucocitos tienen escalas distintas y no comparten eje.
+ */
+function PanelEvolucion({ evolucion = [] }) {
+  // Solo tiene sentido una tendencia con 2 o más mediciones.
+  const series = evolucion.filter((s) => s.puntos.length >= 2);
+  const [elegido, setElegido] = useState(null);
+  if (series.length === 0) return null;
+  const serie = series.find((s) => s.parametro === elegido)
+    ?? series.find((s) => s.parametro === 'GLU')
+    ?? series[0];
+
   return (
     <section className="panel vidrio">
-      <h2>Órdenes en curso</h2>
-      <p style={{ color: 'var(--tinta-suave)' }}>
-        {extras.ordenesEnCurso} {extras.ordenesEnCurso === 1 ? 'orden pendiente' : 'órdenes pendientes'} de resultados o validación.
-      </p>
+      <h2>Evolución de resultados</h2>
+      <Selector etiqueta="Parámetro" value={serie.parametro} vacio={null} onChange={(e) => setElegido(e.target.value)}
+        opciones={series.map((s) => ({ valor: s.parametro, texto: `${s.nombre} (${s.puntos.length} mediciones)` }))} />
+      <GraficaLinea key={serie.parametro} titulo={serie.nombre} unidad={serie.unidad} puntos={serie.puntos}
+        rango={serie.refMin != null || serie.refMax != null ? { min: serie.refMin, max: serie.refMax } : null} />
+      <details style={{ marginTop: 14 }}>
+        <summary style={{ cursor: 'pointer', color: 'var(--tinta-suave)', fontSize: '0.85rem' }}>Ver como tabla</summary>
+        <div className="tabla-envoltura">
+          <table className="tabla">
+            <thead><tr><th>Fecha</th><th className="numero">{serie.nombre}{serie.unidad ? ` (${serie.unidad})` : ''}</th></tr></thead>
+            <tbody>
+              {serie.puntos.map((p, i) => (
+                <tr key={i}>
+                  <td>{fecha(p.fecha)}</td>
+                  <td className="numero">{p.valor}{p.fueraDeRango && <span className="etiqueta etiqueta-peligro" style={{ marginLeft: 6 }}>Fuera de rango</span>}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </details>
     </section>
+  );
+}
+
+function Extras({ extras }) {
+  return (
+    <>
+      {extras.ordenesEnCurso > 0 && (
+        <section className="panel vidrio">
+          <h2>Órdenes en curso</h2>
+          <p style={{ color: 'var(--tinta-suave)' }}>
+            {extras.ordenesEnCurso} {extras.ordenesEnCurso === 1 ? 'orden pendiente' : 'órdenes pendientes'} de resultados o validación.
+          </p>
+        </section>
+      )}
+      <PanelEvolucion evolucion={extras.evolucion} />
+    </>
   );
 }
 
