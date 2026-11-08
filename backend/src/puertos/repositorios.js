@@ -68,6 +68,8 @@ export const PUERTO_LABORATORIO = {
     validarExamen: '(ordenId, codigoExamen, usuario)',
     // → Consulta (orden)
     cambiarEstadoOrden: '(ordenId, estado)',
+    // → { id, nombre, numeroColegiado, especialidad, institucionProcedencia }
+    registrarMedicoReferente: '(medico)',
   },
 };
 

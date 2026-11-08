@@ -3,6 +3,7 @@
 // modelo documental de db/mongo/esquemas.js.
 
 import { aObjectId } from '../conexion.js';
+import { crearRepositorioMedicos } from './medicos.js';
 import { nombreCompleto, ROLES } from './modelo.js';
 import { crearRepositorioOrdenes } from './ordenes.js';
 import { crearRepositorioPacientes } from './pacientes.js';
@@ -38,7 +39,7 @@ export function crearAdaptadorLaboratorioMongo(cliente, nombreDb, zonaHoraria) {
 
     pacientes: crearRepositorioPacientes(cliente, db, zonaHoraria),
     atenciones,
-    laboratorio,
+    laboratorio: { ...laboratorio, ...crearRepositorioMedicos(db) },
 
     catalogos: {
       // En el laboratorio, "médicos" son los médicos referentes: quienes

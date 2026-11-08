@@ -294,6 +294,7 @@ Exclusivas del laboratorio (`:id` es el de la orden):
 | Método | Ruta                                                     | Descripción                                    |
 |--------|----------------------------------------------------------|------------------------------------------------|
 | GET    | `/api/laboratorio/tipos-examen`                          | Catálogo de exámenes con sus parámetros        |
+| POST   | `/api/laboratorio/medicos-referentes`                    | Registrar médico referente `{ nombres, apellidos, numeroColegiado, especialidad?, telefono?, institucionProcedencia? }`. El colegiado es único |
 | POST   | `/api/laboratorio/ordenes/:id/examenes/:codigo/resultados` | `{ resultados: [{ parametro, valor, observacion }] }` |
 | POST   | `/api/laboratorio/ordenes/:id/examenes/:codigo/validacion` | Firma el examen; al validar el último, la orden se completa |
 | PATCH  | `/api/laboratorio/ordenes/:id/estado`                    | `{ estado }`: `en_proceso` o `anulada`         |

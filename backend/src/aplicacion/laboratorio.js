@@ -2,7 +2,7 @@
 // no saben qué motor hay detrás: usan el puerto `laboratorio` del adaptador.
 
 import { NoDisponible, SinPermiso } from '../dominio/errores.js';
-import { validarCambioEstado, validarResultados } from '../dominio/laboratorio.js';
+import { validarCambioEstado, validarMedicoReferente, validarResultados } from '../dominio/laboratorio.js';
 
 function repoLaboratorio(repos) {
   if (!repos.laboratorio) throw new NoDisponible('Operación exclusiva del Laboratorio Clínico');
@@ -33,4 +33,11 @@ export function validarExamen({ usuario, repos }, ordenId, codigoExamen) {
 export function cambiarEstadoOrden({ usuario, repos }, ordenId, datos) {
   exigirRol(usuario, 'medico', 'admin');
   return repoLaboratorio(repos).cambiarEstadoOrden(ordenId, validarCambioEstado(datos));
+}
+
+// Registrar un médico referente nuevo si no está en el catálogo. Lo hace quien
+// recibe la orden: recepción, el químico biólogo o el admin.
+export function registrarMedicoReferente({ usuario, repos }, datos) {
+  exigirRol(usuario, 'recepcion', 'medico', 'admin');
+  return repoLaboratorio(repos).registrarMedicoReferente(validarMedicoReferente(datos));
 }

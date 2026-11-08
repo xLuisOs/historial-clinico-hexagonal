@@ -124,6 +124,9 @@ rutas.post('/facturas/:id/anulacion', async (req, res) => {
 rutas.get('/laboratorio/tipos-examen', async (req, res) => {
   res.json(await laboratorio.listarTiposExamen(req.contexto));
 });
+rutas.post('/laboratorio/medicos-referentes', async (req, res) => {
+  res.status(201).json(await laboratorio.registrarMedicoReferente(req.contexto, req.body));
+});
 rutas.post('/laboratorio/ordenes/:id/examenes/:codigo/resultados', async (req, res) => {
   res.json(await laboratorio.registrarResultados(req.contexto, req.params.id, req.params.codigo, req.body));
 });

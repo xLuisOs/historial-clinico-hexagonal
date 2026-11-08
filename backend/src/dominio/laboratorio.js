@@ -68,3 +68,22 @@ export function validarCambioEstado(datos = {}) {
   v.lanzarSiHayErrores();
   return estado;
 }
+
+/**
+ * Médico referente nuevo (Entrega I, operación 2): quien ordena los exámenes,
+ * aunque no pertenezca al laboratorio. El colegiado es único.
+ */
+export function validarMedicoReferente(datos = {}) {
+  const v = new Validador();
+  const medico = {
+    nombres: v.texto('nombres', datos.nombres, { requerido: true, max: 100 }),
+    apellidos: v.texto('apellidos', datos.apellidos, { requerido: true, max: 100 }),
+    numeroColegiado: v.patron('numeroColegiado', datos.numeroColegiado == null ? null : String(datos.numeroColegiado),
+      /^\d{3,10}$/, 'Solo números (3 a 10 dígitos)', { requerido: true }),
+    especialidad: v.texto('especialidad', datos.especialidad, { max: 80 }),
+    telefono: v.patron('telefono', datos.telefono, /^[0-9+\-\s]{8,20}$/, 'Teléfono inválido'),
+    institucionProcedencia: v.texto('institucionProcedencia', datos.institucionProcedencia, { max: 150 }),
+  };
+  v.lanzarSiHayErrores();
+  return medico;
+}
