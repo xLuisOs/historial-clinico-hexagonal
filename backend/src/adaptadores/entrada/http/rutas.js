@@ -24,6 +24,10 @@ rutas.use(requiereSesion);
 
 rutas.get('/auth/yo', (req, res) => res.json(req.contexto.usuario));
 
+rutas.get('/agenda', async (req, res) => {
+  res.json(await casos.citasDelDia(req.contexto, req.query.fecha));
+});
+
 rutas.get('/pacientes', async (req, res) => {
   res.json(await casos.buscarPacientes(req.contexto, {
     texto: req.query.q,

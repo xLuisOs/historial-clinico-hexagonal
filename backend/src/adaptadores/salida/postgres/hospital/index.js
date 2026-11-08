@@ -30,6 +30,28 @@ export function crearAdaptadorHospitalPostgres(pool) {
       },
     },
 
+    // Puerto opcional: citas del médico en un día.
+    agenda: {
+      async citasDelMedico(medicoId, fecha) {
+        const { rows } = await pool.query(
+          `SELECT c.id_cita, c.fecha_hora, c.estado, c.motivo,
+                  p.id_paciente, p.nombres || ' ' || p.apellidos AS paciente
+           FROM cita c JOIN paciente p ON p.id_paciente = c.paciente_fk
+           WHERE c.medico_fk = $1 AND c.fecha_hora >= $2::date AND c.fecha_hora < $2::date + 1
+           ORDER BY c.fecha_hora`,
+          [medicoId, fecha],
+        );
+        return rows.map((c) => ({
+          id: String(c.id_cita),
+          fechaHora: c.fecha_hora,
+          duracionMin: null,
+          estado: c.estado,
+          motivo: c.motivo,
+          paciente: { id: String(c.id_paciente), nombre: c.paciente },
+        }));
+      },
+    },
+
     pacientes: crearRepositorioPacientes(pool),
     atenciones: crearRepositorioAtenciones(pool),
 

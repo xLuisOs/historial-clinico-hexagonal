@@ -7,7 +7,8 @@
 // contenedor a partir del token). Por eso aquí no aparece ningún motor.
 // =====================================================================
 
-import { SinPermiso } from '../dominio/errores.js';
+import { NoDisponible, SinPermiso } from '../dominio/errores.js';
+import { Validador } from '../dominio/validacion.js';
 import { validarNuevoPaciente, validarContacto, validarBaja } from '../dominio/paciente.js';
 import { validarNuevaConsulta, validarDiagnostico, validarReceta } from '../dominio/atencion.js';
 
@@ -77,4 +78,19 @@ export function listarMedicos({ repos }) {
 
 export function listarMedicamentos({ repos }) {
   return repos.catalogos.listarMedicamentos();
+}
+
+// ---------------------------------------------------------------- agenda
+
+const hoyEnGuatemala = () => new Date(Date.now() - 6 * 3_600_000).toISOString().slice(0, 10);
+
+// Citas del médico que inició sesión en un día (hoy si no se indica).
+// Puerto opcional `agenda`: el laboratorio trabaja con órdenes, no con citas.
+export function citasDelDia({ usuario, repos }, fecha) {
+  exigirRol(usuario, 'medico');
+  if (!repos.agenda) throw new NoDisponible('Esta institución no maneja agenda de citas');
+  const v = new Validador();
+  const dia = v.fecha('fecha', fecha) ?? hoyEnGuatemala();
+  v.lanzarSiHayErrores();
+  return repos.agenda.citasDelMedico(usuario.medicoId, dia);
 }

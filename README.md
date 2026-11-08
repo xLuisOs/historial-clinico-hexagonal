@@ -130,6 +130,7 @@ ocultan los botones que no le corresponden (el backend igual lo verifica):
 | Registrar paciente                  | ✅     | ✅        | ✅    |
 | Actualizar contacto                 |        | ✅        | ✅    |
 | Consulta, diagnóstico y receta      | ✅     |           |       |
+| Mis citas de hoy (agenda)           | ✅     |           |       |
 | Archivar historial                  |        |           | ✅    |
 
 ### Recrear las bases desde cero
@@ -221,4 +222,5 @@ Todas las rutas (salvo login) requieren `Authorization: Bearer <token>`.
 | POST   | `/api/consultas/:id/recetas`       | Recetar medicamento(s)                               |
 | GET    | `/api/catalogos/medicos`           | Catálogo de médicos                                  |
 | GET    | `/api/catalogos/medicamentos`      | Catálogo de medicamentos                             |
+| GET    | `/api/agenda?fecha=AAAA-MM-DD`     | Citas del médico conectado ese día (hoy por defecto) |
 | GET    | `/api/odontologica/procedimientos` | Catálogo de procedimientos (solo odontológica)       |
