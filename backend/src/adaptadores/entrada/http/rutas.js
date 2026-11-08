@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import * as casos from '../../../aplicacion/casos-uso.js';
+import * as odontologica from '../../../aplicacion/odontologica.js';
 import { iniciarSesion } from '../../../aplicacion/autenticacion.js';
 import { INSTITUCIONES } from '../../../config/instituciones.js';
 import { repositoriosDe } from '../../../contenedor.js';
@@ -60,4 +61,9 @@ rutas.get('/catalogos/medicos', async (req, res) => {
 });
 rutas.get('/catalogos/medicamentos', async (req, res) => {
   res.json(await casos.listarMedicamentos(req.contexto));
+});
+
+// ---------------------------------------- exclusivas de la clínica odontológica
+rutas.get('/odontologica/procedimientos', async (req, res) => {
+  res.json(await odontologica.listarProcedimientos(req.contexto));
 });

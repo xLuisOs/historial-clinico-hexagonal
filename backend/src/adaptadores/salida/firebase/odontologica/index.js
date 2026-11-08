@@ -35,6 +35,16 @@ export function crearAdaptadorOdontologicaFirebase(db, zonaHoraria) {
     pacientes: crearRepositorioPacientes(db, zonaHoraria),
     atenciones: crearRepositorioAtenciones(db, zonaHoraria),
 
+    // Puerto propio de la clínica (fuera del contrato común).
+    odontologica: {
+      async listarProcedimientos() {
+        const snap = await col('procedimientos').where('activo', '==', true).get();
+        return snap.docs
+          .map((d) => ({ id: d.id, nombre: d.get('nombre'), descripcion: d.get('descripcion') ?? null, costo: Number(d.get('costo') ?? 0) }))
+          .sort((a, b) => (a.nombre ?? '').localeCompare(b.nombre ?? '', 'es'));
+      },
+    },
+
     catalogos: {
       async listarMedicos() {
         const snap = await col('odontologos').where('activo', '==', true).get();
