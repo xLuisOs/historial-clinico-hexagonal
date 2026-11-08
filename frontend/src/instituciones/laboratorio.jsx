@@ -172,6 +172,57 @@ function Examen({ examen, editable, onResultados, onValidar }) {
   );
 }
 
+/** Agregar exámenes a una orden abierta: solo se ofrecen los que todavía no tiene. */
+function DialogoAgregarExamenes({ ordenId, incluidos, onCerrar, onListo }) {
+  const [tipos, setTipos] = useState(null);
+  const [elegidos, setElegidos] = useState([]);
+  const [error, setError] = useState(null);
+  const [enviando, setEnviando] = useState(false);
+
+  useEffect(() => { api.tiposExamen().then(setTipos).catch(setError); }, []);
+  const disponibles = (tipos ?? []).filter((t) => !incluidos.includes(t.id));
+  const alternar = (id) => setElegidos(elegidos.includes(id) ? elegidos.filter((x) => x !== id) : [...elegidos, id]);
+
+  async function enviar(e) {
+    e.preventDefault();
+    setEnviando(true);
+    setError(null);
+    try {
+      await api.agregarExamenes(ordenId, { examenes: elegidos });
+      onListo();
+    } catch (err) {
+      setError(err);
+      setEnviando(false);
+    }
+  }
+
+  return (
+    <Dialogo titulo="Agregar exámenes" onCerrar={onCerrar}>
+      <form className="formulario" onSubmit={enviar} noValidate>
+        <p style={{ color: 'var(--tinta-suave)' }}>Cada examen se agrega con la definición vigente del catálogo (parámetros y rangos).</p>
+        <Alerta>{error?.detalles?.examenes ?? error?.message}</Alerta>
+        {tipos && disponibles.length === 0 && <p className="vacio">La orden ya incluye todos los exámenes del catálogo.</p>}
+        {disponibles.map((t) => (
+          <label key={t.id} className="check" style={{ display: 'flex' }}>
+            <input type="checkbox" checked={elegidos.includes(t.id)} onChange={() => alternar(t.id)} />
+            <span>
+              {t.nombre} <small style={{ color: 'var(--tinta-tenue)' }}>· {t.categoria}</small>
+              <br />
+              <small style={{ color: 'var(--tinta-suave)' }}>{t.muestra} · {t.parametros.length} {t.parametros.length === 1 ? 'parámetro' : 'parámetros'}</small>
+            </span>
+          </label>
+        ))}
+        <footer>
+          <button type="button" className="boton boton-secundario" onClick={onCerrar}>Volver</button>
+          <button className="boton boton-primario" disabled={enviando || elegidos.length === 0}>
+            {enviando ? 'Guardando…' : `Agregar${elegidos.length ? ` (${elegidos.length})` : ''}`}
+          </button>
+        </footer>
+      </form>
+    </Dialogo>
+  );
+}
+
 /** Confirmación para acciones que no se deshacen (validar, anular). */
 function DialogoConfirmar({ titulo, mensaje, texto, peligro, accion, onCerrar, onListo }) {
   const [error, setError] = useState(null);
@@ -213,11 +264,12 @@ const ACCIONES_ORDEN = {
 function DetalleConsulta({ datos, consulta, usuario, recargar }) {
   const [capturando, setCapturando] = useState(null);
   const [confirmando, setConfirmando] = useState(null);
+  const [agregando, setAgregando] = useState(false);
   if (!datos.numero) return null;
   const abierta = ['pendiente', 'en_proceso'].includes(datos.estado);
   const editable = abierta && puede(usuario, 'atender');
   const acciones = puede(usuario, 'gestionarOrden') ? (ACCIONES_ORDEN[datos.estado] ?? []) : [];
-  const listo = () => { setCapturando(null); setConfirmando(null); recargar(); };
+  const listo = () => { setCapturando(null); setConfirmando(null); setAgregando(false); recargar(); };
 
   const validar = (e) => setConfirmando({
     titulo: `Validar ${e.nombre}`,
@@ -245,8 +297,11 @@ function DetalleConsulta({ datos, consulta, usuario, recargar }) {
           <span className="codigo">{datos.numero}</span>
           <Estado mapa={ESTADO_ORDEN} valor={datos.estado} />
         </h4>
-        {acciones.length > 0 && (
+        {(acciones.length > 0 || editable) && (
           <span className="acciones">
+            {editable && (
+              <button type="button" className="boton boton-secundario boton-chico" onClick={() => setAgregando(true)}>+ Exámenes</button>
+            )}
             {acciones.includes('en_proceso') && (
               <button type="button" className="boton boton-secundario boton-chico" onClick={() => cambiarEstado('en_proceso')}>Iniciar proceso</button>
             )}
@@ -268,6 +323,10 @@ function DetalleConsulta({ datos, consulta, usuario, recargar }) {
         <DialogoResultados ordenId={consulta.id} examen={capturando} onCerrar={() => setCapturando(null)} onListo={listo} />
       )}
       {confirmando && <DialogoConfirmar {...confirmando} onCerrar={() => setConfirmando(null)} onListo={listo} />}
+      {agregando && (
+        <DialogoAgregarExamenes ordenId={consulta.id} incluidos={datos.examenes.map((e) => e.tipoExamenId)}
+          onCerrar={() => setAgregando(false)} onListo={listo} />
+      )}
     </div>
   );
 }

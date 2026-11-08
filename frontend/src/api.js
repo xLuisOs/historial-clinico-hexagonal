@@ -101,6 +101,7 @@ export const api = {
   registrarResultados: (ordenId, codigo, datos) => pedir('POST', `/laboratorio/ordenes/${q(ordenId)}/examenes/${q(codigo)}/resultados`, datos),
   validarExamen: (ordenId, codigo) => pedir('POST', `/laboratorio/ordenes/${q(ordenId)}/examenes/${q(codigo)}/validacion`),
   cambiarEstadoOrden: (ordenId, estado) => pedir('PATCH', `/laboratorio/ordenes/${q(ordenId)}/estado`, { estado }),
+  agregarExamenes: (ordenId, datos) => pedir('POST', `/laboratorio/ordenes/${q(ordenId)}/examenes`, datos),
   registrarMedicoReferente: (datos) => pedir('POST', '/laboratorio/medicos-referentes', datos),
 
   serviciosPediatrico: () => pedir('GET', '/pediatrico/servicios'),
