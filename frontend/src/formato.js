@@ -46,6 +46,9 @@ export const PARENTESCOS = [
   'madre', 'padre', 'abuela', 'abuelo', 'tia', 'tio', 'hermana', 'hermano',
   'conyuge', 'hija', 'hijo', 'tutor_legal', 'otro',
 ];
+// El responsable de un menor (pediátrico) no puede ser cónyuge ni hijo: lo valida también el backend.
+export const PARENTESCOS_DE_MENOR = PARENTESCOS.filter((p) => !['conyuge', 'hija', 'hijo'].includes(p));
+export const parentescosPara = (institucion) => (institucion === 'pediatrico' ? PARENTESCOS_DE_MENOR : PARENTESCOS);
 export const etiqueta = (valor) => (valor ?? '').replace('_', ' ').replace(/^\w/, (c) => c.toUpperCase());
 
 export const TIPOS_SANGRE = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];

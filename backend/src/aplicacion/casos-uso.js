@@ -23,7 +23,7 @@ export function exigirRol(usuario, ...roles) {
 
 export function registrarPaciente({ usuario, repos }, datos) {
   exigirRol(usuario, 'recepcion', 'medico', 'admin');
-  return repos.pacientes.registrar(validarNuevoPaciente(datos));
+  return repos.pacientes.registrar(validarNuevoPaciente(datos, usuario.institucion));
 }
 
 export function buscarPacientes({ repos }, { texto = '', incluirArchivados = false } = {}) {

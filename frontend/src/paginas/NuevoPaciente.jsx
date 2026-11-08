@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 import { IconoAtras } from '../componentes/Iconos.jsx';
 import { Alerta, Campo, erroresDe, Selector } from '../componentes/ui.jsx';
-import { etiqueta, PARENTESCOS, SEXO, TIPOS_SANGRE } from '../formato.js';
+import { etiqueta, parentescosPara, SEXO, TIPOS_SANGRE } from '../formato.js';
 import { useSesion } from '../sesion.jsx';
 
 // Si cada institución pide, permite o no registra un responsable del paciente.
@@ -121,7 +121,7 @@ export function NuevoPaciente() {
                 <Campo etiqueta="Nombres *" value={responsable.nombres} onChange={cambiarResp('nombres')} error={errores['responsable.nombres']} />
                 <Campo etiqueta="Apellidos *" value={responsable.apellidos} onChange={cambiarResp('apellidos')} error={errores['responsable.apellidos']} />
                 <Selector etiqueta="Parentesco *" value={responsable.parentesco} onChange={cambiarResp('parentesco')}
-                  error={errores['responsable.parentesco']} opciones={PARENTESCOS.map((p) => ({ valor: p, texto: etiqueta(p) }))} />
+                  error={errores['responsable.parentesco']} opciones={parentescosPara(usuario.institucion).map((p) => ({ valor: p, texto: etiqueta(p) }))} />
                 <Campo etiqueta="DPI *" inputMode="numeric" maxLength={13} value={responsable.documento}
                   onChange={cambiarResp('documento')} error={errores['responsable.documento']} />
                 <Campo etiqueta="Teléfono *" type="tel" value={responsable.telefono} onChange={cambiarResp('telefono')} error={errores['responsable.telefono']} />

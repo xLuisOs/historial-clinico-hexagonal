@@ -20,6 +20,16 @@ export const PARENTESCOS = [
   'conyuge', 'hija', 'hijo', 'tutor_legal', 'otro',
 ];
 
+// Quién puede ser responsable de un MENOR (el paciente del pediátrico es un
+// niño): un cónyuge o un hijo no aplican. Coincide con el CHECK
+// chk_encargado_parentesco de db/mysql/01_esquema.sql.
+export const PARENTESCOS_DE_MENOR = PARENTESCOS.filter((p) => !['conyuge', 'hija', 'hijo'].includes(p));
+
+// Reglas del responsable que dependen de la institución (nunca del motor).
+const RESPONSABLE_POR_INSTITUCION = {
+  pediatrico: { obligatorio: true, parentescos: PARENTESCOS_DE_MENOR },
+};
+
 const CUI = /^\d{13}$/;
 const TELEFONO = /^[0-9+\-\s]{8,20}$/;
 const CORREO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -34,8 +44,9 @@ function validarContactoEn(v, prefijo, datos = {}, { telefonoRequerido = false }
   };
 }
 
-export function validarNuevoPaciente(datos = {}) {
+export function validarNuevoPaciente(datos = {}, institucion = null) {
   const v = new Validador();
+  const regla = RESPONSABLE_POR_INSTITUCION[institucion] ?? { obligatorio: false, parentescos: PARENTESCOS };
   const paciente = {
     nombres: v.texto('nombres', datos.nombres, { requerido: true, max: 100 }),
     apellidos: v.texto('apellidos', datos.apellidos, { requerido: true, max: 100 }),
@@ -57,10 +68,12 @@ export function validarNuevoPaciente(datos = {}) {
     paciente.responsable = {
       nombres: v.texto('responsable.nombres', r.nombres, { requerido: true, max: 100 }),
       apellidos: v.texto('responsable.apellidos', r.apellidos, { requerido: true, max: 100 }),
-      parentesco: v.opcion('responsable.parentesco', r.parentesco, PARENTESCOS, { requerido: true }),
+      parentesco: v.opcion('responsable.parentesco', r.parentesco, regla.parentescos, { requerido: true }),
       documento: v.patron('responsable.documento', r.documento, CUI, 'DPI de 13 dígitos', { requerido: true }),
       ...validarContactoEn(v, 'responsable', r, { telefonoRequerido: true }),
     };
+  } else if (regla.obligatorio) {
+    v.error('responsable', 'El paciente necesita un responsable');
   }
 
   v.lanzarSiHayErrores();
