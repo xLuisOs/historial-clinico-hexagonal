@@ -80,4 +80,11 @@ export const api = {
   medicos: () => pedir('GET', '/catalogos/medicos'),
   medicamentos: () => pedir('GET', '/catalogos/medicamentos'),
   procedimientosOdontologicos: () => pedir('GET', '/odontologica/procedimientos'),
+  registrarPago: (consultaId, datos) => pedir('POST', `/consultas/${q(consultaId)}/pagos`, datos),
+
+  habitacionesDisponibles: () => pedir('GET', '/hospital/habitaciones'),
+  internar: (pacienteId, datos) => pedir('POST', `/pacientes/${q(pacienteId)}/internamientos`, datos),
+  cambiarMedicoACargo: (id, datos) => pedir('POST', `/internamientos/${q(id)}/cambio-medico`, datos),
+  tratamientoInternamiento: (id, datos) => pedir('POST', `/internamientos/${q(id)}/tratamientos`, datos),
+  darDeAlta: (id, datos) => pedir('POST', `/internamientos/${q(id)}/alta`, datos),
 };

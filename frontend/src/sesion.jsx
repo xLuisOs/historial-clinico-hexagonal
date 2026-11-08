@@ -39,6 +39,8 @@ export const PERMISOS = {
   darDeBaja: ['admin'],
   agendar: ['recepcion', 'admin'],
   atender: ['medico'],
+  internar: ['medico'],
+  cobrar: ['recepcion', 'admin'],
 };
 
 export const puede = (usuario, accion) => PERMISOS[accion]?.includes(usuario?.rol) ?? false;

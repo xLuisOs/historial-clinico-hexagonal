@@ -2,8 +2,9 @@
 // historial muestra además internamientos y facturas.
 
 import { Campo } from '../componentes/ui.jsx';
-import { dinero, fecha, fechaHora } from '../formato.js';
+import { dinero, fecha } from '../formato.js';
 import { Quitar } from './comun.jsx';
+import { PanelInternamientos } from './internamientos.jsx';
 
 const TRATAMIENTO = { descripcion: '', fechaInicio: '', fechaFin: '', indicaciones: '' };
 
@@ -67,49 +68,11 @@ function DetalleConsulta({ datos }) {
   );
 }
 
-function Extras({ extras }) {
+function Extras({ extras, paciente, usuario, recargar }) {
   return (
     <>
 
-      {extras.internamientos?.length > 0 && (
-        <section className="panel vidrio">
-          <h2>Internamientos</h2>
-          <div className="linea-tiempo">
-            {extras.internamientos.map((i) => (
-              <article className="consulta" key={i.id}>
-                <div className="consulta-cabecera">
-                  <div>
-                    <h3>Habitación {i.habitacion}</h3>
-                    <small>{fechaHora(i.fechaIngreso)}{i.fechaAlta ? ` → ${fechaHora(i.fechaAlta)}` : ''}</small>
-                  </div>
-                  <span className={`etiqueta ${i.estado === 'activo' ? 'etiqueta-aviso' : 'etiqueta-gris'}`}>
-                    {i.estado === 'activo' ? 'Internado' : 'Alta'}
-                  </span>
-                </div>
-                <p>{i.motivoIngreso}{i.diagnosticoIngreso ? ` · ${i.diagnosticoIngreso}` : ''}</p>
-                <div className="bloque">
-                  <h4>Médicos a cargo</h4>
-                  <ul className="items">
-                    {i.medicosACargo.map((m, n) => (
-                      <li key={n}><strong>{m.medico}</strong><small>desde {fechaHora(m.fechaInicio)}{m.motivoCambio ? ` · ${m.motivoCambio}` : ''}</small></li>
-                    ))}
-                  </ul>
-                </div>
-                {i.tratamientos.length > 0 && (
-                  <div className="bloque">
-                    <h4>Tratamientos</h4>
-                    <ul className="items">
-                      {i.tratamientos.map((t, n) => (
-                        <li key={n}><strong>{t.descripcion}</strong>{t.indicaciones && <small>· {t.indicaciones}</small>}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </article>
-            ))}
-          </div>
-        </section>
-      )}
+      <PanelInternamientos internamientos={extras.internamientos} paciente={paciente} usuario={usuario} recargar={recargar} />
 
       {extras.facturas?.length > 0 && (
         <section className="panel vidrio">

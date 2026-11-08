@@ -3,8 +3,9 @@
 
 import { useEffect, useState } from 'react';
 import { api } from '../api.js';
-import { Campo, Selector } from '../componentes/ui.jsx';
+import { Alerta, Campo, Dialogo, erroresDe, Selector } from '../componentes/ui.jsx';
 import { dinero, fecha } from '../formato.js';
+import { puede } from '../sesion.jsx';
 import { Quitar } from './comun.jsx';
 
 const PROCEDIMIENTO = { procedimientoId: '', piezaDental: '', observaciones: '' };
@@ -50,8 +51,54 @@ function CamposConsulta({ valor, onChange, errores }) {
 
 const ESTADO_PAGO = { pagado: 'etiqueta-exito', parcial: 'etiqueta-aviso', pendiente: 'etiqueta-peligro' };
 
-function DetalleConsulta({ datos }) {
+const METODOS = { efectivo: 'Efectivo', tarjeta: 'Tarjeta', transferencia: 'Transferencia' };
+
+function DialogoPago({ consulta, saldo, onCerrar, onListo }) {
+  const [monto, setMonto] = useState(String(saldo));
+  const [metodoPago, setMetodoPago] = useState('efectivo');
+  const [error, setError] = useState(null);
+  const [enviando, setEnviando] = useState(false);
+  const errores = erroresDe(error);
+
+  async function enviar(e) {
+    e.preventDefault();
+    setEnviando(true);
+    setError(null);
+    try {
+      await api.registrarPago(consulta.id, { monto: monto === '' ? null : Number(monto), metodoPago });
+      onListo();
+    } catch (err) {
+      setError(err);
+      setEnviando(false);
+    }
+  }
+
+  return (
+    <Dialogo titulo="Registrar pago" onCerrar={onCerrar}>
+      <form className="formulario" onSubmit={enviar} noValidate>
+        <p style={{ color: 'var(--tinta-suave)' }}>Total {dinero(consulta.datosEspecificos.total)} · saldo pendiente <strong>{dinero(saldo)}</strong></p>
+        <Alerta>{error?.message}</Alerta>
+        <div className="rejilla">
+          <Campo etiqueta="Monto (Q) *" type="number" min="0.01" step="0.01" value={monto} onChange={(e) => setMonto(e.target.value)} error={errores.monto} />
+          <Selector etiqueta="Método *" value={metodoPago} onChange={(e) => setMetodoPago(e.target.value)} vacio={null} error={errores.metodoPago}
+            opciones={Object.entries(METODOS).map(([valor, texto]) => ({ valor, texto }))} />
+        </div>
+        <footer>
+          <button type="button" className="boton boton-secundario" onClick={onCerrar}>Volver</button>
+          <button className="boton boton-primario" disabled={enviando}>{enviando ? 'Guardando…' : 'Registrar pago'}</button>
+        </footer>
+      </form>
+    </Dialogo>
+  );
+}
+
+function DetalleConsulta({ datos, consulta, usuario, recargar }) {
+  const [cobrando, setCobrando] = useState(false);
   if (!datos.procedimientos?.length) return null;
+  const pagado = (datos.pagos ?? []).reduce((s, p) => s + Number(p.monto ?? 0), 0);
+  const saldo = Math.round((Number(datos.total ?? 0) - pagado) * 100) / 100;
+  const puedeCobrar = saldo > 0 && puede(usuario, 'cobrar');
+
   return (
     <div className="bloque">
       <h4>Procedimientos</h4>
@@ -64,10 +111,30 @@ function DetalleConsulta({ datos }) {
           </li>
         ))}
       </ul>
+      {datos.pagos?.length > 0 && (
+        <>
+          <h4>Pagos</h4>
+          <ul className="items">
+            {datos.pagos.map((p, n) => (
+              <li key={n}>
+                <strong>{dinero(p.monto)}</strong>
+                <small>{fecha(p.fecha)} · {METODOS[p.metodoPago] ?? p.metodoPago}{p.registradoPor?.nombre ? ` · ${p.registradoPor.nombre}` : ''}</small>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
       <div className="acciones" style={{ alignItems: 'center' }}>
-        <small>Total {dinero(datos.total)}</small>
+        <small>Total {dinero(datos.total)}{saldo > 0 ? ` · saldo ${dinero(saldo)}` : ''}</small>
         {datos.estadoPago && <span className={`etiqueta ${ESTADO_PAGO[datos.estadoPago] ?? ''}`}>{datos.estadoPago}</span>}
+        {puedeCobrar && (
+          <button type="button" className="boton boton-primario boton-chico" onClick={() => setCobrando(true)}>Registrar pago</button>
+        )}
       </div>
+      {cobrando && (
+        <DialogoPago consulta={consulta} saldo={saldo} onCerrar={() => setCobrando(false)}
+          onListo={() => { setCobrando(false); recargar(); }} />
+      )}
     </div>
   );
 }

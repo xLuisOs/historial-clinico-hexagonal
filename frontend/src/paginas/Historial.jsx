@@ -13,7 +13,7 @@ const Dato = ({ titulo, children }) => (
   <div className="dato"><small>{titulo}</small><span>{children || '—'}</span></div>
 );
 
-function Consulta({ consulta, vista, puedeAtender, onDiagnostico, onReceta }) {
+function Consulta({ consulta, vista, usuario, recargar, puedeAtender, onDiagnostico, onReceta }) {
   const { DetalleConsulta } = vista;
   return (
     <article className="consulta">
@@ -45,7 +45,7 @@ function Consulta({ consulta, vista, puedeAtender, onDiagnostico, onReceta }) {
         </ul>
       </div>
 
-      <DetalleConsulta datos={consulta.datosEspecificos ?? {}} />
+      <DetalleConsulta datos={consulta.datosEspecificos ?? {}} consulta={consulta} usuario={usuario} recargar={recargar} />
 
       {consulta.receta && (
         <div className="bloque">
@@ -171,7 +171,7 @@ export function Historial() {
             : (
               <div className="linea-tiempo">
                 {consultas.map((c) => (
-                  <Consulta key={c.id} consulta={c} vista={vista} puedeAtender={puedeAtender}
+                  <Consulta key={c.id} consulta={c} vista={vista} usuario={usuario} recargar={cargar} puedeAtender={puedeAtender}
                     onDiagnostico={() => setDialogo({ tipo: 'diagnostico', consulta: c })}
                     onReceta={() => setDialogo({ tipo: 'receta', consulta: c })} />
                 ))}
@@ -185,7 +185,7 @@ export function Historial() {
               onReprogramar={(cita) => setDialogo({ tipo: 'reprogramar', cita })}
               onCancelar={(cita) => setDialogo({ tipo: 'cancelarCita', cita })} />
           )}
-          <Extras extras={extras ?? {}} />
+          <Extras extras={extras ?? {}} paciente={paciente} usuario={usuario} recargar={cargar} />
         </div>
       </div>
 

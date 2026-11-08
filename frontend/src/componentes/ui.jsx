@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { IconoCerrar } from './Iconos.jsx';
 
 /** Campo de formulario con su etiqueta y el error que mande el backend. */
@@ -30,7 +31,11 @@ export function Alerta({ tipo = 'error', children }) {
   return <div className={`alerta alerta-${tipo}`} role={tipo === 'error' ? 'alert' : 'status'}>{children}</div>;
 }
 
-/** Ventana encima de la página. Se cierra con Esc o tocando el fondo. */
+/**
+ * Ventana encima de la página. Se cierra con Esc o tocando el fondo.
+ * Se dibuja directamente en <body>: dentro de un panel de vidrio
+ * (backdrop-filter) un elemento fijo quedaría encerrado en ese panel.
+ */
 export function Dialogo({ titulo, onCerrar, children }) {
   useEffect(() => {
     const alPresionar = (e) => e.key === 'Escape' && onCerrar();
@@ -38,7 +43,7 @@ export function Dialogo({ titulo, onCerrar, children }) {
     return () => window.removeEventListener('keydown', alPresionar);
   }, [onCerrar]);
 
-  return (
+  return createPortal(
     <div className="fondo-dialogo" onMouseDown={(e) => e.target === e.currentTarget && onCerrar()}>
       <section className="dialogo vidrio" role="dialog" aria-modal="true" aria-label={titulo}>
         <header>
@@ -49,7 +54,8 @@ export function Dialogo({ titulo, onCerrar, children }) {
         </header>
         {children}
       </section>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
