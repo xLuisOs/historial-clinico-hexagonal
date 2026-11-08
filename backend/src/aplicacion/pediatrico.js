@@ -1,7 +1,7 @@
 // Casos de uso exclusivos del Centro Médico Pediátrico (sea cual sea su motor).
 
 import { NoDisponible } from '../dominio/errores.js';
-import { validarCobro, validarVacunaAplicada } from '../dominio/pediatrico.js';
+import { validarCobro, validarPagoCobro, validarVacunaAplicada } from '../dominio/pediatrico.js';
 import { exigirRol } from './casos-uso.js';
 
 function pediatricoDe(repos) {
@@ -25,4 +25,10 @@ export function listarServicios({ repos }) {
 export function generarCobro({ usuario, repos }, consultaId, datos) {
   exigirRol(usuario, 'recepcion', 'admin');
   return pediatricoDe(repos).generarCobro(consultaId, validarCobro(datos));
+}
+
+// Abonos contra un cobro (recepción o admin). No se paga más que el saldo.
+export function registrarPago({ usuario, repos }, cobroId, datos) {
+  exigirRol(usuario, 'recepcion', 'admin');
+  return pediatricoDe(repos).registrarPago(cobroId, validarPagoCobro(datos));
 }

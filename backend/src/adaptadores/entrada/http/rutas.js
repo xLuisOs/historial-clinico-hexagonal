@@ -144,3 +144,6 @@ rutas.get('/pediatrico/servicios', async (req, res) => {
 rutas.post('/consultas/:id/cobro', async (req, res) => {
   res.status(201).json(await pediatrico.generarCobro(req.contexto, req.params.id, req.body));
 });
+rutas.post('/cobros/:id/pagos', async (req, res) => {
+  res.status(201).json(await pediatrico.registrarPago(req.contexto, req.params.id, req.body));
+});

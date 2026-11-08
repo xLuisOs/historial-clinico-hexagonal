@@ -1,3 +1,4 @@
+import { METODOS_PAGO, validarPago } from './pago.js';
 import { Validador } from './validacion.js';
 
 // Reglas propias del Centro Médico Pediátrico que no dependen del motor.
@@ -45,3 +46,18 @@ export function validarCobro(datos = {}) {
   v.lanzarSiHayErrores();
   return cobro;
 }
+
+/**
+ * Pago contra un cobro = { monto, metodoPago, referencia }
+ * Mismos métodos que el catálogo metodo_pago (efectivo, tarjeta, transferencia).
+ * La referencia (voucher o número de transferencia) es opcional.
+ */
+export function validarPagoCobro(datos = {}) {
+  const pago = validarPago(datos);
+  const v = new Validador();
+  const referencia = v.texto('referencia', datos.referencia, { max: 40 });
+  v.lanzarSiHayErrores();
+  return { ...pago, referencia };
+}
+
+export { METODOS_PAGO };
