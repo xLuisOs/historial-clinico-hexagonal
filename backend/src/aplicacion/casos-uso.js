@@ -13,7 +13,7 @@ import { validarNuevoPaciente, validarContacto, validarBaja } from '../dominio/p
 import { validarNuevaConsulta, validarDiagnostico, validarReceta } from '../dominio/atencion.js';
 import { validarNuevaCita, validarReprogramacion } from '../dominio/cita.js';
 
-function exigirRol(usuario, ...roles) {
+export function exigirRol(usuario, ...roles) {
   if (!roles.includes(usuario.rol)) {
     throw new SinPermiso(`Esta acción requiere rol: ${roles.join(' o ')}`);
   }

@@ -4,6 +4,7 @@
 
 import { crearRepositorioAgenda } from './agenda.js';
 import { crearRepositorioAtenciones } from './atenciones.js';
+import { crearRepositorioInternamientos } from './internamientos.js';
 import { crearRepositorioPacientes } from './pacientes.js';
 
 export function crearAdaptadorHospitalPostgres(pool) {
@@ -33,6 +34,8 @@ export function crearAdaptadorHospitalPostgres(pool) {
 
     // Puerto opcional (fuera del contrato común): citas.
     agenda: crearRepositorioAgenda(pool),
+    // Puerto propio del hospital (fuera del contrato común).
+    internamientos: crearRepositorioInternamientos(pool),
 
     pacientes: crearRepositorioPacientes(pool),
     atenciones: crearRepositorioAtenciones(pool),

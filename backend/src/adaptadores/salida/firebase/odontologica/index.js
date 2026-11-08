@@ -5,6 +5,7 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { crearRepositorioAgenda } from './agenda.js';
 import { crearRepositorioAtenciones } from './atenciones.js';
 import { COLECCIONES, nombreCompleto, ROLES } from './modelo.js';
+import { registrarPago } from './pagos.js';
 import { crearRepositorioPacientes } from './pacientes.js';
 
 const ordenarPorApellido = (a, b) => (a.get('apellidos') ?? '').localeCompare(b.get('apellidos') ?? '', 'es');
@@ -47,6 +48,7 @@ export function crearAdaptadorOdontologicaFirebase(db, zonaHoraria) {
           .map((d) => ({ id: d.id, nombre: d.get('nombre'), descripcion: d.get('descripcion') ?? null, costo: Number(d.get('costo') ?? 0) }))
           .sort((a, b) => (a.nombre ?? '').localeCompare(b.nombre ?? '', 'es'));
       },
+      registrarPago: (consultaId, pago, usuario) => registrarPago(db, consultaId, pago, usuario),
     },
 
     catalogos: {

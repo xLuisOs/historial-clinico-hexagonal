@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import * as casos from '../../../aplicacion/casos-uso.js';
+import * as hospital from '../../../aplicacion/hospital.js';
 import * as odontologica from '../../../aplicacion/odontologica.js';
 import { iniciarSesion } from '../../../aplicacion/autenticacion.js';
 import { INSTITUCIONES } from '../../../config/instituciones.js';
@@ -82,4 +83,24 @@ rutas.get('/catalogos/medicamentos', async (req, res) => {
 // ---------------------------------------- exclusivas de la clínica odontológica
 rutas.get('/odontologica/procedimientos', async (req, res) => {
   res.json(await odontologica.listarProcedimientos(req.contexto));
+});
+rutas.post('/consultas/:id/pagos', async (req, res) => {
+  res.status(201).json(await odontologica.registrarPago(req.contexto, req.params.id, req.body));
+});
+
+// ------------------------------------------------ exclusivas del hospital general
+rutas.get('/hospital/habitaciones', async (req, res) => {
+  res.json(await hospital.habitacionesDisponibles(req.contexto));
+});
+rutas.post('/pacientes/:id/internamientos', async (req, res) => {
+  res.status(201).json(await hospital.internar(req.contexto, req.params.id, req.body));
+});
+rutas.post('/internamientos/:id/cambio-medico', async (req, res) => {
+  res.json(await hospital.cambiarMedicoACargo(req.contexto, req.params.id, req.body));
+});
+rutas.post('/internamientos/:id/tratamientos', async (req, res) => {
+  res.status(201).json(await hospital.agregarTratamientoInternamiento(req.contexto, req.params.id, req.body));
+});
+rutas.post('/internamientos/:id/alta', async (req, res) => {
+  res.json(await hospital.darDeAlta(req.contexto, req.params.id, req.body));
 });

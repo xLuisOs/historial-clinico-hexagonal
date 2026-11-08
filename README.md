@@ -132,6 +132,8 @@ ocultan los botones que no le corresponden (el backend igual lo verifica):
 | Consulta, diagnóstico y receta      | ✅     |           |       |
 | Mis citas de hoy (agenda)           | ✅     |           |       |
 | Agendar, reprogramar y cancelar citas |      | ✅        | ✅    |
+| Internar, cambiar médico, dar de alta (hospital) | ✅ |      |       |
+| Registrar pagos (odontológica)      |        | ✅        | ✅    |
 | Archivar historial                  |        |           | ✅    |
 
 ### Recrear las bases desde cero
@@ -229,3 +231,9 @@ Todas las rutas (salvo login) requieren `Authorization: Bearer <token>`.
 | PATCH  | `/api/citas/:id`                   | Reprogramar `{ fechaHora, duracionMin? }`            |
 | POST   | `/api/citas/:id/cancelacion`       | Cancelar la cita                                     |
 | GET    | `/api/odontologica/procedimientos` | Catálogo de procedimientos (solo odontológica)       |
+| POST   | `/api/consultas/:id/pagos`         | Registrar pago `{ monto, metodoPago }` (odontológica) |
+| GET    | `/api/hospital/habitaciones`       | Habitaciones disponibles (hospital)                  |
+| POST   | `/api/pacientes/:id/internamientos`| Internar `{ habitacionId, medicoId, motivoIngreso, diagnosticoIngreso? }` |
+| POST   | `/api/internamientos/:id/cambio-medico` | Cambiar médico a cargo `{ medicoId, motivoCambio }` |
+| POST   | `/api/internamientos/:id/tratamientos`  | Tratamiento durante el internamiento            |
+| POST   | `/api/internamientos/:id/alta`     | Dar de alta `{ diagnosticoAlta }`: libera la habitación |

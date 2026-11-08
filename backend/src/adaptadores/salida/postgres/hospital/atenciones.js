@@ -109,11 +109,11 @@ async function obtenerConsulta(cx, consultaId) {
 }
 
 /** Internamientos del paciente, con sus tratamientos y el historial de médicos a cargo. */
-async function cargarInternamientos(cx, pacienteId) {
+export async function cargarInternamientos(cx, pacienteId) {
   const { rows: filas } = await cx.query(
     `SELECT i.id_internamiento, i.fecha_ingreso, i.fecha_alta, i.estado, i.motivo_ingreso,
             i.diagnostico_ingreso, i.diagnostico_alta, h.numero AS habitacion,
-            m.nombres || ' ' || m.apellidos AS medico_responsable
+            m.id_medico, m.nombres || ' ' || m.apellidos AS medico_responsable
      FROM internamiento i
      JOIN habitacion h ON h.id_habitacion = i.habitacion_fk
      JOIN medico m     ON m.id_medico = i.medico_responsable_fk
@@ -143,6 +143,7 @@ async function cargarInternamientos(cx, pacienteId) {
     diagnosticoIngreso: f.diagnostico_ingreso,
     diagnosticoAlta: f.diagnostico_alta,
     medicoResponsable: f.medico_responsable,
+    medicoResponsableId: String(f.id_medico),
     medicosACargo: medicos
       .filter((m) => m.internamiento_fk === f.id_internamiento)
       .map(({ internamiento_fk, fecha_inicio, fecha_fin, motivo_cambio, ...m }) => ({
