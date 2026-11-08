@@ -27,13 +27,13 @@ export function CamposDiagnostico({ valor, onChange, errores, prefijo, conTipo =
   );
 }
 
-export function EditorDiagnosticos({ lista, onChange, errores }) {
+export function EditorDiagnosticos({ lista, onChange, errores, titulo = 'Diagnósticos' }) {
   const cambiar = (i) => (d) => onChange(lista.map((x, j) => (j === i ? d : x)));
   return (
     <section className="seccion-form">
       <header>
         <div>
-          <h2>Diagnósticos</h2>
+          <h2>{titulo}</h2>
           <p>Al menos uno, y exactamente un principal.</p>
         </div>
       </header>

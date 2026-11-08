@@ -71,7 +71,7 @@ export function NuevaConsulta() {
       <div className="encabezado">
         <div>
           <Link to={`/pacientes/${id}`} className="volver"><IconoAtras tam={16} /> {nombreCompleto(historial.paciente)}</Link>
-          <h1 style={{ marginTop: 8 }}>Nueva consulta</h1>
+          <h1 style={{ marginTop: 8 }}>{vista.textos.tituloNueva}</h1>
           <p>Atiende: {usuario.nombre}. Todo se guarda junto o no se guarda nada.</p>
         </div>
       </div>
@@ -87,7 +87,7 @@ export function NuevaConsulta() {
                 vacio="Sin cita previa" error={errores.citaId}
                 opciones={citas.map((c) => ({ valor: c.id, texto: `${fechaHora(c.fechaHora)} · ${c.motivo ?? 'sin motivo'}` }))} />
             )}
-            <Campo etiqueta="Motivo de la consulta" value={motivo} onChange={(e) => setMotivo(e.target.value)}
+            <Campo etiqueta={vista.textos.motivo} value={motivo} onChange={(e) => setMotivo(e.target.value)}
               error={errores.motivo} placeholder={citaId ? 'Si se deja vacío, se usa el de la cita' : ''} />
           </div>
           {vista.conObservaciones && (
@@ -97,19 +97,19 @@ export function NuevaConsulta() {
           )}
         </section>
 
-        <EditorDiagnosticos lista={diagnosticos} onChange={setDiagnosticos} errores={errores} />
+        <EditorDiagnosticos lista={diagnosticos} onChange={setDiagnosticos} errores={errores} titulo={vista.textos.diagnosticos} />
 
         <CamposConsulta valor={especificos} onChange={setEspecificos} errores={errores} />
 
         <section className="seccion-form">
           <header>
             <div>
-              <h2>Receta</h2>
-              <p>Opcional. También se puede recetar después, desde el historial.</p>
+              <h2>{vista.textos.receta}</h2>
+              <p>{vista.textos.recetaAyuda}</p>
             </div>
             <label className="check">
               <input type="checkbox" checked={conReceta} onChange={(e) => setConReceta(e.target.checked)} />
-              Emitir receta
+              {vista.textos.conReceta}
             </label>
           </header>
           {conReceta && (
@@ -123,7 +123,7 @@ export function NuevaConsulta() {
 
         <div className="acciones" style={{ justifyContent: 'flex-end' }}>
           <Link to={`/pacientes/${id}`} className="boton boton-secundario">Cancelar</Link>
-          <button className="boton boton-primario" disabled={enviando}>{enviando ? 'Guardando…' : 'Registrar consulta'}</button>
+          <button className="boton boton-primario" disabled={enviando}>{enviando ? 'Guardando…' : vista.textos.guardar}</button>
         </div>
       </form>
     </>

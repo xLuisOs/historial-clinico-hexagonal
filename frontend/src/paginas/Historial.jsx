@@ -19,13 +19,13 @@ function Consulta({ consulta, vista, usuario, recargar, puedeAtender, onDiagnost
     <article className="consulta">
       <div className="consulta-cabecera">
         <div>
-          <h3>{consulta.motivo || 'Consulta'}</h3>
+          <h3>{consulta.motivo || vista.textos.sinMotivo}</h3>
           <small>{fechaHora(consulta.fecha)} · {consulta.medico?.nombre}</small>
         </div>
         {puedeAtender && (
           <div className="acciones">
             <button type="button" className="boton boton-secundario boton-chico" onClick={onDiagnostico}>+ Diagnóstico</button>
-            <button type="button" className="boton boton-secundario boton-chico" onClick={onReceta}>+ Receta</button>
+            <button type="button" className="boton boton-secundario boton-chico" onClick={onReceta}>+ {vista.textos.botonReceta}</button>
           </div>
         )}
       </div>
@@ -49,7 +49,7 @@ function Consulta({ consulta, vista, usuario, recargar, puedeAtender, onDiagnost
 
       {consulta.receta && (
         <div className="bloque">
-          <h4>Receta · {fecha(consulta.receta.fechaEmision)}</h4>
+          <h4>{vista.textos.receta} · {fecha(consulta.receta.fechaEmision)}</h4>
           <ul className="items">
             {consulta.receta.items.map((i) => (
               <li key={i.id}>
@@ -112,7 +112,7 @@ export function Historial() {
             </div>
             <div className="acciones">
               {puedeAtender && (
-                <Link to={`/pacientes/${id}/consulta`} className="boton boton-primario"><IconoMas tam={18} /> Nueva consulta</Link>
+                <Link to={`/pacientes/${id}/consulta`} className="boton boton-primario"><IconoMas tam={18} /> {vista.textos.nuevaConsulta}</Link>
               )}
               {puedeAgendar && (
                 <button type="button" className="boton boton-primario" onClick={() => setDialogo({ tipo: 'agendar' })}><IconoMas tam={18} /> Agendar cita</button>
@@ -163,7 +163,7 @@ export function Historial() {
       <div className="columnas">
         <section className="panel vidrio">
           <div className="titulo-panel">
-            <h2>Consultas</h2>
+            <h2>{vista.textos.consultas}</h2>
             <small style={{ color: 'var(--tinta-suave)' }}>{consultas.length} {consultas.length === 1 ? 'registro' : 'registros'}</small>
           </div>
           {consultas.length === 0
