@@ -2,8 +2,8 @@
 // historial muestra la curva de crecimiento y el esquema de vacunación.
 
 import { Campo } from '../componentes/ui.jsx';
-import { fecha } from '../formato.js';
 import { PanelCobros } from './cobrosPediatrico.jsx';
+import { PanelCrecimiento } from './crecimiento.jsx';
 import { PanelVacunacion } from './vacunacion.jsx';
 
 const MEDIDAS = [
@@ -42,26 +42,7 @@ function DetalleConsulta({ datos }) {
 function Extras({ extras, paciente, consultas, usuario, recargar }) {
   return (
     <>
-      {extras.crecimiento?.length > 0 && (
-        <section className="panel vidrio">
-          <h2>Crecimiento</h2>
-          <div className="tabla-envoltura">
-            <table className="tabla">
-              <thead><tr><th>Fecha</th><th className="numero">Peso (kg)</th><th className="numero">Talla (cm)</th><th className="numero">P. cefálico (cm)</th></tr></thead>
-              <tbody>
-                {extras.crecimiento.map((c, n) => (
-                  <tr key={n}>
-                    <td>{fecha(c.fecha)}</td>
-                    <td className="numero">{c.pesoKg ?? '—'}</td>
-                    <td className="numero">{c.tallaCm ?? '—'}</td>
-                    <td className="numero">{c.perimetroCefalicoCm ?? '—'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      )}
+      <PanelCrecimiento crecimiento={extras.crecimiento} />
       <PanelVacunacion vacunas={extras.vacunas} paciente={paciente} consultas={consultas} usuario={usuario} recargar={recargar} />
       <PanelCobros cobros={extras.cobros} consultas={consultas} usuario={usuario} recargar={recargar} />
     </>
