@@ -3,6 +3,7 @@
 
 import { Campo } from '../componentes/ui.jsx';
 import { fecha } from '../formato.js';
+import { PanelVacunacion } from './vacunacion.jsx';
 
 const MEDIDAS = [
   ['pesoKg', 'Peso (kg)', '0.1'],
@@ -37,13 +38,7 @@ function DetalleConsulta({ datos }) {
   );
 }
 
-const ESTADO_VACUNA = {
-  aplicada: ['etiqueta-exito', 'Aplicada'],
-  pendiente: ['etiqueta-peligro', 'Pendiente'],
-  proxima: ['etiqueta-gris', 'Próxima'],
-};
-
-function Extras({ extras }) {
+function Extras({ extras, paciente, consultas, usuario, recargar }) {
   return (
     <>
       {extras.crecimiento?.length > 0 && (
@@ -66,29 +61,7 @@ function Extras({ extras }) {
           </div>
         </section>
       )}
-      {extras.vacunas?.length > 0 && (
-        <section className="panel vidrio">
-          <h2>Esquema de vacunación</h2>
-          <div className="tabla-envoltura">
-            <table className="tabla">
-              <thead><tr><th>Vacuna</th><th>Dosis</th><th>Edad</th><th>Estado</th></tr></thead>
-              <tbody>
-                {extras.vacunas.map((v, n) => {
-                  const [clase, texto] = ESTADO_VACUNA[v.estado] ?? ['etiqueta-gris', v.estado];
-                  return (
-                    <tr key={n}>
-                      <td>{v.vacuna}</td>
-                      <td>{v.dosis}</td>
-                      <td>{v.edadRecomendadaMeses} m</td>
-                      <td><span className={`etiqueta ${clase}`}>{texto}</span>{v.fechaAplicacion && <small> {fecha(v.fechaAplicacion)}</small>}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      )}
+      <PanelVacunacion vacunas={extras.vacunas} paciente={paciente} consultas={consultas} usuario={usuario} recargar={recargar} />
     </>
   );
 }
