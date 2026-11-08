@@ -44,6 +44,7 @@ export const PERMISOS = {
   facturar: ['recepcion', 'admin'],
   anularFactura: ['admin'],
   aplicarVacuna: ['medico'],
+  gestionarOrden: ['medico', 'admin'],
 };
 
 export const puede = (usuario, accion) => PERMISOS[accion]?.includes(usuario?.rol) ?? false;

@@ -143,7 +143,7 @@ function CamposConsulta({ valor, onChange, errores }) {
   );
 }
 
-function Examen({ examen, editable, onResultados }) {
+function Examen({ examen, editable, onResultados, onValidar }) {
   const conValor = examen.parametros.filter((p) => p.valor != null).length;
   return (
     <div style={{ borderTop: '1px solid rgba(15, 45, 54, 0.08)', paddingTop: 10, marginTop: 10 }}>
@@ -154,9 +154,14 @@ function Examen({ examen, editable, onResultados }) {
           <small style={{ color: 'var(--tinta-suave)' }}>{conValor} de {examen.parametros.length}</small>
         </span>
         {editable && examen.estado !== 'validado' && (
-          <button type="button" className="boton boton-primario boton-chico" onClick={onResultados}>
-            {conValor === 0 ? 'Registrar resultados' : 'Editar resultados'}
-          </button>
+          <span className="acciones">
+            <button type="button" className={`boton boton-chico ${examen.estado === 'resultados_completos' ? 'boton-secundario' : 'boton-primario'}`} onClick={onResultados}>
+              {conValor === 0 ? 'Registrar resultados' : 'Editar resultados'}
+            </button>
+            {examen.estado === 'resultados_completos' && (
+              <button type="button" className="boton boton-primario boton-chico" onClick={onValidar}>Validar</button>
+            )}
+          </span>
         )}
       </div>
       {examen.validadoPor && (
@@ -167,27 +172,102 @@ function Examen({ examen, editable, onResultados }) {
   );
 }
 
+/** Confirmación para acciones que no se deshacen (validar, anular). */
+function DialogoConfirmar({ titulo, mensaje, texto, peligro, accion, onCerrar, onListo }) {
+  const [error, setError] = useState(null);
+  const [enviando, setEnviando] = useState(false);
+  async function confirmar() {
+    setEnviando(true);
+    setError(null);
+    try {
+      await accion();
+      onListo();
+    } catch (err) {
+      setError(err);
+      setEnviando(false);
+    }
+  }
+  return (
+    <Dialogo titulo={titulo} onCerrar={onCerrar}>
+      <div className="formulario">
+        <p>{mensaje}</p>
+        <Alerta>{error?.message}</Alerta>
+        <footer>
+          <button type="button" className="boton boton-secundario" onClick={onCerrar}>Volver</button>
+          <button type="button" className={`boton ${peligro ? 'boton-peligro' : 'boton-primario'}`} disabled={enviando} onClick={confirmar}>
+            {enviando ? 'Guardando…' : texto}
+          </button>
+        </footer>
+      </div>
+    </Dialogo>
+  );
+}
+
+// Cambios manuales permitidos (los mismos que TRANSICIONES_ORDEN del backend):
+// "completada" no está porque la orden se completa sola al validar el último examen.
+const ACCIONES_ORDEN = {
+  pendiente: ['en_proceso', 'anulada'],
+  en_proceso: ['anulada'],
+};
+
 function DetalleConsulta({ datos, consulta, usuario, recargar }) {
   const [capturando, setCapturando] = useState(null);
+  const [confirmando, setConfirmando] = useState(null);
   if (!datos.numero) return null;
-  const editable = ['pendiente', 'en_proceso'].includes(datos.estado) && puede(usuario, 'atender');
+  const abierta = ['pendiente', 'en_proceso'].includes(datos.estado);
+  const editable = abierta && puede(usuario, 'atender');
+  const acciones = puede(usuario, 'gestionarOrden') ? (ACCIONES_ORDEN[datos.estado] ?? []) : [];
+  const listo = () => { setCapturando(null); setConfirmando(null); recargar(); };
+
+  const validar = (e) => setConfirmando({
+    titulo: `Validar ${e.nombre}`,
+    mensaje: 'Validar equivale a firmar el examen: sus resultados ya no se podrán modificar. Si es el último examen pendiente, la orden se completa.',
+    texto: 'Validar examen',
+    accion: () => api.validarExamen(consulta.id, e.codigo),
+  });
+  const cambiarEstado = (estado) => setConfirmando(estado === 'anulada' ? {
+    titulo: `Anular ${datos.numero}`,
+    mensaje: 'La orden queda anulada y ya no admite resultados ni exámenes nuevos. No se puede deshacer.',
+    texto: 'Anular orden',
+    peligro: true,
+    accion: () => api.cambiarEstadoOrden(consulta.id, 'anulada'),
+  } : {
+    titulo: `Iniciar ${datos.numero}`,
+    mensaje: 'La orden pasa a "en proceso": se tomaron las muestras y se empiezan a procesar.',
+    texto: 'Iniciar proceso',
+    accion: () => api.cambiarEstadoOrden(consulta.id, 'en_proceso'),
+  });
+
   return (
     <div className="bloque">
-      <h4 style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-        <span className="codigo">{datos.numero}</span>
-        <Estado mapa={ESTADO_ORDEN} valor={datos.estado} />
-      </h4>
-      <ul className="items">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+        <h4 style={{ display: 'flex', gap: 8, alignItems: 'center', margin: 0 }}>
+          <span className="codigo">{datos.numero}</span>
+          <Estado mapa={ESTADO_ORDEN} valor={datos.estado} />
+        </h4>
+        {acciones.length > 0 && (
+          <span className="acciones">
+            {acciones.includes('en_proceso') && (
+              <button type="button" className="boton boton-secundario boton-chico" onClick={() => cambiarEstado('en_proceso')}>Iniciar proceso</button>
+            )}
+            {acciones.includes('anulada') && (
+              <button type="button" className="boton boton-fantasma boton-chico" onClick={() => cambiarEstado('anulada')}>Anular orden</button>
+            )}
+          </span>
+        )}
+      </div>
+      <ul className="items" style={{ marginTop: 8 }}>
         <li><small>Médico referente:</small> <span>{datos.medicoReferente?.nombre} (col. {datos.medicoReferente?.numeroColegiado})</span></li>
         {datos.registradaPor && <li><small>Registró:</small> <span>{datos.registradaPor.nombre}</span></li>}
       </ul>
       {datos.examenes.map((e) => (
-        <Examen key={e.codigo} examen={e} editable={editable} onResultados={() => setCapturando(e)} />
+        <Examen key={e.codigo} examen={e} editable={editable}
+          onResultados={() => setCapturando(e)} onValidar={() => validar(e)} />
       ))}
       {capturando && (
-        <DialogoResultados ordenId={consulta.id} examen={capturando}
-          onCerrar={() => setCapturando(null)} onListo={() => { setCapturando(null); recargar(); }} />
+        <DialogoResultados ordenId={consulta.id} examen={capturando} onCerrar={() => setCapturando(null)} onListo={listo} />
       )}
+      {confirmando && <DialogoConfirmar {...confirmando} onCerrar={() => setConfirmando(null)} onListo={listo} />}
     </div>
   );
 }
