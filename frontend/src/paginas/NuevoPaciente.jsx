@@ -4,6 +4,7 @@ import { api } from '../api.js';
 import { IconoAtras } from '../componentes/Iconos.jsx';
 import { Alerta, Campo, erroresDe, Selector } from '../componentes/ui.jsx';
 import { etiqueta, parentescosPara, SEXO, TIPOS_SANGRE } from '../formato.js';
+import { BuscadorEncargado } from '../instituciones/encargado.jsx';
 import { useSesion } from '../sesion.jsx';
 
 // Si cada institución pide, permite o no registra un responsable del paciente.
@@ -24,6 +25,9 @@ export function NuevoPaciente() {
   const [datos, setDatos] = useState(INICIAL);
   const [conResponsable, setConResponsable] = useState(regla === 'obligatorio');
   const [responsable, setResponsable] = useState(RESPONSABLE_INICIAL);
+  // Pediátrico: encargado ya registrado (se asocia por id) o null para capturar uno nuevo.
+  const [existente, setExistente] = useState(null);
+  const buscaEncargado = usuario.institucion === 'pediatrico';
   const [error, setError] = useState(null);
   const [enviando, setEnviando] = useState(false);
   const errores = erroresDe(error);
@@ -45,7 +49,7 @@ export function NuevoPaciente() {
         documento: d.documento,
         contacto: { telefono: d.telefono, direccion: d.direccion, correo: d.correo },
         datosClinicos: { tipoSangre: d.tipoSangre, alergias: d.alergias },
-        responsable: conResponsable ? vacioANulo(responsable) : null,
+        responsable: !conResponsable ? null : existente ? { id: existente.id } : vacioANulo(responsable),
       });
       navegar(`/pacientes/${paciente.id}`);
     } catch (err) {
@@ -116,7 +120,12 @@ export function NuevoPaciente() {
                 </label>
               )}
             </header>
-            {conResponsable && (
+            {conResponsable && buscaEncargado && (
+              <BuscadorEncargado encontrado={existente} onEncontrado={setExistente} onQuitar={() => setExistente(null)}
+                onNuevo={(dpi) => setResponsable({ ...responsable, documento: dpi })} />
+            )}
+            {errores.responsable && <small className="error-campo">{errores.responsable}</small>}
+            {conResponsable && !existente && (
               <div className="rejilla">
                 <Campo etiqueta="Nombres *" value={responsable.nombres} onChange={cambiarResp('nombres')} error={errores['responsable.nombres']} />
                 <Campo etiqueta="Apellidos *" value={responsable.apellidos} onChange={cambiarResp('apellidos')} error={errores['responsable.apellidos']} />

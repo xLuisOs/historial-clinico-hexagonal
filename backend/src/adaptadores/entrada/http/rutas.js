@@ -147,3 +147,6 @@ rutas.post('/consultas/:id/cobro', async (req, res) => {
 rutas.post('/cobros/:id/pagos', async (req, res) => {
   res.status(201).json(await pediatrico.registrarPago(req.contexto, req.params.id, req.body));
 });
+rutas.post('/pediatrico/encargados/busqueda', async (req, res) => {
+  res.json(await pediatrico.buscarEncargado(req.contexto, req.body));
+});

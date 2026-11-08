@@ -306,5 +306,6 @@ Exclusivas del pediátrico:
 | GET    | `/api/pediatrico/servicios`   | Catálogo de servicios facturables con su precio vigente            |
 | POST   | `/api/consultas/:id/cobro`    | Generar el cobro de la consulta `{ items: [{ servicioId, cantidad }] }` (recepción/admin). El precio se copia del catálogo; un solo cobro por consulta, a nombre del encargado |
 | POST   | `/api/cobros/:id/pagos`       | Abono `{ monto, metodoPago, referencia? }` (recepción/admin). No puede exceder el saldo; al completarse, el trigger marca el cobro como pagado |
+| POST   | `/api/pediatrico/encargados/busqueda` | Buscar encargado `{ dpi }` para asociarle otro niño (hermanos). El DPI va en el cuerpo y no en la URL, para que no quede en los registros |
 
 El historial del pediátrico incluye en `extras.cobros` cada cobro con su detalle, pagos y saldo.

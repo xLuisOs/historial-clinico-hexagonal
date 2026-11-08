@@ -98,6 +98,7 @@ export const api = {
 
   aplicarVacuna: (pacienteId, datos) => pedir('POST', `/pacientes/${q(pacienteId)}/vacunas`, datos),
   serviciosPediatrico: () => pedir('GET', '/pediatrico/servicios'),
+  buscarEncargado: (dpi) => pedir('POST', '/pediatrico/encargados/busqueda', { dpi }),
   generarCobro: (consultaId, datos) => pedir('POST', `/consultas/${q(consultaId)}/cobro`, datos),
   pagarCobro: (cobroId, datos) => pedir('POST', `/cobros/${q(cobroId)}/pagos`, datos),
 };

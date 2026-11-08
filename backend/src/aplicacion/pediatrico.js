@@ -1,6 +1,7 @@
 // Casos de uso exclusivos del Centro Médico Pediátrico (sea cual sea su motor).
 
 import { NoDisponible } from '../dominio/errores.js';
+import { Validador } from '../dominio/validacion.js';
 import { validarCobro, validarPagoCobro, validarVacunaAplicada } from '../dominio/pediatrico.js';
 import { exigirRol } from './casos-uso.js';
 
@@ -31,4 +32,15 @@ export function generarCobro({ usuario, repos }, consultaId, datos) {
 export function registrarPago({ usuario, repos }, cobroId, datos) {
   exigirRol(usuario, 'recepcion', 'admin');
   return pediatricoDe(repos).registrarPago(cobroId, validarPagoCobro(datos));
+}
+
+// Buscar al encargado por DPI para asociarle otro niño (hermanos). Lo usan
+// quienes registran pacientes. El DPI viaja en el cuerpo, no en la URL, para
+// que no quede en los registros de peticiones (es un dato restringido).
+export function buscarEncargado({ usuario, repos }, datos = {}) {
+  exigirRol(usuario, 'recepcion', 'medico', 'admin');
+  const v = new Validador();
+  const dpi = v.patron('dpi', datos.dpi == null ? null : String(datos.dpi), /^\d{13}$/, 'DPI de 13 dígitos', { requerido: true });
+  v.lanzarSiHayErrores();
+  return pediatricoDe(repos).buscarEncargado(dpi);
 }
