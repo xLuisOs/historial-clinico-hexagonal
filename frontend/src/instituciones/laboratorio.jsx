@@ -5,6 +5,9 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api.js';
 import { Alerta, Campo, Dialogo, erroresDe, Selector } from '../componentes/ui.jsx';
+import { fecha } from '../formato.js';
+import { puede } from '../sesion.jsx';
+import { DialogoResultados, TablaResultados } from './resultados.jsx';
 
 export const ESTADO_ORDEN = {
   pendiente: ['etiqueta-aviso', 'Pendiente'],
@@ -140,8 +143,34 @@ function CamposConsulta({ valor, onChange, errores }) {
   );
 }
 
-function DetalleConsulta({ datos }) {
+function Examen({ examen, editable, onResultados }) {
+  const conValor = examen.parametros.filter((p) => p.valor != null).length;
+  return (
+    <div style={{ borderTop: '1px solid rgba(15, 45, 54, 0.08)', paddingTop: 10, marginTop: 10 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+        <span style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+          <strong>{examen.nombre}</strong>
+          <Estado mapa={ESTADO_EXAMEN} valor={examen.estado} />
+          <small style={{ color: 'var(--tinta-suave)' }}>{conValor} de {examen.parametros.length}</small>
+        </span>
+        {editable && examen.estado !== 'validado' && (
+          <button type="button" className="boton boton-primario boton-chico" onClick={onResultados}>
+            {conValor === 0 ? 'Registrar resultados' : 'Editar resultados'}
+          </button>
+        )}
+      </div>
+      {examen.validadoPor && (
+        <small style={{ color: 'var(--tinta-suave)' }}>Validado por {examen.validadoPor.nombre} el {fecha(examen.fechaValidacion)}</small>
+      )}
+      <TablaResultados examen={examen} />
+    </div>
+  );
+}
+
+function DetalleConsulta({ datos, consulta, usuario, recargar }) {
+  const [capturando, setCapturando] = useState(null);
   if (!datos.numero) return null;
+  const editable = ['pendiente', 'en_proceso'].includes(datos.estado) && puede(usuario, 'atender');
   return (
     <div className="bloque">
       <h4 style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -151,14 +180,14 @@ function DetalleConsulta({ datos }) {
       <ul className="items">
         <li><small>Médico referente:</small> <span>{datos.medicoReferente?.nombre} (col. {datos.medicoReferente?.numeroColegiado})</span></li>
         {datos.registradaPor && <li><small>Registró:</small> <span>{datos.registradaPor.nombre}</span></li>}
-        {datos.examenes.map((e) => (
-          <li key={e.codigo}>
-            <strong>{e.nombre}</strong>
-            <Estado mapa={ESTADO_EXAMEN} valor={e.estado} />
-            <small>{e.parametros.filter((p) => p.valor != null).length} de {e.parametros.length} resultados</small>
-          </li>
-        ))}
       </ul>
+      {datos.examenes.map((e) => (
+        <Examen key={e.codigo} examen={e} editable={editable} onResultados={() => setCapturando(e)} />
+      ))}
+      {capturando && (
+        <DialogoResultados ordenId={consulta.id} examen={capturando}
+          onCerrar={() => setCapturando(null)} onListo={() => { setCapturando(null); recargar(); }} />
+      )}
     </div>
   );
 }

@@ -98,6 +98,7 @@ export const api = {
 
   aplicarVacuna: (pacienteId, datos) => pedir('POST', `/pacientes/${q(pacienteId)}/vacunas`, datos),
   tiposExamen: () => pedir('GET', '/laboratorio/tipos-examen'),
+  registrarResultados: (ordenId, codigo, datos) => pedir('POST', `/laboratorio/ordenes/${q(ordenId)}/examenes/${q(codigo)}/resultados`, datos),
   registrarMedicoReferente: (datos) => pedir('POST', '/laboratorio/medicos-referentes', datos),
 
   serviciosPediatrico: () => pedir('GET', '/pediatrico/servicios'),
