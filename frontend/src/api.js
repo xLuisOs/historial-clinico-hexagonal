@@ -1,0 +1,77 @@
+// Cliente de la API. El frontend no sabe qué motor de base de datos hay detrás:
+// siempre habla con las mismas rutas y el backend decide según el token.
+
+const CLAVE_SESION = 'historial-clinico:sesion';
+
+export class ErrorApi extends Error {
+  constructor(estado, mensaje, detalles) {
+    super(mensaje);
+    this.estado = estado;
+    this.detalles = detalles ?? {};
+  }
+}
+
+export function leerSesion() {
+  try {
+    return JSON.parse(localStorage.getItem(CLAVE_SESION));
+  } catch {
+    return null;
+  }
+}
+
+export function guardarSesion(sesion) {
+  try {
+    if (sesion) localStorage.setItem(CLAVE_SESION, JSON.stringify(sesion));
+    else localStorage.removeItem(CLAVE_SESION);
+  } catch {
+    // Sin almacenamiento (modo privado): la sesión dura mientras la pestaña esté abierta.
+  }
+}
+
+async function pedir(metodo, ruta, cuerpo) {
+  const token = leerSesion()?.token;
+  let respuesta;
+  try {
+    respuesta = await fetch(`/api${ruta}`, {
+      method: metodo,
+      headers: {
+        ...(cuerpo !== undefined && { 'Content-Type': 'application/json' }),
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+      body: cuerpo === undefined ? undefined : JSON.stringify(cuerpo),
+    });
+  } catch {
+    throw new ErrorApi(0, 'No se pudo conectar con el servidor');
+  }
+
+  const datos = await respuesta.json().catch(() => null);
+  if (respuesta.status === 401 && ruta !== '/auth/login') {
+    window.dispatchEvent(new Event('sesion-vencida'));
+  }
+  if (!respuesta.ok) {
+    throw new ErrorApi(respuesta.status, datos?.error ?? 'Error inesperado', datos?.detalles);
+  }
+  return datos;
+}
+
+const q = (texto) => encodeURIComponent(texto);
+
+export const api = {
+  instituciones: () => pedir('GET', '/instituciones'),
+  login: (correo, password) => pedir('POST', '/auth/login', { correo, password }),
+
+  buscarPacientes: (texto, archivados) =>
+    pedir('GET', `/pacientes?q=${q(texto)}${archivados ? '&archivados=true' : ''}`),
+  registrarPaciente: (datos) => pedir('POST', '/pacientes', datos),
+  historial: (id) => pedir('GET', `/pacientes/${q(id)}/historial`),
+  actualizarContacto: (id, datos) => pedir('PATCH', `/pacientes/${q(id)}/contacto`, datos),
+  darDeBaja: (id, datos) => pedir('POST', `/pacientes/${q(id)}/baja`, datos),
+
+  registrarConsulta: (pacienteId, datos) => pedir('POST', `/pacientes/${q(pacienteId)}/consultas`, datos),
+  agregarDiagnostico: (consultaId, datos) => pedir('POST', `/consultas/${q(consultaId)}/diagnosticos`, datos),
+  recetar: (consultaId, datos) => pedir('POST', `/consultas/${q(consultaId)}/recetas`, datos),
+
+  medicos: () => pedir('GET', '/catalogos/medicos'),
+  medicamentos: () => pedir('GET', '/catalogos/medicamentos'),
+  procedimientosOdontologicos: () => pedir('GET', '/odontologica/procedimientos'),
+};

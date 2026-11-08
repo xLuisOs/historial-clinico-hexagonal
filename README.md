@@ -34,6 +34,14 @@ backend/
     │       └── firebase/odontologica/   ✅ implementado
     ├── contenedor.js          Elige el adaptador según la institución del usuario
     └── servidor.js
+
+frontend/                      Cliente web (React + Vite), igual para las cuatro instituciones
+└── src/
+    ├── api.js                 Llamadas a la API (el token va en cada petición)
+    ├── sesion.jsx             Usuario conectado y qué puede hacer su rol
+    ├── paginas/               Login, pacientes, nuevo paciente, historial, nueva consulta
+    ├── componentes/           Barra de navegación, campos, diálogos, editores de diagnóstico/receta
+    └── instituciones/         Lo único que cambia por institución: campos de la consulta y extras del historial
 ```
 
 **Para agregar un motor:** implementa los métodos de `src/puertos/repositorios.js` en
@@ -101,6 +109,28 @@ insertar y actualizar en ese esquema (no puede borrar historiales).
 Las reglas de Firestore quedan en `allow read, write: if false`: nadie entra directo
 desde un navegador; el backend entra con la clave de la cuenta de servicio, que no
 pasa por las reglas.
+
+### Frontend
+
+Con el backend corriendo (`npm run dev` en `backend/`), en otra terminal:
+
+```bash
+cd frontend
+npm install
+npm run dev                                   # http://localhost:5173
+```
+
+Vite reenvía `/api` al backend en `http://localhost:4000`, así que no hace falta
+configurar nada más. La interfaz es la misma para todos; según el rol del usuario se
+ocultan los botones que no le corresponden (el backend igual lo verifica):
+
+| Acción                              | Médico | Recepción | Admin |
+|-------------------------------------|:------:|:---------:|:-----:|
+| Buscar pacientes y ver historial    | ✅     | ✅        | ✅    |
+| Registrar paciente                  | ✅     | ✅        | ✅    |
+| Actualizar contacto                 |        | ✅        | ✅    |
+| Consulta, diagnóstico y receta      | ✅     |           |       |
+| Archivar historial                  |        |           | ✅    |
 
 ### Recrear las bases desde cero
 
@@ -191,3 +221,4 @@ Todas las rutas (salvo login) requieren `Authorization: Bearer <token>`.
 | POST   | `/api/consultas/:id/recetas`       | Recetar medicamento(s)                               |
 | GET    | `/api/catalogos/medicos`           | Catálogo de médicos                                  |
 | GET    | `/api/catalogos/medicamentos`      | Catálogo de medicamentos                             |
+| GET    | `/api/odontologica/procedimientos` | Catálogo de procedimientos (solo odontológica)       |
