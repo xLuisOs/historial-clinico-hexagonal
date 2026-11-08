@@ -15,6 +15,7 @@ export function Barra() {
         </span>
       </Link>
       <nav aria-label="Principal">
+        {puede(usuario, 'atender') && usuario.institucion !== 'laboratorio' && <NavLink to="/agenda">Mis citas de hoy</NavLink>}
         <NavLink to="/" end>Pacientes</NavLink>
         {puede(usuario, 'registrarPaciente') && <NavLink to="/pacientes/nuevo">Nuevo paciente</NavLink>}
       </nav>

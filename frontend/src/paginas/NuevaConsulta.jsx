@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { api } from '../api.js';
 import {
   DIAGNOSTICO, EditorDiagnosticos, EditorReceta, ITEM_RECETA, prepararDiagnostico, prepararItems,
@@ -14,10 +14,12 @@ export function NuevaConsulta() {
   const { id } = useParams();
   const { usuario } = useSesion();
   const navegar = useNavigate();
+  const [parametros] = useSearchParams();
   const vista = vistaDe(usuario.institucion);
 
   const [historial, setHistorial] = useState(null);
-  const [citaId, setCitaId] = useState('');
+  const [citasDeHoy, setCitasDeHoy] = useState([]);
+  const [citaId, setCitaId] = useState(parametros.get('cita') ?? '');
   const [motivo, setMotivo] = useState('');
   const [observaciones, setObservaciones] = useState('');
   const [diagnosticos, setDiagnosticos] = useState([{ ...DIAGNOSTICO }]);
@@ -30,13 +32,24 @@ export function NuevaConsulta() {
   const errores = erroresDe(error);
 
   useEffect(() => { api.historial(id).then(setHistorial).catch(setError); }, [id]);
+  // Las citas de hoy que ya pasaron de hora no salen en "próximas citas", pero
+  // se pueden atender: se toman de la agenda del médico.
+  useEffect(() => {
+    if (!puede(usuario, 'atender') || usuario.institucion === 'laboratorio') return;
+    const d = new Date();
+    const hoy = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    api.agenda(hoy)
+      .then((lista) => setCitasDeHoy(lista.filter((c) => c.paciente.id === id && ['programada', 'confirmada'].includes(c.estado))))
+      .catch(() => {});
+  }, [id, usuario]);
 
   if (!puede(usuario, 'atender')) {
     return <Alerta>Solo el personal médico puede registrar consultas.</Alerta>;
   }
   if (!historial) return error ? <Alerta>{error.message}</Alerta> : <Cargando />;
 
-  const citas = historial.extras?.proximasCitas ?? [];
+  const proximas = historial.extras?.proximasCitas ?? [];
+  const citas = [...citasDeHoy, ...proximas.filter((c) => !citasDeHoy.some((h) => h.id === c.id))];
   const { CamposConsulta } = vista;
 
   async function guardar(e) {

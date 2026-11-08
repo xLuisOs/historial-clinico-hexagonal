@@ -5,17 +5,31 @@ import { Alerta, Campo } from '../componentes/ui.jsx';
 import { useSesion } from '../sesion.jsx';
 
 const MOTOR = { postgresql: 'PostgreSQL', firebase: 'Firebase', mongodb: 'MongoDB', mysql: 'MySQL' };
+const CLAVE = 'historial-clinico:instituciones';
+
+function institucionesGuardadas() {
+  try {
+    return JSON.parse(localStorage.getItem(CLAVE)) ?? [];
+  } catch {
+    return [];
+  }
+}
 
 export function Login() {
   const { iniciar } = useSesion();
-  const [instituciones, setInstituciones] = useState([]);
+  const [instituciones, setInstituciones] = useState(institucionesGuardadas);
   const [correo, setCorreo] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
   const [enviando, setEnviando] = useState(false);
 
   useEffect(() => {
-    api.instituciones().then(setInstituciones).catch(() => {});
+    api.instituciones()
+      .then((lista) => {
+        setInstituciones(lista);
+        try { localStorage.setItem(CLAVE, JSON.stringify(lista)); } catch { /* sin almacenamiento */ }
+      })
+      .catch(() => {});
   }, []);
 
   async function entrar(e) {
@@ -41,6 +55,7 @@ export function Login() {
             motor de base de datos; al iniciar sesión, tu correo decide a cuál te conectas.
           </p>
           <div className="instituciones">
+            {instituciones.length === 0 && [1, 2, 3, 4].map((n) => <div className="institucion esperando" key={n} aria-hidden="true" />)}
             {instituciones.map((i) => {
               const Icono = ICONO_INSTITUCION[i.clave] ?? IconoCruz;
               return (

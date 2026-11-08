@@ -71,6 +71,8 @@ export const api = {
   agregarDiagnostico: (consultaId, datos) => pedir('POST', `/consultas/${q(consultaId)}/diagnosticos`, datos),
   recetar: (consultaId, datos) => pedir('POST', `/consultas/${q(consultaId)}/recetas`, datos),
 
+  agenda: (fecha) => pedir('GET', `/agenda?fecha=${q(fecha)}`),
+
   medicos: () => pedir('GET', '/catalogos/medicos'),
   medicamentos: () => pedir('GET', '/catalogos/medicamentos'),
   procedimientosOdontologicos: () => pedir('GET', '/odontologica/procedimientos'),

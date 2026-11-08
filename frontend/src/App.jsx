@@ -1,5 +1,6 @@
 import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom';
 import { Barra } from './componentes/Barra.jsx';
+import { Agenda } from './paginas/Agenda.jsx';
 import { Historial } from './paginas/Historial.jsx';
 import { Login } from './paginas/Login.jsx';
 import { NuevaConsulta } from './paginas/NuevaConsulta.jsx';
@@ -39,6 +40,7 @@ export function App() {
           <Route path="/login" element={<SoloSinSesion />} />
           <Route element={<ConSesion />}>
             <Route index element={<Pacientes />} />
+            <Route path="agenda" element={<Agenda />} />
             <Route path="pacientes/nuevo" element={<NuevoPaciente />} />
             <Route path="pacientes/:id" element={<Historial />} />
             <Route path="pacientes/:id/consulta" element={<NuevaConsulta />} />
