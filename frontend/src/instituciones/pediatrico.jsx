@@ -3,6 +3,7 @@
 
 import { Campo } from '../componentes/ui.jsx';
 import { fecha } from '../formato.js';
+import { PanelCobros } from './cobrosPediatrico.jsx';
 import { PanelVacunacion } from './vacunacion.jsx';
 
 const MEDIDAS = [
@@ -62,6 +63,7 @@ function Extras({ extras, paciente, consultas, usuario, recargar }) {
         </section>
       )}
       <PanelVacunacion vacunas={extras.vacunas} paciente={paciente} consultas={consultas} usuario={usuario} recargar={recargar} />
+      <PanelCobros cobros={extras.cobros} consultas={consultas} usuario={usuario} recargar={recargar} />
     </>
   );
 }

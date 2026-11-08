@@ -97,4 +97,7 @@ export const api = {
   anularFactura: (id) => pedir('POST', `/facturas/${q(id)}/anulacion`),
 
   aplicarVacuna: (pacienteId, datos) => pedir('POST', `/pacientes/${q(pacienteId)}/vacunas`, datos),
+  serviciosPediatrico: () => pedir('GET', '/pediatrico/servicios'),
+  generarCobro: (consultaId, datos) => pedir('POST', `/consultas/${q(consultaId)}/cobro`, datos),
+  pagarCobro: (cobroId, datos) => pedir('POST', `/cobros/${q(cobroId)}/pagos`, datos),
 };
