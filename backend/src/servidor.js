@@ -15,5 +15,8 @@ async function apagar() {
   await cerrarConexiones();
   process.exit(0);
 }
+// Un error que se escape de una petición se registra en lugar de apagar el
+// servidor completo (y con él, las cuatro instituciones).
+process.on('unhandledRejection', (error) => console.error('[sin manejar]', error));
 process.on('SIGINT', apagar);
 process.on('SIGTERM', apagar);

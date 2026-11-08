@@ -15,9 +15,12 @@ export function Barra() {
         </span>
       </Link>
       <nav aria-label="Principal">
-        {puede(usuario, 'atender') && usuario.institucion !== 'laboratorio' && <NavLink to="/agenda">Mis citas de hoy</NavLink>}
+        {usuario.institucion !== 'laboratorio' && (puede(usuario, 'atender') || puede(usuario, 'agendar')) && (
+          <NavLink to="/agenda">{puede(usuario, 'atender') ? 'Mis citas de hoy' : 'Agenda'}</NavLink>
+        )}
         <NavLink to="/" end>Pacientes</NavLink>
         {puede(usuario, 'registrarPaciente') && <NavLink to="/pacientes/nuevo">Nuevo paciente</NavLink>}
+        <NavLink to="/medicos">{usuario.institucion === 'odontologica' ? 'Odontólogos' : 'Médicos'}</NavLink>
       </nav>
       <div className="barra-usuario">
         <div className="chip-usuario">

@@ -39,8 +39,24 @@ export function crearPoolPostgres({ url, ca }) {
   if (!url) throw new NoDisponible('PostgreSQL no está configurado (falta POSTGRES_URL)');
   // Abrir una conexión a Supabase cuesta varios viajes de ida y vuelta (TLS +
   // autenticación): se mantienen abiertas 5 minutos en vez de los 10 s por defecto.
-  return new pg.Pool({ ...configDesdeUrl(url, ca), max: 5, types, idleTimeoutMillis: 300_000, keepAlive: true });
+  // Si no hay conexión en 10 s, la petición falla en vez de quedarse esperando.
+  const pool = new pg.Pool({
+    ...configDesdeUrl(url, ca), max: 5, types,
+    idleTimeoutMillis: 300_000, keepAlive: true, connectionTimeoutMillis: 10_000,
+  });
+  // Supabase o la red pueden cortar una conexión que está sin usar. Sin este
+  // manejador, pg lanza el error fuera de cualquier petición y Node apaga el
+  // servidor entero. Con él, el pool descarta esa conexión y abre otra.
+  pool.on('error', (error) => console.warn(`[postgres] conexión inactiva descartada: ${error.message}`));
+  // Las consultas sueltas (fuera de transacción) también traducen sus errores:
+  // una caída de red llega al cliente como "base no disponible", no como error 500.
+  const consultar = pool.query.bind(pool);
+  pool.query = (...args) => consultar(...args).catch((error) => { throw traducirError(error); });
+  return pool;
 }
+
+// Errores de red o de servidor caído: la base no está disponible en este momento.
+const SIN_CONEXION = ['ECONNRESET', 'ECONNREFUSED', 'ETIMEDOUT', 'ENOTFOUND', 'EAI_AGAIN', '57P01', '57P03', '08001', '08006'];
 
 /** Ejecuta `fn(cliente)` dentro de una transacción; si algo falla, hace ROLLBACK. */
 export async function enTransaccion(pool, fn) {
@@ -73,6 +89,9 @@ export function traducirError(error, mensajes = {}) {
     case '42501': // insufficient_privilege
       return new NoDisponible('PostgreSQL rechazó el acceso (revisa POSTGRES_URL)');
     default:
+      if (SIN_CONEXION.includes(error?.code) || /Connection terminated|timeout exceeded when trying to connect/i.test(error?.message ?? '')) {
+        return new NoDisponible('No se pudo conectar con la base de datos del hospital. Intenta de nuevo.');
+      }
       return error;
   }
 }

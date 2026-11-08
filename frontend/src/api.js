@@ -49,7 +49,11 @@ async function pedir(metodo, ruta, cuerpo) {
     window.dispatchEvent(new Event('sesion-vencida'));
   }
   if (!respuesta.ok) {
-    throw new ErrorApi(respuesta.status, datos?.error ?? 'Error inesperado', datos?.detalles);
+    // Sin JSON, la respuesta no vino del backend sino del proxy de Vite: el
+    // backend está apagado o se reinició a mitad de la petición.
+    const mensaje = datos?.error
+      ?? (respuesta.status >= 500 ? 'No se pudo conectar con el servidor. Revisa que el backend esté corriendo e intenta de nuevo.' : 'Error inesperado');
+    throw new ErrorApi(respuesta.status, mensaje, datos?.detalles);
   }
   return datos;
 }
@@ -71,7 +75,8 @@ export const api = {
   agregarDiagnostico: (consultaId, datos) => pedir('POST', `/consultas/${q(consultaId)}/diagnosticos`, datos),
   recetar: (consultaId, datos) => pedir('POST', `/consultas/${q(consultaId)}/recetas`, datos),
 
-  agenda: (fecha) => pedir('GET', `/agenda?fecha=${q(fecha)}`),
+  agenda: (fecha, medicoId) => pedir('GET', `/agenda?fecha=${q(fecha)}${medicoId ? `&medicoId=${q(medicoId)}` : ''}`),
+  marcarEstadoCita: (citaId, estado) => pedir('POST', `/citas/${q(citaId)}/estado`, { estado }),
   citasDelPaciente: (pacienteId) => pedir('GET', `/pacientes/${q(pacienteId)}/citas`),
   agendarCita: (pacienteId, datos) => pedir('POST', `/pacientes/${q(pacienteId)}/citas`, datos),
   reprogramarCita: (citaId, datos) => pedir('PATCH', `/citas/${q(citaId)}`, datos),

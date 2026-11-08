@@ -1,5 +1,5 @@
 import { FieldValue } from 'firebase-admin/firestore';
-import { ahoraEnGuatemala, ESTADOS_PENDIENTES, exigirHorarioLibre } from '../../../../dominio/cita.js';
+import { ahoraEnGuatemala, ESTADOS_PENDIENTES, exigirHorarioLibre, exigirTransicion } from '../../../../dominio/cita.js';
 import { Conflicto, NoEncontrado } from '../../../../dominio/errores.js';
 import { enTransaccion, textoATimestamp, timestampATexto } from '../conexion.js';
 import { COLECCIONES, nombreCompleto } from './modelo.js';
@@ -103,6 +103,19 @@ export function crearRepositorioAgenda(db, zonaHoraria) {
           fecha_hora: textoATimestamp(cambio.fechaHora, zonaHoraria),
           duracion_min: cambio.duracionMin,
         });
+      });
+      return obtenerCita(citaId);
+    },
+
+    // El modelo de la clínica no tiene "confirmada": solo programada, atendida,
+    // cancelada y no_asistio.
+    async marcarEstado(citaId, estado) {
+      if (estado === 'confirmada') throw new Conflicto('La clínica no maneja confirmación de citas');
+      await enTransaccion(db, async (t) => {
+        const snap = await t.get(col('citas').doc(citaId));
+        if (!snap.exists) throw new NoEncontrado('Cita no encontrada');
+        exigirTransicion({ estado: snap.get('estado'), fechaHora: texto(snap.get('fecha_hora')) }, estado);
+        t.update(snap.ref, { estado });
       });
       return obtenerCita(citaId);
     },

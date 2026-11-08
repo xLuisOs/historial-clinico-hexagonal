@@ -7,11 +7,11 @@
 // contenedor a partir del token). Por eso aquí no aparece ningún motor.
 // =====================================================================
 
-import { NoDisponible, SinPermiso } from '../dominio/errores.js';
+import { DatosInvalidos, NoDisponible, SinPermiso } from '../dominio/errores.js';
 import { Validador } from '../dominio/validacion.js';
 import { validarNuevoPaciente, validarContacto, validarBaja } from '../dominio/paciente.js';
 import { validarNuevaConsulta, validarDiagnostico, validarReceta } from '../dominio/atencion.js';
-import { validarNuevaCita, validarReprogramacion } from '../dominio/cita.js';
+import { validarCambioEstado, validarNuevaCita, validarReprogramacion } from '../dominio/cita.js';
 
 export function exigirRol(usuario, ...roles) {
   if (!roles.includes(usuario.rol)) {
@@ -94,13 +94,16 @@ function agendaDe(repos) {
   return repos.agenda;
 }
 
-// Citas del médico que inició sesión en un día (hoy si no se indica).
-export function citasDelDia({ usuario, repos }, fecha) {
-  exigirRol(usuario, 'medico');
+// Citas de un médico en un día (hoy si no se indica). El médico ve las suyas;
+// la recepción y el admin, las del médico que elijan.
+export function citasDelDia({ usuario, repos }, fecha, medicoId) {
+  exigirRol(usuario, 'medico', 'recepcion', 'admin');
   const v = new Validador();
   const dia = v.fecha('fecha', fecha) ?? hoyEnGuatemala();
   v.lanzarSiHayErrores();
-  return agendaDe(repos).citasDelMedico(usuario.medicoId, dia);
+  const medico = usuario.rol === 'medico' ? usuario.medicoId : medicoId;
+  if (!medico) throw new DatosInvalidos('Datos inválidos', { medicoId: 'Elige un médico' });
+  return agendaDe(repos).citasDelMedico(String(medico), dia);
 }
 
 // Citas pendientes del paciente, de hoy en adelante.
@@ -118,6 +121,12 @@ export function agendarCita({ usuario, repos }, pacienteId, datos) {
 export function reprogramarCita({ usuario, repos }, citaId, datos) {
   exigirRol(usuario, 'recepcion', 'admin');
   return agendaDe(repos).reprogramar(citaId, validarReprogramacion(datos));
+}
+
+// Confirmar la cita o marcar que el paciente no asistió.
+export function marcarEstadoCita({ usuario, repos }, citaId, datos) {
+  exigirRol(usuario, 'recepcion', 'admin');
+  return agendaDe(repos).marcarEstado(citaId, validarCambioEstado(datos));
 }
 
 export function cancelarCita({ usuario, repos }, citaId) {

@@ -1,4 +1,4 @@
-import { DURACION_POR_DEFECTO, ESTADOS_PENDIENTES, exigirHorarioLibre } from '../../../../dominio/cita.js';
+import { DURACION_POR_DEFECTO, ESTADOS_PENDIENTES, exigirHorarioLibre, exigirTransicion } from '../../../../dominio/cita.js';
 import { Conflicto, NoEncontrado } from '../../../../dominio/errores.js';
 import { enTransaccion } from '../conexion.js';
 import { exigirPacienteActivo, idNumerico } from './pacientes.js';
@@ -101,6 +101,17 @@ export function crearRepositorioAgenda(pool) {
         const actual = await exigirCitaPendiente(cx, id);
         await exigirMedicoLibre(cx, actual.medico_fk, fechaHora, id);
         await cx.query('UPDATE cita SET fecha_hora = $1 WHERE id_cita = $2', [fechaHora, id]);
+        return obtenerCita(cx, id);
+      });
+    },
+
+    marcarEstado(citaId, estado) {
+      return enTransaccion(pool, async (cx) => {
+        const id = idNumerico(citaId, 'Cita');
+        const { rows } = await cx.query('SELECT estado, fecha_hora FROM cita WHERE id_cita = $1 FOR UPDATE', [id]);
+        if (rows.length === 0) throw new NoEncontrado('Cita no encontrada');
+        exigirTransicion({ estado: rows[0].estado, fechaHora: rows[0].fecha_hora }, estado);
+        await cx.query('UPDATE cita SET estado = $1 WHERE id_cita = $2', [estado, id]);
         return obtenerCita(cx, id);
       });
     },

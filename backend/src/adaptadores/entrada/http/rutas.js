@@ -26,7 +26,7 @@ rutas.use(requiereSesion);
 rutas.get('/auth/yo', (req, res) => res.json(req.contexto.usuario));
 
 rutas.get('/agenda', async (req, res) => {
-  res.json(await casos.citasDelDia(req.contexto, req.query.fecha));
+  res.json(await casos.citasDelDia(req.contexto, req.query.fecha, req.query.medicoId));
 });
 rutas.get('/pacientes/:id/citas', async (req, res) => {
   res.json(await casos.citasDelPaciente(req.contexto, req.params.id));
@@ -36,6 +36,9 @@ rutas.post('/pacientes/:id/citas', async (req, res) => {
 });
 rutas.patch('/citas/:id', async (req, res) => {
   res.json(await casos.reprogramarCita(req.contexto, req.params.id, req.body));
+});
+rutas.post('/citas/:id/estado', async (req, res) => {
+  res.json(await casos.marcarEstadoCita(req.contexto, req.params.id, req.body));
 });
 rutas.post('/citas/:id/cancelacion', async (req, res) => {
   res.json(await casos.cancelarCita(req.contexto, req.params.id));

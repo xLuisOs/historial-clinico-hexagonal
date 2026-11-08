@@ -80,3 +80,23 @@ export function exigirHorarioLibre(citas, { fechaHora, duracionMin }) {
     });
   }
 }
+
+// Estados que la recepción puede marcar a mano; "atendida" la pone la consulta.
+export const ESTADOS_MARCABLES = ['confirmada', 'no_asistio'];
+
+export function validarCambioEstado(datos = {}) {
+  const v = new Validador();
+  const estado = v.opcion('estado', datos.estado, ESTADOS_MARCABLES, { requerido: true });
+  v.lanzarSiHayErrores();
+  return estado;
+}
+
+const ESTADO_LEGIBLE = { no_asistio: 'marcada como "no asistió"' };
+
+/** Solo una cita pendiente cambia de estado, y "no asistió" solo cuando ya pasó su hora. */
+export function exigirTransicion({ estado, fechaHora }, nuevo) {
+  if (!ESTADOS_PENDIENTES.includes(estado) || estado === nuevo) {
+    throw new Conflicto(`La cita ya está ${ESTADO_LEGIBLE[estado] ?? estado}`);
+  }
+  if (nuevo === 'no_asistio' && fechaHora > ahoraEnGuatemala()) throw new Conflicto('Todavía no es la hora de la cita');
+}

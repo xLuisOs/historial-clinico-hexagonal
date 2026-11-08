@@ -3,6 +3,7 @@ import { Barra } from './componentes/Barra.jsx';
 import { Agenda } from './paginas/Agenda.jsx';
 import { Historial } from './paginas/Historial.jsx';
 import { Login } from './paginas/Login.jsx';
+import { Medicos } from './paginas/Medicos.jsx';
 import { NuevaConsulta } from './paginas/NuevaConsulta.jsx';
 import { NuevoPaciente } from './paginas/NuevoPaciente.jsx';
 import { Pacientes } from './paginas/Pacientes.jsx';
@@ -41,6 +42,7 @@ export function App() {
           <Route element={<ConSesion />}>
             <Route index element={<Pacientes />} />
             <Route path="agenda" element={<Agenda />} />
+            <Route path="medicos" element={<Medicos />} />
             <Route path="pacientes/nuevo" element={<NuevoPaciente />} />
             <Route path="pacientes/:id" element={<Historial />} />
             <Route path="pacientes/:id/consulta" element={<NuevaConsulta />} />

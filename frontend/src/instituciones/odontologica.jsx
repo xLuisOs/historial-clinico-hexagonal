@@ -92,11 +92,16 @@ function DialogoPago({ consulta, saldo, onCerrar, onListo }) {
   );
 }
 
+/** Lo que falta por pagar de una consulta: total − pagos. */
+function saldoDe(datos = {}) {
+  const pagado = (datos.pagos ?? []).reduce((s, p) => s + Number(p.monto ?? 0), 0);
+  return Math.round((Number(datos.total ?? 0) - pagado) * 100) / 100;
+}
+
 function DetalleConsulta({ datos, consulta, usuario, recargar }) {
   const [cobrando, setCobrando] = useState(false);
   if (!datos.procedimientos?.length) return null;
-  const pagado = (datos.pagos ?? []).reduce((s, p) => s + Number(p.monto ?? 0), 0);
-  const saldo = Math.round((Number(datos.total ?? 0) - pagado) * 100) / 100;
+  const saldo = saldoDe(datos);
   const puedeCobrar = saldo > 0 && puede(usuario, 'cobrar');
 
   return (
@@ -139,7 +144,13 @@ function DetalleConsulta({ datos, consulta, usuario, recargar }) {
   );
 }
 
-function Extras({ extras }) {
+function Extras({ extras, consultas = [], usuario, recargar }) {
+  const [cobrando, setCobrando] = useState(null);
+  const pendientes = consultas
+    .map((c) => ({ consulta: c, saldo: saldoDe(c.datosEspecificos) }))
+    .filter((p) => p.saldo > 0);
+  const puedeCobrar = puede(usuario, 'cobrar');
+
   return (
     <>
       {extras.cuenta && (
@@ -150,7 +161,30 @@ function Extras({ extras }) {
             <div className="cifra"><small>Pagado</small><strong>{dinero(extras.cuenta.pagado)}</strong></div>
             <div className="cifra"><small>Saldo pendiente</small><strong>{dinero(extras.cuenta.saldoPendiente)}</strong></div>
           </div>
+          {pendientes.length > 0 && (
+            <>
+              <h4 style={{ marginTop: 18 }}>Consultas por cobrar</h4>
+              <ul className="items">
+                {pendientes.map(({ consulta, saldo }) => (
+                  <li key={consulta.id} style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span>
+                      <strong>{consulta.motivo || 'Consulta'}</strong>
+                      <br />
+                      <small>{fecha(consulta.fecha)} · total {dinero(consulta.datosEspecificos.total)} · saldo {dinero(saldo)}</small>
+                    </span>
+                    {puedeCobrar && (
+                      <button type="button" className="boton boton-primario boton-chico" onClick={() => setCobrando({ consulta, saldo })}>Cobrar</button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
         </section>
+      )}
+      {cobrando && (
+        <DialogoPago consulta={cobrando.consulta} saldo={cobrando.saldo} onCerrar={() => setCobrando(null)}
+          onListo={() => { setCobrando(null); recargar(); }} />
       )}
       {extras.procedimientos?.length > 0 && (
         <section className="panel vidrio">

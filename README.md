@@ -130,8 +130,11 @@ ocultan los botones que no le corresponden (el backend igual lo verifica):
 | Registrar paciente                  | ✅     | ✅        | ✅    |
 | Actualizar contacto                 |        | ✅        | ✅    |
 | Consulta, diagnóstico y receta      | ✅     |           |       |
-| Mis citas de hoy (agenda)           | ✅     |           |       |
+| Mis citas de hoy (agenda propia)    | ✅     |           |       |
+| Agenda por médico                   |        | ✅        | ✅    |
+| Ver médicos por especialidad        | ✅     | ✅        | ✅    |
 | Agendar, reprogramar y cancelar citas |      | ✅        | ✅    |
+| Confirmar cita / marcar "no asistió" |       | ✅        | ✅    |
 | Internar, cambiar médico, dar de alta (hospital) | ✅ |      |       |
 | Registrar pagos (odontológica)      |        | ✅        | ✅    |
 | Facturar y cobrar (hospital)        |        | ✅        | ✅    |
@@ -227,11 +230,12 @@ Todas las rutas (salvo login) requieren `Authorization: Bearer <token>`.
 | POST   | `/api/consultas/:id/recetas`       | Recetar medicamento(s)                               |
 | GET    | `/api/catalogos/medicos`           | Catálogo de médicos                                  |
 | GET    | `/api/catalogos/medicamentos`      | Catálogo de medicamentos                             |
-| GET    | `/api/agenda?fecha=AAAA-MM-DD`     | Citas del médico conectado ese día (hoy por defecto) |
+| GET    | `/api/agenda?fecha=AAAA-MM-DD&medicoId=` | Citas de ese día (hoy por defecto): las del médico conectado, o las del `medicoId` para recepción y admin |
 | GET    | `/api/pacientes/:id/citas`         | Citas pendientes del paciente, de hoy en adelante    |
 | POST   | `/api/pacientes/:id/citas`         | Agendar `{ medicoId, fechaHora, duracionMin?, motivo }` |
 | PATCH  | `/api/citas/:id`                   | Reprogramar `{ fechaHora, duracionMin? }`            |
 | POST   | `/api/citas/:id/cancelacion`       | Cancelar la cita                                     |
+| POST   | `/api/citas/:id/estado`            | `{ estado: 'confirmada' \| 'no_asistio' }` (la odontológica no confirma; "no asistió" solo pasada la hora) |
 | GET    | `/api/odontologica/procedimientos` | Catálogo de procedimientos (solo odontológica)       |
 | POST   | `/api/consultas/:id/pagos`         | Registrar pago `{ monto, metodoPago }` (odontológica) |
 | GET    | `/api/hospital/habitaciones`       | Habitaciones disponibles (hospital)                  |

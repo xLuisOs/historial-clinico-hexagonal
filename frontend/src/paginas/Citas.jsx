@@ -5,6 +5,8 @@ import { useEffect, useState } from 'react';
 import { api } from '../api.js';
 import { Alerta, Campo, Dialogo, erroresDe, Selector } from '../componentes/ui.jsx';
 import { fechaHora } from '../formato.js';
+import { useSesion } from '../sesion.jsx';
+import { puedeConfirmar, puedeMarcarAusencia } from './Agenda.jsx';
 
 // Solo la odontológica guarda cuánto dura cada cita; las demás usan 30 min.
 const conDuracion = (institucion) => institucion === 'odontologica';
@@ -21,8 +23,11 @@ function ahoraEntrada() {
 }
 
 export function PanelCitas({ pacienteId, puedeAgendar, version, onReprogramar, onCancelar }) {
+  const { usuario } = useSesion();
   const [citas, setCitas] = useState(null);
   const [disponible, setDisponible] = useState(true);
+  const [error, setError] = useState(null);
+  const [marcadas, setMarcadas] = useState(0);
 
   useEffect(() => {
     let vigente = true;
@@ -30,12 +35,23 @@ export function PanelCitas({ pacienteId, puedeAgendar, version, onReprogramar, o
       .then((r) => { if (vigente) setCitas(r); })
       .catch((e) => { if (vigente && e.estado === 503) setDisponible(false); });
     return () => { vigente = false; };
-  }, [pacienteId, version]);
+  }, [pacienteId, version, marcadas]);
+
+  async function marcar(cita, estado) {
+    try {
+      setError(null);
+      await api.marcarEstadoCita(cita.id, estado);
+      setMarcadas((n) => n + 1);
+    } catch (e) {
+      setError(e.message);
+    }
+  }
 
   if (!disponible) return null; // institución sin agenda (laboratorio)
   return (
     <section className="panel vidrio">
       <h2>Próximas citas</h2>
+      <Alerta>{error}</Alerta>
       {!citas && <p className="vacio">Cargando…</p>}
       {citas?.length === 0 && <p className="vacio">Sin citas programadas.</p>}
       {citas?.length > 0 && (
@@ -53,6 +69,12 @@ export function PanelCitas({ pacienteId, puedeAgendar, version, onReprogramar, o
               </div>
               {puedeAgendar && (
                 <div className="acciones">
+                  {puedeConfirmar(usuario.institucion, c) && (
+                    <button type="button" className="boton boton-secundario boton-chico" onClick={() => marcar(c, 'confirmada')}>Confirmar</button>
+                  )}
+                  {puedeMarcarAusencia(c) && (
+                    <button type="button" className="boton boton-fantasma boton-chico" onClick={() => marcar(c, 'no_asistio')}>No asistió</button>
+                  )}
                   <button type="button" className="boton boton-secundario boton-chico" onClick={() => onReprogramar(c)}>Reprogramar</button>
                   <button type="button" className="boton boton-fantasma boton-chico" onClick={() => onCancelar(c)}>Cancelar cita</button>
                 </div>
