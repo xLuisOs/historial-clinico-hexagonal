@@ -185,7 +185,7 @@ export function Historial() {
               onReprogramar={(cita) => setDialogo({ tipo: 'reprogramar', cita })}
               onCancelar={(cita) => setDialogo({ tipo: 'cancelarCita', cita })} />
           )}
-          <Extras extras={extras ?? {}} paciente={paciente} usuario={usuario} recargar={cargar} />
+          <Extras extras={extras ?? {}} paciente={paciente} consultas={consultas} usuario={usuario} recargar={cargar} />
         </div>
       </div>
 

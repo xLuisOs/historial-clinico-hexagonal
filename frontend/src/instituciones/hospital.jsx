@@ -1,9 +1,10 @@
 // Hospital General: la consulta lleva tratamientos y si fue por emergencia; el
-// historial muestra además internamientos y facturas.
+// historial suma internamientos y facturación.
 
 import { Campo } from '../componentes/ui.jsx';
-import { dinero, fecha } from '../formato.js';
+import { fecha } from '../formato.js';
 import { Quitar } from './comun.jsx';
+import { PanelFacturas } from './facturacion.jsx';
 import { PanelInternamientos } from './internamientos.jsx';
 
 const TRATAMIENTO = { descripcion: '', fechaInicio: '', fechaFin: '', indicaciones: '' };
@@ -68,34 +69,13 @@ function DetalleConsulta({ datos }) {
   );
 }
 
-function Extras({ extras, paciente, usuario, recargar }) {
+function Extras({ extras, paciente, consultas, usuario, recargar }) {
   return (
     <>
-
       <PanelInternamientos internamientos={extras.internamientos} paciente={paciente} usuario={usuario} recargar={recargar} />
 
-      {extras.facturas?.length > 0 && (
-        <section className="panel vidrio">
-          <h2>Facturas</h2>
-          <div className="tabla-envoltura">
-            <table className="tabla">
-              <thead>
-                <tr><th>Fecha</th><th className="numero">Total</th><th className="numero">Saldo</th><th>Estado</th></tr>
-              </thead>
-              <tbody>
-                {extras.facturas.map((f) => (
-                  <tr key={f.id}>
-                    <td>{fecha(f.fechaEmision)}</td>
-                    <td className="numero">{dinero(f.total)}</td>
-                    <td className="numero">{dinero(f.saldo)}</td>
-                    <td><span className={`etiqueta ${f.estado === 'pagada' ? 'etiqueta-exito' : 'etiqueta-aviso'}`}>{f.estado}</span></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      )}
+      <PanelFacturas facturas={extras.facturas} consultas={consultas} internamientos={extras.internamientos}
+        paciente={paciente} usuario={usuario} recargar={recargar} />
     </>
   );
 }

@@ -134,6 +134,8 @@ ocultan los botones que no le corresponden (el backend igual lo verifica):
 | Agendar, reprogramar y cancelar citas |      | ✅        | ✅    |
 | Internar, cambiar médico, dar de alta (hospital) | ✅ |      |       |
 | Registrar pagos (odontológica)      |        | ✅        | ✅    |
+| Facturar y cobrar (hospital)        |        | ✅        | ✅    |
+| Anular facturas sin pagos (hospital) |       |           | ✅    |
 | Archivar historial                  |        |           | ✅    |
 
 ### Recrear las bases desde cero
@@ -237,3 +239,6 @@ Todas las rutas (salvo login) requieren `Authorization: Bearer <token>`.
 | POST   | `/api/internamientos/:id/cambio-medico` | Cambiar médico a cargo `{ medicoId, motivoCambio }` |
 | POST   | `/api/internamientos/:id/tratamientos`  | Tratamiento durante el internamiento            |
 | POST   | `/api/internamientos/:id/alta`     | Dar de alta `{ diagnosticoAlta }`: libera la habitación |
+| POST   | `/api/pacientes/:id/facturas`      | Facturar `{ consultaId \| internamientoId, items: [{ descripcion, cantidad, precioUnitario }] }` |
+| POST   | `/api/facturas/:id/pagos`          | Pago `{ monto, metodoPago, referencia? }` (efectivo, tarjeta, transferencia, seguro) |
+| POST   | `/api/facturas/:id/anulacion`      | Anular una factura sin pagos (admin)                 |

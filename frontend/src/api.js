@@ -87,4 +87,7 @@ export const api = {
   cambiarMedicoACargo: (id, datos) => pedir('POST', `/internamientos/${q(id)}/cambio-medico`, datos),
   tratamientoInternamiento: (id, datos) => pedir('POST', `/internamientos/${q(id)}/tratamientos`, datos),
   darDeAlta: (id, datos) => pedir('POST', `/internamientos/${q(id)}/alta`, datos),
+  crearFactura: (pacienteId, datos) => pedir('POST', `/pacientes/${q(pacienteId)}/facturas`, datos),
+  pagarFactura: (id, datos) => pedir('POST', `/facturas/${q(id)}/pagos`, datos),
+  anularFactura: (id) => pedir('POST', `/facturas/${q(id)}/anulacion`),
 };

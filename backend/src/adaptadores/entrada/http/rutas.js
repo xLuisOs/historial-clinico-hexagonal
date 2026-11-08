@@ -104,3 +104,12 @@ rutas.post('/internamientos/:id/tratamientos', async (req, res) => {
 rutas.post('/internamientos/:id/alta', async (req, res) => {
   res.json(await hospital.darDeAlta(req.contexto, req.params.id, req.body));
 });
+rutas.post('/pacientes/:id/facturas', async (req, res) => {
+  res.status(201).json(await hospital.crearFactura(req.contexto, req.params.id, req.body));
+});
+rutas.post('/facturas/:id/pagos', async (req, res) => {
+  res.status(201).json(await hospital.registrarPagoFactura(req.contexto, req.params.id, req.body));
+});
+rutas.post('/facturas/:id/anulacion', async (req, res) => {
+  res.json(await hospital.anularFactura(req.contexto, req.params.id));
+});

@@ -1,7 +1,8 @@
 // Casos de uso exclusivos del Hospital General (sea cual sea su motor):
-// internamientos. Los decide el médico; cualquiera puede ver las habitaciones.
+// internamientos (los decide el médico) y facturación (recepción y admin).
 
 import { NoDisponible } from '../dominio/errores.js';
+import { validarNuevaFactura, validarPagoFactura } from '../dominio/factura.js';
 import { validarAlta, validarCambioMedico, validarIngreso, validarTratamiento } from '../dominio/internamiento.js';
 import { exigirRol } from './casos-uso.js';
 
@@ -35,4 +36,30 @@ export function agregarTratamientoInternamiento({ usuario, repos }, internamient
 export function darDeAlta({ usuario, repos }, internamientoId, datos) {
   exigirRol(usuario, 'medico');
   return internamientosDe(repos).darDeAlta(internamientoId, validarAlta(datos));
+}
+
+// ------------------------------------------------------------- facturación
+
+function facturacionDe(repos) {
+  if (!repos.facturacion) throw new NoDisponible('Solo disponible para el Hospital General');
+  return repos.facturacion;
+}
+
+// Regla: una consulta o un internamiento del mismo paciente, sin otra factura
+// vigente. El total lo calcula la base a partir del detalle.
+export function crearFactura({ usuario, repos }, pacienteId, datos) {
+  exigirRol(usuario, 'recepcion', 'admin');
+  return facturacionDe(repos).crear(pacienteId, validarNuevaFactura(datos));
+}
+
+// La base rechaza un pago mayor al saldo y cierra la factura al completarse.
+export function registrarPagoFactura({ usuario, repos }, facturaId, datos) {
+  exigirRol(usuario, 'recepcion', 'admin');
+  return facturacionDe(repos).registrarPago(facturaId, validarPagoFactura(datos));
+}
+
+// Solo el admin, y solo si la factura no tiene pagos.
+export function anularFactura({ usuario, repos }, facturaId) {
+  exigirRol(usuario, 'admin');
+  return facturacionDe(repos).anular(facturaId);
 }

@@ -155,23 +155,52 @@ export async function cargarInternamientos(cx, pacienteId) {
   }));
 }
 
-/** Facturas con lo pagado y el saldo de cada una. */
-async function cargarFacturas(cx, pacienteId) {
-  const { rows } = await cx.query(
+/**
+ * Facturas del paciente (o una sola), con su origen (consulta o internamiento),
+ * el detalle, los pagos y el saldo.
+ */
+export async function cargarFacturas(cx, pacienteId, facturaId = null) {
+  const { rows: filas } = await cx.query(
     `SELECT f.id_factura, f.fecha_emision, f.total, f.estado,
-            COALESCE((SELECT SUM(monto) FROM pago p WHERE p.factura_fk = f.id_factura), 0) AS pagado
-     FROM factura f WHERE f.paciente_fk = $1
+            f.consulta_fk, co.fecha_hora_atencion, co.motivo_consulta,
+            f.internamiento_fk, i.fecha_ingreso, h.numero AS habitacion
+     FROM factura f
+     LEFT JOIN consulta co     ON co.id_consulta = f.consulta_fk
+     LEFT JOIN internamiento i ON i.id_internamiento = f.internamiento_fk
+     LEFT JOIN habitacion h    ON h.id_habitacion = i.habitacion_fk
+     WHERE f.paciente_fk = $1 AND ($2::int IS NULL OR f.id_factura = $2)
      ORDER BY f.fecha_emision DESC`,
-    [pacienteId],
+    [pacienteId, facturaId],
   );
-  return rows.map((f) => ({
-    id: String(f.id_factura),
-    fechaEmision: f.fecha_emision,
-    total: f.total,
-    pagado: f.pagado,
-    saldo: Math.round((f.total - f.pagado) * 100) / 100,
-    estado: f.estado,
-  }));
+  if (filas.length === 0) return [];
+
+  const ids = filas.map((f) => f.id_factura);
+  const [{ rows: detalle }, { rows: pagos }] = await todas(cx,
+    [`SELECT factura_fk, descripcion, cantidad, precio_unitario, subtotal
+      FROM detalle_factura WHERE factura_fk = ANY($1) ORDER BY id_detalle_factura`, [ids]],
+    [`SELECT factura_fk, fecha_pago, monto, metodo_pago, referencia
+      FROM pago WHERE factura_fk = ANY($1) ORDER BY fecha_pago`, [ids]],
+  );
+
+  return filas.map((f) => {
+    const susPagos = pagos.filter((p) => p.factura_fk === f.id_factura);
+    const pagado = Math.round(susPagos.reduce((s, p) => s + p.monto, 0) * 100) / 100;
+    return {
+      id: String(f.id_factura),
+      fechaEmision: f.fecha_emision,
+      total: f.total,
+      pagado,
+      saldo: Math.round((f.total - pagado) * 100) / 100,
+      estado: f.estado,
+      origen: f.consulta_fk !== null
+        ? { tipo: 'consulta', id: String(f.consulta_fk), fecha: f.fecha_hora_atencion, descripcion: f.motivo_consulta }
+        : { tipo: 'internamiento', id: String(f.internamiento_fk), fecha: f.fecha_ingreso, descripcion: `Habitación ${f.habitacion}` },
+      detalle: detalle
+        .filter((d) => d.factura_fk === f.id_factura)
+        .map((d) => ({ descripcion: d.descripcion, cantidad: d.cantidad, precioUnitario: d.precio_unitario, subtotal: d.subtotal })),
+      pagos: susPagos.map((p) => ({ fecha: p.fecha_pago, monto: p.monto, metodoPago: p.metodo_pago, referencia: p.referencia })),
+    };
+  });
 }
 
 // ---------------------------------------------------------------- escritura
