@@ -1,3 +1,4 @@
+import pg from 'pg';
 import { Conflicto, NoEncontrado } from '../../../../dominio/errores.js';
 import { enTransaccion, traducirError } from '../conexion.js';
 import { exigirPacienteActivo, filaAPaciente, idNumerico, SELECT_PACIENTE } from './pacientes.js';
@@ -10,13 +11,21 @@ const MENSAJES_RECETA = {
 // ------------------------------------------------------------------ lectura
 
 /**
- * Carga consultas completas (diagnósticos, receta, tratamientos) con 4 consultas en lugar de N+1.
- * Van una tras otra: dentro de una transacción todas usan la misma conexión.
+ * Ejecuta varias consultas: en paralelo si `cx` es el pool (cada una toma su
+ * conexión), una tras otra si es una conexión de una transacción.
  */
+async function todas(cx, ...consultas) {
+  if (cx instanceof pg.Pool) return Promise.all(consultas.map((c) => cx.query(...c)));
+  const resultados = [];
+  for (const c of consultas) resultados.push(await cx.query(...c));
+  return resultados;
+}
+
+/** Carga consultas completas (diagnósticos, receta, tratamientos) con 4 consultas en lugar de N+1. */
 async function cargarConsultas(cx, where, params) {
   const { rows: filas } = await cx.query(
     `SELECT co.id_consulta, co.cita_fk, co.fecha_hora_atencion, co.motivo_consulta, co.es_emergencia,
-          m.id_medico, m.nombres || ' ' || m.apellidos AS medico_nombre
+            m.id_medico, m.nombres || ' ' || m.apellidos AS medico_nombre
      FROM consulta co
      JOIN medico m ON m.id_medico = co.medico_fk
      WHERE ${where}
@@ -26,28 +35,21 @@ async function cargarConsultas(cx, where, params) {
   if (filas.length === 0) return [];
 
   const ids = filas.map((f) => f.id_consulta);
-  const { rows: diagnosticos } = await cx.query(
-    `SELECT id_diagnostico, consulta_fk, codigo_cie10, descripcion, tipo
-     FROM diagnostico WHERE consulta_fk = ANY($1)
-     ORDER BY tipo = 'principal' DESC, id_diagnostico`,
-    [ids],
-  );
-  const { rows: items } = await cx.query(
-    `SELECT r.id_receta, r.consulta_fk, r.fecha_emision, r.indicaciones AS indicaciones_generales,
-            d.id_detalle, d.dosis, d.frecuencia, d.duracion_dias, d.via, d.indicaciones,
-            md.id_medicamento, md.nombre, md.presentacion
-     FROM receta r
-     LEFT JOIN detalle_receta d ON d.receta_fk = r.id_receta
-     LEFT JOIN medicamento md   ON md.id_medicamento = d.medicamento_fk
-     WHERE r.consulta_fk = ANY($1)
-     ORDER BY d.id_detalle`,
-    [ids],
-  );
-  const { rows: tratamientos } = await cx.query(
-    `SELECT id_tratamiento, consulta_fk, descripcion, fecha_inicio, fecha_fin, indicaciones
-     FROM tratamiento WHERE consulta_fk = ANY($1)
-     ORDER BY id_tratamiento`,
-    [ids],
+  const [{ rows: diagnosticos }, { rows: items }, { rows: tratamientos }] = await todas(cx,
+    [`SELECT id_diagnostico, consulta_fk, codigo_cie10, descripcion, tipo
+      FROM diagnostico WHERE consulta_fk = ANY($1)
+      ORDER BY tipo = 'principal' DESC, id_diagnostico`, [ids]],
+    [`SELECT r.id_receta, r.consulta_fk, r.fecha_emision, r.indicaciones AS indicaciones_generales,
+             d.id_detalle, d.dosis, d.frecuencia, d.duracion_dias, d.via, d.indicaciones,
+             md.id_medicamento, md.nombre, md.presentacion
+      FROM receta r
+      LEFT JOIN detalle_receta d ON d.receta_fk = r.id_receta
+      LEFT JOIN medicamento md   ON md.id_medicamento = d.medicamento_fk
+      WHERE r.consulta_fk = ANY($1)
+      ORDER BY d.id_detalle`, [ids]],
+    [`SELECT id_tratamiento, consulta_fk, descripcion, fecha_inicio, fecha_fin, indicaciones
+      FROM tratamiento WHERE consulta_fk = ANY($1)
+      ORDER BY id_tratamiento`, [ids]],
   );
 
   return filas.map((f) => {
@@ -110,8 +112,8 @@ async function obtenerConsulta(cx, consultaId) {
 async function cargarInternamientos(cx, pacienteId) {
   const { rows: filas } = await cx.query(
     `SELECT i.id_internamiento, i.fecha_ingreso, i.fecha_alta, i.estado, i.motivo_ingreso,
-          i.diagnostico_ingreso, i.diagnostico_alta, h.numero AS habitacion,
-          m.nombres || ' ' || m.apellidos AS medico_responsable
+            i.diagnostico_ingreso, i.diagnostico_alta, h.numero AS habitacion,
+            m.nombres || ' ' || m.apellidos AS medico_responsable
      FROM internamiento i
      JOIN habitacion h ON h.id_habitacion = i.habitacion_fk
      JOIN medico m     ON m.id_medico = i.medico_responsable_fk
@@ -122,17 +124,13 @@ async function cargarInternamientos(cx, pacienteId) {
   if (filas.length === 0) return [];
 
   const ids = filas.map((f) => f.id_internamiento);
-  const { rows: medicos } = await cx.query(
-    `SELECT im.internamiento_fk, m.nombres || ' ' || m.apellidos AS medico,
-            im.fecha_inicio, im.fecha_fin, im.motivo_cambio
-     FROM internamiento_medico im JOIN medico m ON m.id_medico = im.medico_fk
-     WHERE im.internamiento_fk = ANY($1) ORDER BY im.fecha_inicio`,
-    [ids],
-  );
-  const { rows: tratamientos } = await cx.query(
-    `SELECT internamiento_fk, descripcion, fecha_inicio, fecha_fin, indicaciones
-     FROM tratamiento WHERE internamiento_fk = ANY($1) ORDER BY id_tratamiento`,
-    [ids],
+  const [{ rows: medicos }, { rows: tratamientos }] = await todas(cx,
+    [`SELECT im.internamiento_fk, m.nombres || ' ' || m.apellidos AS medico,
+             im.fecha_inicio, im.fecha_fin, im.motivo_cambio
+      FROM internamiento_medico im JOIN medico m ON m.id_medico = im.medico_fk
+      WHERE im.internamiento_fk = ANY($1) ORDER BY im.fecha_inicio`, [ids]],
+    [`SELECT internamiento_fk, descripcion, fecha_inicio, fecha_fin, indicaciones
+      FROM tratamiento WHERE internamiento_fk = ANY($1) ORDER BY id_tratamiento`, [ids]],
   );
 
   return filas.map((f) => ({
@@ -160,7 +158,7 @@ async function cargarInternamientos(cx, pacienteId) {
 async function cargarFacturas(cx, pacienteId) {
   const { rows } = await cx.query(
     `SELECT f.id_factura, f.fecha_emision, f.total, f.estado,
-          COALESCE((SELECT SUM(monto) FROM pago p WHERE p.factura_fk = f.id_factura), 0) AS pagado
+            COALESCE((SELECT SUM(monto) FROM pago p WHERE p.factura_fk = f.id_factura), 0) AS pagado
      FROM factura f WHERE f.paciente_fk = $1
      ORDER BY f.fecha_emision DESC`,
     [pacienteId],

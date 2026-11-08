@@ -37,7 +37,9 @@ export function configDesdeUrl(url, ca) {
 // en db/postgres/01_esquema.sql).
 export function crearPoolPostgres({ url, ca }) {
   if (!url) throw new NoDisponible('PostgreSQL no está configurado (falta POSTGRES_URL)');
-  return new pg.Pool({ ...configDesdeUrl(url, ca), max: 5, types });
+  // Abrir una conexión a Supabase cuesta varios viajes de ida y vuelta (TLS +
+  // autenticación): se mantienen abiertas 5 minutos en vez de los 10 s por defecto.
+  return new pg.Pool({ ...configDesdeUrl(url, ca), max: 5, types, idleTimeoutMillis: 300_000, keepAlive: true });
 }
 
 /** Ejecuta `fn(cliente)` dentro de una transacción; si algo falla, hace ROLLBACK. */
