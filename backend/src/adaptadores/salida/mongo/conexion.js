@@ -1,5 +1,28 @@
+import dns from 'node:dns';
 import { MongoClient, ObjectId } from 'mongodb';
 import { Conflicto, DatosInvalidos, NoDisponible, NoEncontrado } from '../../../dominio/errores.js';
+
+const DNS_PUBLICOS = ['1.1.1.1', '8.8.8.8'];
+
+/**
+ * Las URL mongodb+srv:// (Atlas) necesitan una consulta DNS de tipo SRV que
+ * Node hace con su propio resolvedor. En algunas máquinas Windows (VPN o proxy
+ * del navegador) ese resolvedor queda apuntando a 127.0.0.1 sin nadie que
+ * responda y la conexión falla con "querySrv ECONNREFUSED", aunque el resto del
+ * sistema resuelva bien. En ese caso se usan DNS públicos. MONGO_DNS permite
+ * fijar otros servidores (separados por coma) o desactivarlo con "sistema".
+ */
+export function prepararDns(url) {
+  if (!url?.startsWith('mongodb+srv://')) return;
+  const preferidos = process.env.MONGO_DNS?.trim();
+  if (preferidos === 'sistema') return;
+  if (preferidos) {
+    dns.setServers(preferidos.split(',').map((s) => s.trim()).filter(Boolean));
+    return;
+  }
+  const soloLocales = dns.getServers().every((s) => /^(127\.|::1$|\[::1\])/.test(s));
+  if (soloLocales) dns.setServers(DNS_PUBLICOS);
+}
 
 /**
  * Cliente de MongoDB. Atlas (y el contenedor local con replica set) permiten
@@ -7,6 +30,7 @@ import { Conflicto, DatosInvalidos, NoDisponible, NoEncontrado } from '../../../
  */
 export function crearClienteMongo({ url }) {
   if (!url) throw new NoDisponible('MongoDB no está configurado (falta MONGO_URL)');
+  prepararDns(url);
   return new MongoClient(url, { maxPoolSize: 5, serverSelectionTimeoutMS: 8000 });
 }
 

@@ -9,7 +9,7 @@ arquitectura hexagonal, la lógica de negocio no depende del motor.
 | Hospital General         | PostgreSQL | Supabase       | Fer         | `@hospital.gt`      |
 | Clínica Odontológica     | Firebase   | Firestore      | Fer         | `@odonto.gt`        |
 | Laboratorio Clínico      | MongoDB    | MongoDB Atlas  | Luis        | `@lab.gt`           |
-| Centro Médico Pediátrico | MySQL      | Aiven          | Luis        | `@pediatrico.gt`    |
+| Centro Médico Pediátrico | MySQL      | Azure Database for MySQL | Luis | `@pediatrico.gt` |
 
 Al iniciar sesión, el dominio del correo decide la institución. Desde ese momento
 todas las operaciones del usuario van al motor de esa institución.
@@ -62,14 +62,21 @@ npm run dev                                   # API en http://localhost:4000/api
 
 ### Opción B: bases en la nube (compartidas entre las dos computadoras)
 
-**MySQL en Aiven**
-1. Crear la cuenta en aiven.io, luego *Create service* → **MySQL** → plan **Free**.
-2. En la página del servicio, copiar *Host*, *Port* y la clave de `avnadmin`, y
-   descargar el **CA certificate** en `backend/certs/aiven-ca.pem` (no se sube al repo).
-3. En `.env`, llenar `MYSQL_ADMIN_URL`, `MYSQL_URL` y `MYSQL_SSL_CA` como indica
-   `.env.example`. Usar contraseñas fuertes en `MYSQL_APP_PASSWORD` y `MYSQL_LECTURA_PASSWORD`.
-4. Ejecutar `npm run db:mysql:semilla` **una sola vez** (lo hace una persona; la otra
+**MySQL en Azure** (servidor flexible, con el beneficio Azure for Students)
+1. Crear un *Azure Database for MySQL – Servidor flexible*: nivel **Ampliable B1ms**,
+   20 GB, sin alta disponibilidad ni crecimiento automático (entra en las 750 h/mes
+   gratuitas), MySQL 8.4, región permitida por la suscripción (usamos *Mexico Central*).
+2. En *Redes*: acceso público y regla de firewall `0.0.0.0 – 255.255.255.255`
+   (la conexión exige TLS 1.2 y contraseña).
+3. En *Parámetros del servidor*: `log_bin_trust_function_creators = ON`. Sin esto
+   el administrador (que no tiene SUPER) no puede crear los triggers.
+4. En `.env`, llenar `MYSQL_ADMIN_URL` (usuario administrador del servidor) y
+   `MYSQL_URL` como indica `.env.example`. Usar contraseñas fuertes en
+   `MYSQL_APP_PASSWORD` y `MYSQL_LECTURA_PASSWORD`.
+5. Ejecutar `npm run db:mysql:semilla` **una sola vez** (lo hace una persona; la otra
    solo necesita el `.env`).
+
+> Para ahorrar crédito, el servidor se puede **Detener** desde el portal cuando no se usa.
 
 **MongoDB en Atlas**
 1. Crear la cuenta en mongodb.com/atlas y un clúster **M0 (Free)**.

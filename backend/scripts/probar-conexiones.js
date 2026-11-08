@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import mysql from 'mysql2/promise';
 import { MongoClient } from 'mongodb';
 import { configDesdeUrl } from '../src/adaptadores/salida/mysql/conexion.js';
+import { prepararDns } from '../src/adaptadores/salida/mongo/conexion.js';
 
 dotenv.config({ quiet: true });
 
@@ -23,6 +24,7 @@ const pruebas = {
 
   async 'MongoDB (laboratorio)'() {
     if (!process.env.MONGO_URL) return 'sin configurar (MONGO_URL)';
+    prepararDns(process.env.MONGO_URL);
     const cliente = new MongoClient(process.env.MONGO_URL, { serverSelectionTimeoutMS: 8000 });
     try {
       await cliente.connect();
@@ -53,7 +55,7 @@ for (const [nombre, probar] of Object.entries(pruebas)) {
     fallo = true;
     console.log(`✘ ${nombre.padEnd(24)} ${error.message}`);
     if (/self[- ]signed|certificate/i.test(error.message)) {
-      console.log('    → Descarga el CA certificate de Aiven y pon su ruta en MYSQL_SSL_CA');
+      console.log('    → Revisa el certificado del servidor (MYSQL_SSL_CA) o la regla de firewall en Azure');
     }
   }
 }

@@ -12,6 +12,7 @@ import dotenv from 'dotenv';
 import { MongoClient } from 'mongodb';
 import { COLECCIONES } from '../db/mongo/esquemas.js';
 import { SEMILLA } from '../db/mongo/semilla.js';
+import { prepararDns } from '../src/adaptadores/salida/mongo/conexion.js';
 
 dotenv.config({ quiet: true });
 
@@ -24,6 +25,7 @@ const nombreDb = process.env.MONGO_DB ?? 'laboratorio';
 const conSemilla = process.argv.includes('--semilla');
 const reiniciar = process.argv.includes('--reiniciar');
 
+prepararDns(url);
 const cliente = new MongoClient(url, { serverSelectionTimeoutMS: 8000 });
 
 try {

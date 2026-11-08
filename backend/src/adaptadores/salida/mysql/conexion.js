@@ -6,7 +6,7 @@ const HOSTS_LOCALES = ['localhost', '127.0.0.1', '::1'];
 
 /**
  * Convierte una URL mysql://usuario:clave@host:puerto/base en la configuración
- * de mysql2. Fuera de localhost exige SSL (Aiven lo requiere): si se indica
+ * de mysql2. Fuera de localhost exige SSL (Azure lo requiere): si se indica
  * `ca`, se valida el certificado del servidor contra ese archivo.
  */
 export function configDesdeUrl(url, ca) {
