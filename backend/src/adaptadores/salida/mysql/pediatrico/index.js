@@ -1,6 +1,7 @@
 // Adaptador MySQL del Centro Médico Pediátrico: implementa los puertos de
 // puertos/repositorios.js sobre el esquema de db/mysql/01_esquema.sql.
 
+import { crearRepositorioAgenda } from './agenda.js';
 import { crearRepositorioAtenciones } from './atenciones.js';
 import { crearRepositorioPacientes } from './pacientes.js';
 
@@ -29,28 +30,8 @@ export function crearAdaptadorPediatricoMysql(pool) {
       },
     },
 
-    // Puerto opcional: citas del médico en un día.
-    agenda: {
-      async citasDelMedico(medicoId, fecha) {
-        const [filas] = await pool.query(
-          `SELECT ci.id_cita, ci.fecha_hora_programada, ci.estado_cita, ci.motivo_cita,
-                  p.id_paciente, CONCAT(p.nombres, ' ', p.apellidos) AS paciente
-           FROM cita ci JOIN paciente p ON p.id_paciente = ci.paciente_fk
-           WHERE ci.medico_fk = ? AND ci.fecha_hora_programada >= ?
-             AND ci.fecha_hora_programada < ? + INTERVAL 1 DAY
-           ORDER BY ci.fecha_hora_programada`,
-          [medicoId, fecha, fecha],
-        );
-        return filas.map((c) => ({
-          id: String(c.id_cita),
-          fechaHora: c.fecha_hora_programada,
-          duracionMin: null,
-          estado: c.estado_cita,
-          motivo: c.motivo_cita,
-          paciente: { id: String(c.id_paciente), nombre: c.paciente },
-        }));
-      },
-    },
+    // Puerto opcional (fuera del contrato común): citas.
+    agenda: crearRepositorioAgenda(pool),
 
     pacientes: crearRepositorioPacientes(pool),
     atenciones: crearRepositorioAtenciones(pool),

@@ -78,6 +78,11 @@ export function fechaATimestamp(fecha, zonaHoraria) {
   return fecha ? Timestamp.fromDate(new Date(`${fecha}T00:00:00${zonaHoraria}`)) : null;
 }
 
+/** 'AAAA-MM-DD HH:MM:SS' en hora local → Timestamp */
+export function textoATimestamp(texto, zonaHoraria) {
+  return Timestamp.fromDate(new Date(`${texto.replace(' ', 'T')}${zonaHoraria}`));
+}
+
 /** Timestamp → 'AAAA-MM-DD HH:MM:SS' en hora local */
 export function timestampATexto(valor, zonaHoraria) {
   if (!valor?.toDate) return null;

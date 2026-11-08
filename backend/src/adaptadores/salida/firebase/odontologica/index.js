@@ -2,7 +2,7 @@
 // puertos de puertos/repositorios.js sobre el modelo documental de modelo.js.
 
 import { FieldValue } from 'firebase-admin/firestore';
-import { timestampATexto } from '../conexion.js';
+import { crearRepositorioAgenda } from './agenda.js';
 import { crearRepositorioAtenciones } from './atenciones.js';
 import { COLECCIONES, nombreCompleto, ROLES } from './modelo.js';
 import { crearRepositorioPacientes } from './pacientes.js';
@@ -33,24 +33,8 @@ export function crearAdaptadorOdontologicaFirebase(db, zonaHoraria) {
       },
     },
 
-    // Puerto opcional: citas del odontólogo en un día. Solo se filtra por
-    // odontólogo en Firestore (sin índice compuesto); el día se filtra aquí.
-    agenda: {
-      async citasDelMedico(odontologoId, fecha) {
-        const snap = await col('citas').where('odontologo.id', '==', odontologoId).get();
-        return snap.docs
-          .map((c) => ({
-            id: c.id,
-            fechaHora: timestampATexto(c.get('fecha_hora'), zonaHoraria),
-            duracionMin: c.get('duracion_min') ?? null,
-            estado: c.get('estado'),
-            motivo: c.get('motivo') ?? null,
-            paciente: { id: c.get('paciente.id'), nombre: nombreCompleto(c.get('paciente')) },
-          }))
-          .filter((c) => c.fechaHora?.startsWith(fecha))
-          .sort((a, b) => a.fechaHora.localeCompare(b.fechaHora));
-      },
-    },
+    // Puerto opcional (fuera del contrato común): citas.
+    agenda: crearRepositorioAgenda(db, zonaHoraria),
 
     pacientes: crearRepositorioPacientes(db, zonaHoraria),
     atenciones: crearRepositorioAtenciones(db, zonaHoraria),

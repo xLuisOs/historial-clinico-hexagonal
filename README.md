@@ -131,6 +131,7 @@ ocultan los botones que no le corresponden (el backend igual lo verifica):
 | Actualizar contacto                 |        | ✅        | ✅    |
 | Consulta, diagnóstico y receta      | ✅     |           |       |
 | Mis citas de hoy (agenda)           | ✅     |           |       |
+| Agendar, reprogramar y cancelar citas |      | ✅        | ✅    |
 | Archivar historial                  |        |           | ✅    |
 
 ### Recrear las bases desde cero
@@ -223,4 +224,8 @@ Todas las rutas (salvo login) requieren `Authorization: Bearer <token>`.
 | GET    | `/api/catalogos/medicos`           | Catálogo de médicos                                  |
 | GET    | `/api/catalogos/medicamentos`      | Catálogo de medicamentos                             |
 | GET    | `/api/agenda?fecha=AAAA-MM-DD`     | Citas del médico conectado ese día (hoy por defecto) |
+| GET    | `/api/pacientes/:id/citas`         | Citas pendientes del paciente, de hoy en adelante    |
+| POST   | `/api/pacientes/:id/citas`         | Agendar `{ medicoId, fechaHora, duracionMin?, motivo }` |
+| PATCH  | `/api/citas/:id`                   | Reprogramar `{ fechaHora, duracionMin? }`            |
+| POST   | `/api/citas/:id/cancelacion`       | Cancelar la cita                                     |
 | GET    | `/api/odontologica/procedimientos` | Catálogo de procedimientos (solo odontológica)       |

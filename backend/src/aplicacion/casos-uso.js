@@ -11,6 +11,7 @@ import { NoDisponible, SinPermiso } from '../dominio/errores.js';
 import { Validador } from '../dominio/validacion.js';
 import { validarNuevoPaciente, validarContacto, validarBaja } from '../dominio/paciente.js';
 import { validarNuevaConsulta, validarDiagnostico, validarReceta } from '../dominio/atencion.js';
+import { validarNuevaCita, validarReprogramacion } from '../dominio/cita.js';
 
 function exigirRol(usuario, ...roles) {
   if (!roles.includes(usuario.rol)) {
@@ -81,16 +82,45 @@ export function listarMedicamentos({ repos }) {
 }
 
 // ---------------------------------------------------------------- agenda
+//
+// Puerto opcional `agenda`: el laboratorio trabaja con órdenes, no con citas.
+// Agenda la recepción (las secretarias, en la odontológica) o el admin; el
+// médico ve sus citas del día y las atiende al registrar la consulta.
 
 const hoyEnGuatemala = () => new Date(Date.now() - 6 * 3_600_000).toISOString().slice(0, 10);
 
+function agendaDe(repos) {
+  if (!repos.agenda) throw new NoDisponible('Esta institución no maneja agenda de citas');
+  return repos.agenda;
+}
+
 // Citas del médico que inició sesión en un día (hoy si no se indica).
-// Puerto opcional `agenda`: el laboratorio trabaja con órdenes, no con citas.
 export function citasDelDia({ usuario, repos }, fecha) {
   exigirRol(usuario, 'medico');
-  if (!repos.agenda) throw new NoDisponible('Esta institución no maneja agenda de citas');
   const v = new Validador();
   const dia = v.fecha('fecha', fecha) ?? hoyEnGuatemala();
   v.lanzarSiHayErrores();
-  return repos.agenda.citasDelMedico(usuario.medicoId, dia);
+  return agendaDe(repos).citasDelMedico(usuario.medicoId, dia);
+}
+
+// Citas pendientes del paciente, de hoy en adelante.
+export function citasDelPaciente({ repos }, pacienteId) {
+  return agendaDe(repos).citasDelPaciente(pacienteId);
+}
+
+// Regla: no se agenda en el pasado, ni a un paciente archivado, ni a un médico
+// que ya tiene otra cita a esa hora (lo verifica el adaptador en una transacción).
+export function agendarCita({ usuario, repos }, pacienteId, datos) {
+  exigirRol(usuario, 'recepcion', 'admin');
+  return agendaDe(repos).agendar(pacienteId, validarNuevaCita(datos), usuario);
+}
+
+export function reprogramarCita({ usuario, repos }, citaId, datos) {
+  exigirRol(usuario, 'recepcion', 'admin');
+  return agendaDe(repos).reprogramar(citaId, validarReprogramacion(datos));
+}
+
+export function cancelarCita({ usuario, repos }, citaId) {
+  exigirRol(usuario, 'recepcion', 'admin');
+  return agendaDe(repos).cancelar(citaId);
 }
