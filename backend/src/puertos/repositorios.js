@@ -62,6 +62,24 @@ export const PUERTOS = {
 //   agenda:       citas (ver aplicacion/casos-uso.js)
 //   antecedentes: { agregar(pacienteId, antecedente, usuario) → Antecedente[] }
 //                 antecedentes médicos (ver dominio/antecedente.js)
+//   personal:     médicos administrados por el admin (ver dominio/medico.js).
+//                 Medico = { id, nombre, nombres, apellidos, numeroColegiado,
+//                            especialidad, telefono, correo, activo }
+//     listarPersonal()                      → Medico[] (activos e inactivos)
+//     registrarMedico({ nombres, apellidos, numeroColegiado, especialidad,
+//                       telefono, correo, passwordHash })  → Medico
+//         médico + usuario en una sola operación atómica; colegiado o correo
+//         repetidos → Conflicto
+//     actualizarMedico(id, cambios)         → Medico
+//     restablecerPassword(id, passwordHash)
+//     cambiarEstadoMedico(id, activo)       → Medico
+//         desactivar cambia médico y usuario a la vez, y falla con Conflicto
+//         (detalles: { citas, internamientos }) si tiene citas pendientes a
+//         futuro o pacientes internados a su cargo
+//     Cada método es opcional: el laboratorio trae listar, actualizar y
+//     cambiar estado de sus médicos referentes, que no inician sesión.
+//   usuarios.estaActivo(usuarioId) → boolean (opcional): con él, una sesión
+//     abierta deja de servir en cuanto el usuario se desactiva.
 
 // Puerto adicional, solo para el adaptador del Laboratorio Clínico (sea cual
 // sea su motor). Si un adaptador trae `laboratorio`, debe implementarlo completo.

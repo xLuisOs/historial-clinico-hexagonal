@@ -7,11 +7,14 @@
 // contenedor a partir del token). Por eso aquí no aparece ningún motor.
 // =====================================================================
 
+import bcrypt from 'bcryptjs';
+import { INSTITUCIONES } from '../config/instituciones.js';
 import { DatosInvalidos, NoDisponible, SinPermiso } from '../dominio/errores.js';
 import { Validador } from '../dominio/validacion.js';
 import { validarNuevoPaciente, validarContacto, validarBaja } from '../dominio/paciente.js';
 import { validarNuevaConsulta, validarDiagnostico, validarReceta } from '../dominio/atencion.js';
 import { validarAntecedente } from '../dominio/antecedente.js';
+import { validarCambiosMedico, validarEstadoMedico, validarNuevaPassword, validarNuevoMedico } from '../dominio/medico.js';
 import { historialParaRol, pacienteParaRol } from '../dominio/privacidad.js';
 import { validarCambioEstado, validarNuevaCita, validarReprogramacion } from '../dominio/cita.js';
 
@@ -90,6 +93,50 @@ export function recetar({ usuario, repos }, consultaId, datos) {
 
 export function listarMedicos({ repos }) {
   return repos.catalogos.listarMedicos();
+}
+
+// ---------------------------------------------------------------- personal
+//
+// El admin de cada institución administra a sus médicos (ver dominio/medico.js).
+// Las contraseñas llegan en claro solo hasta aquí: el adaptador recibe el hash.
+
+function repoPersonal(repos, metodo) {
+  if (typeof repos.personal?.[metodo] !== 'function') {
+    throw new NoDisponible('Esta institución no permite esta operación sobre su personal');
+  }
+  return repos.personal;
+}
+
+export function listarPersonal({ usuario, repos }) {
+  exigirRol(usuario, 'admin');
+  return repoPersonal(repos, 'listarPersonal').listarPersonal();
+}
+
+// Alta: queda en el catálogo y con su usuario, en una sola operación atómica.
+export async function registrarMedico({ usuario, repos }, datos) {
+  exigirRol(usuario, 'admin');
+  const personal = repoPersonal(repos, 'registrarMedico');
+  const { password, ...medico } = validarNuevoMedico(datos, INSTITUCIONES[usuario.institucion]);
+  return personal.registrarMedico({ ...medico, passwordHash: await bcrypt.hash(password, 10) });
+}
+
+export function actualizarMedico({ usuario, repos }, medicoId, datos) {
+  exigirRol(usuario, 'admin');
+  return repoPersonal(repos, 'actualizarMedico').actualizarMedico(medicoId, validarCambiosMedico(datos));
+}
+
+export async function restablecerPasswordMedico({ usuario, repos }, medicoId, datos) {
+  exigirRol(usuario, 'admin');
+  const personal = repoPersonal(repos, 'restablecerPassword');
+  await personal.restablecerPassword(medicoId, await bcrypt.hash(validarNuevaPassword(datos), 10));
+}
+
+// Desactivar exige que no tenga citas pendientes a futuro ni pacientes
+// internados a su cargo: el adaptador lo revisa en la misma transacción en la
+// que cambia el estado, con el médico bloqueado para que nadie le agende a la vez.
+export function cambiarEstadoMedico({ usuario, repos }, medicoId, datos) {
+  exigirRol(usuario, 'admin');
+  return repoPersonal(repos, 'cambiarEstadoMedico').cambiarEstadoMedico(medicoId, validarEstadoMedico(datos));
 }
 
 export function listarMedicamentos({ repos }) {

@@ -84,6 +84,24 @@ rutas.post('/consultas/:id/recetas', async (req, res) => {
 rutas.get('/catalogos/medicos', async (req, res) => {
   res.json(await casos.listarMedicos(req.contexto));
 });
+
+// Personal médico (solo admin).
+rutas.get('/personal/medicos', async (req, res) => {
+  res.json(await casos.listarPersonal(req.contexto));
+});
+rutas.post('/personal/medicos', async (req, res) => {
+  res.status(201).json(await casos.registrarMedico(req.contexto, req.body));
+});
+rutas.patch('/personal/medicos/:id', async (req, res) => {
+  res.json(await casos.actualizarMedico(req.contexto, req.params.id, req.body));
+});
+rutas.post('/personal/medicos/:id/password', async (req, res) => {
+  await casos.restablecerPasswordMedico(req.contexto, req.params.id, req.body);
+  res.status(204).end();
+});
+rutas.post('/personal/medicos/:id/estado', async (req, res) => {
+  res.json(await casos.cambiarEstadoMedico(req.contexto, req.params.id, req.body));
+});
 rutas.get('/catalogos/medicamentos', async (req, res) => {
   res.json(await casos.listarMedicamentos(req.contexto));
 });
