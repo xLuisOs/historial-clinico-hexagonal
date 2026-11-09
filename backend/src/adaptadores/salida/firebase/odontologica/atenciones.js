@@ -52,6 +52,7 @@ function documentoAConsulta(snap, zonaHoraria) {
         fecha: texto(p.fecha),
         metodoPago: p.metodo_pago,
         monto: p.monto,
+        referencia: p.referencia ?? null,
         registradoPor: p.registrado_por && { id: p.registrado_por.id, nombre: nombreCompleto(p.registrado_por) },
       })),
     },

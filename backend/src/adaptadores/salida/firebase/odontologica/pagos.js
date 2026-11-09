@@ -10,7 +10,7 @@ const redondear = (n) => Math.round(n * 100) / 100;
  * en una transacción: si otra recepcionista cobra a la vez, Firestore la
  * reintenta con el saldo ya actualizado.
  */
-export async function registrarPago(db, consultaId, { monto, metodoPago }, usuario) {
+export async function registrarPago(db, consultaId, { monto, metodoPago, referencia }, usuario) {
   return enTransaccion(db, async (t) => {
     const consulta = await t.get(db.collection(COLECCIONES.consultas).doc(consultaId));
     if (!consulta.exists) throw new NoEncontrado('Consulta no encontrada');
@@ -31,6 +31,7 @@ export async function registrarPago(db, consultaId, { monto, metodoPago }, usuar
         fecha: Timestamp.now(),
         metodo_pago: metodoPago,
         monto,
+        referencia: referencia ?? null,
         registrado_por: {
           id: quien.get('recepcionista_id') ?? null,
           nombres: quien.get('nombres') ?? usuario.nombre,

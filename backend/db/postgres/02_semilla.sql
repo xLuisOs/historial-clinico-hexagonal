@@ -138,7 +138,7 @@ INSERT INTO detalle_factura (factura_fk, descripcion, cantidad, precio_unitario)
 -- y cierran la factura cuando se completa).
 INSERT INTO pago (factura_fk, fecha_pago, monto, metodo_pago, referencia) VALUES
   (1, date_trunc('day', localtimestamp) - interval '30 days' + interval '10 hours 5 minutes', 350.00,  'efectivo', NULL),
-  (2, date_trunc('day', localtimestamp) - interval '12 days' + interval '11 hours 2 minutes', 300.00,  'tarjeta',  'AUT-558812'),
+  (2, date_trunc('day', localtimestamp) - interval '12 days' + interval '11 hours 2 minutes', 300.00,  'tarjeta',  '558812'),
   (3, date_trunc('day', localtimestamp) - interval '2 days'  + interval '9 hours 30 minutes', 5000.00, 'seguro',   'POL-77120');
 
 -- Como varios inserts llevan id explícito, cada tabla sigue numerando desde su último id.

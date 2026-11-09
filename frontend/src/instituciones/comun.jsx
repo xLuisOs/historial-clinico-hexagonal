@@ -1,3 +1,6 @@
+import { Campo } from '../componentes/ui.jsx';
+import { REFERENCIA_PAGO } from '../formato.js';
+
 /**
  * Para una institución sin vista propia: muestra los datos tal como llegan,
  * así la interfaz sigue funcionando aunque cambie lo que devuelve su adaptador.
@@ -31,3 +34,13 @@ export function ExtrasGenericos({ extras }) {
 export const Quitar = ({ onClick }) => (
   <button type="button" className="boton boton-fantasma boton-chico quitar" onClick={onClick}>Quitar</button>
 );
+
+/** Campo de referencia del pago: cambia de nombre según el método y no aparece en efectivo. */
+export function CampoReferencia({ metodo, value, onChange, error }) {
+  const regla = REFERENCIA_PAGO[metodo];
+  if (!regla) return null;
+  return (
+    <Campo etiqueta={`${regla.campo} *`} value={value} onChange={onChange} error={error} placeholder={regla.ayuda}
+      maxLength={regla.max} autoComplete="off" style={{ textTransform: 'uppercase' }} />
+  );
+}

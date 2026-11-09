@@ -208,8 +208,8 @@ const item = (clave, dosis, frecuencia, duracionDias) => ({
   via: 'oral',
   indicaciones: null,
 });
-const pago = (dias, hora, metodo, monto) => ({
-  fecha: instante(dias, hora), metodo_pago: metodo, monto, registrado_por: recJuarez,
+const pago = (dias, hora, metodo, monto, referencia = null) => ({
+  fecha: instante(dias, hora), metodo_pago: metodo, monto, referencia, registrado_por: recJuarez,
 });
 
 const consultas = [
@@ -255,7 +255,7 @@ const consultas = [
     },
     total: procedimientos.extraccion.costo,
     estado_pago: 'pagado',
-    pagos: [pago(-20, '12:10', 'tarjeta', procedimientos.extraccion.costo)],
+    pagos: [pago(-20, '12:10', 'tarjeta', procedimientos.extraccion.costo, '482913')],
   }),
 ];
 informar('consultas', consultas);

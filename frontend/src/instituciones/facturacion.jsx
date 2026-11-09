@@ -5,9 +5,9 @@
 import { useState } from 'react';
 import { api } from '../api.js';
 import { Alerta, Campo, Dialogo, erroresDe, Selector } from '../componentes/ui.jsx';
-import { dinero, fecha, fechaHora } from '../formato.js';
+import { dinero, fecha, fechaHora, REFERENCIA_PAGO, textoReferencia } from '../formato.js';
 import { puede } from '../sesion.jsx';
-import { Quitar } from './comun.jsx';
+import { CampoReferencia, Quitar } from './comun.jsx';
 
 const METODOS = { efectivo: 'Efectivo', tarjeta: 'Tarjeta', transferencia: 'Transferencia', seguro: 'Seguro' };
 const ESTADO = { pendiente: 'etiqueta-aviso', pagada: 'etiqueta-exito', anulada: 'etiqueta-gris' };
@@ -87,10 +87,12 @@ function DialogoNuevaFactura({ paciente, origenes, onCerrar, onListo }) {
 function DialogoPagoFactura({ factura, onCerrar, onListo }) {
   const [datos, setDatos] = useState({ monto: String(factura.saldo), metodoPago: 'efectivo', referencia: '' });
   const cambiar = (campo) => (e) => setDatos({ ...datos, [campo]: e.target.value });
+  // Al cambiar de método, la referencia anterior ya no aplica.
+  const cambiarMetodo = (e) => setDatos({ ...datos, metodoPago: e.target.value, referencia: '' });
   const { error, errores, enviando, enviar } = useEnvio(() => api.pagarFactura(factura.id, {
     monto: datos.monto === '' ? null : Number(datos.monto),
     metodoPago: datos.metodoPago,
-    referencia: datos.referencia.trim() || null,
+    referencia: REFERENCIA_PAGO[datos.metodoPago] ? datos.referencia.trim() || null : null,
   }), onListo);
 
   return (
@@ -100,11 +102,10 @@ function DialogoPagoFactura({ factura, onCerrar, onListo }) {
         <Alerta>{error?.message}</Alerta>
         <div className="rejilla">
           <Campo etiqueta="Monto (Q) *" type="number" min="0.01" step="0.01" value={datos.monto} onChange={cambiar('monto')} error={errores.monto} />
-          <Selector etiqueta="Método *" value={datos.metodoPago} onChange={cambiar('metodoPago')} vacio={null} error={errores.metodoPago}
+          <Selector etiqueta="Método *" value={datos.metodoPago} onChange={cambiarMetodo} vacio={null} error={errores.metodoPago}
             opciones={Object.entries(METODOS).map(([valor, texto]) => ({ valor, texto }))} />
         </div>
-        <Campo etiqueta="Referencia" value={datos.referencia} onChange={cambiar('referencia')} error={errores.referencia}
-          placeholder="No. de autorización, póliza…" />
+        <CampoReferencia metodo={datos.metodoPago} value={datos.referencia} onChange={cambiar('referencia')} error={errores.referencia} />
         <Pie onCerrar={onCerrar} enviando={enviando} texto="Registrar pago" />
       </form>
     </Dialogo>
@@ -177,7 +178,7 @@ export function PanelFacturas({ facturas = [], consultas = [], internamientos = 
                 {f.pagos.map((p, n) => (
                   <li key={n}>
                     <strong>{dinero(p.monto)}</strong>
-                    <small>{fecha(p.fecha)} · {METODOS[p.metodoPago] ?? p.metodoPago}{p.referencia ? ` · ${p.referencia}` : ''}</small>
+                    <small>{fecha(p.fecha)} · {METODOS[p.metodoPago] ?? p.metodoPago}{p.referencia ? ` · ${textoReferencia(p.metodoPago, p.referencia)}` : ''}</small>
                   </li>
                 ))}
               </ul>

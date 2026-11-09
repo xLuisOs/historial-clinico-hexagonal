@@ -279,7 +279,7 @@ Todas las rutas (salvo login) requieren `Authorization: Bearer <token>`.
 | POST   | `/api/citas/:id/cancelacion`       | Cancelar la cita                                     |
 | POST   | `/api/citas/:id/estado`            | `{ estado: 'confirmada' \| 'no_asistio' }` (la odontológica no confirma; "no asistió" solo pasada la hora) |
 | GET    | `/api/odontologica/procedimientos` | Catálogo de procedimientos (solo odontológica)       |
-| POST   | `/api/consultas/:id/pagos`         | Registrar pago `{ monto, metodoPago }` (odontológica) |
+| POST   | `/api/consultas/:id/pagos`         | Registrar pago `{ monto, metodoPago, referencia? }` (odontológica: efectivo, tarjeta, transferencia) |
 | GET    | `/api/hospital/habitaciones`       | Habitaciones disponibles (hospital)                  |
 | POST   | `/api/pacientes/:id/internamientos`| Internar `{ habitacionId, medicoId, motivoIngreso, diagnosticoIngreso? }` |
 | POST   | `/api/internamientos/:id/cambio-medico` | Cambiar médico a cargo `{ medicoId, motivoCambio }` |
@@ -287,6 +287,12 @@ Todas las rutas (salvo login) requieren `Authorization: Bearer <token>`.
 | POST   | `/api/internamientos/:id/alta`     | Dar de alta `{ diagnosticoAlta }`: libera la habitación |
 | POST   | `/api/pacientes/:id/facturas`      | Facturar `{ consultaId \| internamientoId, items: [{ descripcion, cantidad, precioUnitario }] }` |
 | POST   | `/api/facturas/:id/pagos`          | Pago `{ monto, metodoPago, referencia? }` (efectivo, tarjeta, transferencia, seguro) |
+
+En los pagos del hospital y de la odontológica, la referencia depende del método:
+el efectivo no lleva; la tarjeta pide el **No. de autorización** del voucher
+(6 letras o números, con al menos un número); la transferencia, el **No. de boleta
+o transacción** (6 a 20 dígitos), y el seguro, el **No. de póliza** (5 a 20 letras,
+números o guiones, con al menos un número). Se guarda en mayúsculas y sin espacios.
 | POST   | `/api/facturas/:id/anulacion`      | Anular una factura sin pagos (admin)                 |
 
 Exclusivas del laboratorio (`:id` es el de la orden):

@@ -1,3 +1,4 @@
+import { validarReferencia } from './pago.js';
 import { Validador } from './validacion.js';
 
 // Facturación del hospital: una factura sale de una consulta O de un
@@ -39,10 +40,11 @@ export function validarPagoFactura(datos = {}) {
   const v = new Validador();
   const monto = v.numero('monto', datos.monto, { requerido: true, min: 0.01, max: 1_000_000 });
   if (monto !== null && Math.round(monto * 100) !== monto * 100) v.error('monto', 'Máximo dos decimales');
+  const metodoPago = v.opcion('metodoPago', datos.metodoPago, METODOS_PAGO_FACTURA, { requerido: true });
   const pago = {
     monto,
-    metodoPago: v.opcion('metodoPago', datos.metodoPago, METODOS_PAGO_FACTURA, { requerido: true }),
-    referencia: v.texto('referencia', datos.referencia, { max: 40 }),
+    metodoPago,
+    referencia: metodoPago ? validarReferencia(v, metodoPago, datos.referencia) : null,
   };
   v.lanzarSiHayErrores();
   return pago;

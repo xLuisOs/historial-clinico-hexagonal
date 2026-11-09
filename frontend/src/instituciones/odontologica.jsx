@@ -4,9 +4,9 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api.js';
 import { Alerta, Campo, Dialogo, erroresDe, Selector } from '../componentes/ui.jsx';
-import { dinero, fecha } from '../formato.js';
+import { dinero, fecha, REFERENCIA_PAGO, textoReferencia } from '../formato.js';
 import { puede } from '../sesion.jsx';
-import { Quitar } from './comun.jsx';
+import { CampoReferencia, Quitar } from './comun.jsx';
 
 const PROCEDIMIENTO = { procedimientoId: '', piezaDental: '', observaciones: '' };
 
@@ -56,6 +56,7 @@ const METODOS = { efectivo: 'Efectivo', tarjeta: 'Tarjeta', transferencia: 'Tran
 function DialogoPago({ consulta, saldo, onCerrar, onListo }) {
   const [monto, setMonto] = useState(String(saldo));
   const [metodoPago, setMetodoPago] = useState('efectivo');
+  const [referencia, setReferencia] = useState('');
   const [error, setError] = useState(null);
   const [enviando, setEnviando] = useState(false);
   const errores = erroresDe(error);
@@ -65,7 +66,11 @@ function DialogoPago({ consulta, saldo, onCerrar, onListo }) {
     setEnviando(true);
     setError(null);
     try {
-      await api.registrarPago(consulta.id, { monto: monto === '' ? null : Number(monto), metodoPago });
+      await api.registrarPago(consulta.id, {
+        monto: monto === '' ? null : Number(monto),
+        metodoPago,
+        referencia: REFERENCIA_PAGO[metodoPago] ? referencia.trim() || null : null,
+      });
       onListo();
     } catch (err) {
       setError(err);
@@ -80,9 +85,10 @@ function DialogoPago({ consulta, saldo, onCerrar, onListo }) {
         <Alerta>{error?.message}</Alerta>
         <div className="rejilla">
           <Campo etiqueta="Monto (Q) *" type="number" min="0.01" step="0.01" value={monto} onChange={(e) => setMonto(e.target.value)} error={errores.monto} />
-          <Selector etiqueta="Método *" value={metodoPago} onChange={(e) => setMetodoPago(e.target.value)} vacio={null} error={errores.metodoPago}
+          <Selector etiqueta="Método *" value={metodoPago} onChange={(e) => { setMetodoPago(e.target.value); setReferencia(''); }} vacio={null} error={errores.metodoPago}
             opciones={Object.entries(METODOS).map(([valor, texto]) => ({ valor, texto }))} />
         </div>
+        <CampoReferencia metodo={metodoPago} value={referencia} onChange={(e) => setReferencia(e.target.value)} error={errores.referencia} />
         <footer>
           <button type="button" className="boton boton-secundario" onClick={onCerrar}>Volver</button>
           <button className="boton boton-primario" disabled={enviando}>{enviando ? 'Guardando…' : 'Registrar pago'}</button>
@@ -123,7 +129,7 @@ function DetalleConsulta({ datos, consulta, usuario, recargar }) {
             {datos.pagos.map((p, n) => (
               <li key={n}>
                 <strong>{dinero(p.monto)}</strong>
-                <small>{fecha(p.fecha)} · {METODOS[p.metodoPago] ?? p.metodoPago}{p.registradoPor?.nombre ? ` · ${p.registradoPor.nombre}` : ''}</small>
+                <small>{fecha(p.fecha)} · {METODOS[p.metodoPago] ?? p.metodoPago}{p.referencia ? ` · ${textoReferencia(p.metodoPago, p.referencia)}` : ''}{p.registradoPor?.nombre ? ` · ${p.registradoPor.nombre}` : ''}</small>
               </li>
             ))}
           </ul>

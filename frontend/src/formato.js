@@ -53,3 +53,14 @@ export const etiqueta = (valor) => (valor ?? '').replace('_', ' ').replace(/^\w/
 
 export const TIPOS_SANGRE = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 export const VIAS = ['oral', 'intramuscular', 'intravenosa', 'subcutanea', 'topica', 'inhalada', 'oftalmica', 'otica', 'nasal', 'rectal'];
+
+// Referencia de un pago según el método (el backend valida el mismo formato).
+// El efectivo no lleva referencia.
+export const REFERENCIA_PAGO = {
+  tarjeta: { campo: 'No. de autorización', corto: 'Autorización', ayuda: '6 caracteres del voucher, p. ej. 482913', max: 6 },
+  transferencia: { campo: 'No. de boleta o transacción', corto: 'Boleta', ayuda: 'Solo números, de 6 a 20 dígitos', max: 20 },
+  seguro: { campo: 'No. de póliza', corto: 'Póliza', ayuda: 'Como aparece en el carné, p. ej. POL-77120', max: 20 },
+};
+/** 'Autorización 558812', 'Póliza POL-77120'… o '' si no hay referencia. */
+export const textoReferencia = (metodo, referencia) =>
+  referencia ? `${REFERENCIA_PAGO[metodo]?.corto ?? 'Ref.'} ${referencia}` : '';
