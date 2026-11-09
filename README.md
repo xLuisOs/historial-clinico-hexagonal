@@ -259,6 +259,22 @@ pendientes ni pacientes internados a su cargo. Una sesión abierta deja de servi
 cuanto su usuario se desactiva: en cada petición se revisa que siga activo (la
 respuesta se recuerda 30 segundos).
 
+### Imprimir o guardar en PDF
+
+Los documentos se abren en una vista previa (hoja blanca con el encabezado de la
+institución) y se imprimen con **"Imprimir / Guardar PDF"**, que usa la impresión del
+navegador: ahí se elige la impresora o "Guardar como PDF". No usa librerías; al imprimir,
+la hoja de estilos oculta todo lo demás (`componentes/Imprimible.jsx` y `Documentos.jsx`).
+
+| Documento | Dónde | Quién |
+|---|---|---|
+| Receta médica (con línea de firma) | Historial → consulta con receta (hospital, odontológica y pediátrico) | Quien ve la receta |
+| Comprobante de cobro | Pediátrico → Cobros | Recepción, admin y médicos |
+| Factura | Hospital → Facturas | Quien ve las facturas |
+| Comprobante de consulta | Odontológica → consulta con procedimientos | Quien ve la consulta |
+| Informe de resultados (solo exámenes validados) | Laboratorio → orden con exámenes validados | Químico biólogo y admin (recepción no recibe resultados) |
+| Reporte del periodo | Administración → Reportes | Admin |
+
 ### Pruebas automáticas
 
 ```bash

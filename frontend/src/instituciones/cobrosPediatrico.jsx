@@ -7,6 +7,8 @@ import { api } from '../api.js';
 import { Alerta, Campo, Dialogo, erroresDe, Selector } from '../componentes/ui.jsx';
 import { dinero, fecha, fechaHora, REFERENCIA_PAGO, textoReferencia } from '../formato.js';
 import { puede } from '../sesion.jsx';
+import { ComprobanteCobro } from '../componentes/Documentos.jsx';
+import { BotonImprimir } from '../componentes/Imprimible.jsx';
 import { CampoReferencia, Quitar } from './comun.jsx';
 
 const METODOS = { efectivo: 'Efectivo', tarjeta: 'Tarjeta', transferencia: 'Transferencia' };
@@ -119,7 +121,8 @@ function DialogoPago({ cobro, onCerrar, onListo }) {
   );
 }
 
-function Cobro({ cobro, consulta, puedeCobrar, onPagar }) {
+function Cobro({ cobro, consulta, paciente, puedeCobrar, onPagar }) {
+  const [imprimiendo, setImprimiendo] = useState(false);
   const [clase, texto] = ESTADO[cobro.estado] ?? ['etiqueta-gris', cobro.estado];
   return (
     <li style={{ flexDirection: 'column', alignItems: 'stretch', gap: 6, padding: '12px 0', borderTop: '1px solid rgba(15, 45, 54, 0.08)' }}>
@@ -141,15 +144,19 @@ function Cobro({ cobro, consulta, puedeCobrar, onPagar }) {
       )}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <small>Total <strong>{dinero(cobro.total)}</strong> · pagado {dinero(cobro.pagado)} · saldo <strong>{dinero(cobro.saldo)}</strong></small>
-        {puedeCobrar && cobro.estado === 'pendiente' && (
-          <button type="button" className="boton boton-primario boton-chico" onClick={onPagar}>Registrar pago</button>
-        )}
+        <span className="acciones">
+          <BotonImprimir texto="Comprobante" onClick={() => setImprimiendo(true)} />
+          {puedeCobrar && cobro.estado === 'pendiente' && (
+            <button type="button" className="boton boton-primario boton-chico" onClick={onPagar}>Registrar pago</button>
+          )}
+        </span>
       </div>
+      {imprimiendo && <ComprobanteCobro cobro={cobro} consulta={consulta} paciente={paciente} onCerrar={() => setImprimiendo(false)} />}
     </li>
   );
 }
 
-export function PanelCobros({ cobros = [], consultas = [], usuario, recargar }) {
+export function PanelCobros({ cobros = [], consultas = [], paciente, usuario, recargar }) {
   const [dialogo, setDialogo] = useState(null);
   const puedeCobrar = puede(usuario, 'cobrar');
   const conCobro = new Set(cobros.map((c) => c.consultaId));
@@ -194,7 +201,7 @@ export function PanelCobros({ cobros = [], consultas = [], usuario, recargar }) 
           <h4 style={{ marginTop: 18 }}>Historial de cobros</h4>
           <ul className="items">
             {cobros.map((c) => (
-              <Cobro key={c.id} cobro={c} consulta={porId.get(c.consultaId)} puedeCobrar={puedeCobrar}
+              <Cobro key={c.id} cobro={c} consulta={porId.get(c.consultaId)} paciente={paciente} puedeCobrar={puedeCobrar}
                 onPagar={() => setDialogo({ tipo: 'pago', cobro: c })} />
             ))}
           </ul>

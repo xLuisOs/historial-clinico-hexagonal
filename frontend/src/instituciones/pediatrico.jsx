@@ -58,8 +58,8 @@ const secciones = [
     titulo: 'Cobros',
     visible: ({ extras, usuario }) => extras.cobros?.length > 0 || puede(usuario, 'cobrar'),
     insignia: ({ extras }) => extras.cobros.filter((c) => c.estado === 'pendiente').length || null,
-    Componente: ({ extras, consultas, usuario, recargar }) => (
-      <PanelCobros cobros={extras.cobros} consultas={consultas} usuario={usuario} recargar={recargar} />
+    Componente: ({ extras, paciente, consultas, usuario, recargar }) => (
+      <PanelCobros cobros={extras.cobros} consultas={consultas} paciente={paciente} usuario={usuario} recargar={recargar} />
     ),
   },
 ];

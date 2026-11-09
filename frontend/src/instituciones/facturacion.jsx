@@ -7,6 +7,8 @@ import { api } from '../api.js';
 import { Alerta, Campo, Dialogo, erroresDe, Selector } from '../componentes/ui.jsx';
 import { dinero, fecha, fechaHora, REFERENCIA_PAGO, textoReferencia } from '../formato.js';
 import { puede } from '../sesion.jsx';
+import { FacturaImprimible } from '../componentes/Documentos.jsx';
+import { BotonImprimir } from '../componentes/Imprimible.jsx';
 import { CampoReferencia, Quitar } from './comun.jsx';
 
 const METODOS = { efectivo: 'Efectivo', tarjeta: 'Tarjeta', transferencia: 'Transferencia', seguro: 'Seguro' };
@@ -185,6 +187,7 @@ export function PanelFacturas({ facturas = [], consultas = [], internamientos = 
             )}
             <div className="acciones" style={{ alignItems: 'center' }}>
               {f.estado === 'pendiente' && <small>Saldo <strong>{dinero(f.saldo)}</strong></small>}
+              {f.estado !== 'anulada' && <BotonImprimir texto="Imprimir factura" onClick={() => setDialogo({ tipo: 'imprimir', factura: f })} />}
               {puedeFacturar && f.estado === 'pendiente' && (
                 <button type="button" className="boton boton-primario boton-chico" onClick={() => setDialogo({ tipo: 'pago', factura: f })}>Registrar pago</button>
               )}
@@ -199,6 +202,7 @@ export function PanelFacturas({ facturas = [], consultas = [], internamientos = 
       {dialogo?.tipo === 'nueva' && <DialogoNuevaFactura paciente={paciente} origenes={origenes} onCerrar={cerrar} onListo={alListo} />}
       {dialogo?.tipo === 'pago' && <DialogoPagoFactura factura={dialogo.factura} onCerrar={cerrar} onListo={alListo} />}
       {dialogo?.tipo === 'anular' && <DialogoAnular factura={dialogo.factura} onCerrar={cerrar} onListo={alListo} />}
+      {dialogo?.tipo === 'imprimir' && <FacturaImprimible factura={dialogo.factura} paciente={paciente} onCerrar={cerrar} />}
     </section>
   );
 }

@@ -4,6 +4,7 @@
 
 import { useEffect, useState } from 'react';
 import { api } from '../api.js';
+import { ReporteImprimible } from '../componentes/Documentos.jsx';
 import { Alerta, Cargando } from '../componentes/ui.jsx';
 import { dinero, fecha } from '../formato.js';
 import { useSesion } from '../sesion.jsx';
@@ -44,6 +45,7 @@ export function Reportes() {
   const [periodo, setPeriodo] = useState({ desde: opciones[0].desde, hasta: opciones[0].hasta });
   const [reporte, setReporte] = useState(null);
   const [error, setError] = useState(null);
+  const [imprimiendo, setImprimiendo] = useState(false);
 
   useEffect(() => {
     let vigente = true;
@@ -64,7 +66,13 @@ export function Reportes() {
           <h1>Reportes</h1>
           <p>{usuario.institucionNombre} · del {fecha(periodo.desde)} al {fecha(periodo.hasta)}</p>
         </div>
+        {reporte && (
+          <button type="button" className="boton boton-secundario" onClick={() => setImprimiendo(true)}>Imprimir / Guardar PDF</button>
+        )}
       </div>
+      {imprimiendo && reporte && (
+        <ReporteImprimible reporte={reporte} periodo={periodo} formatear={formatear} onCerrar={() => setImprimiendo(false)} />
+      )}
 
       <section className="panel vidrio filtros-reporte">
         <div className="acciones" role="group" aria-label="Periodo">

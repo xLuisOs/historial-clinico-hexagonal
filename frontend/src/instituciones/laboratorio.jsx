@@ -9,6 +9,8 @@ import { Alerta, Campo, Dialogo, erroresDe, Selector } from '../componentes/ui.j
 import { GraficaLinea } from '../componentes/GraficaLinea.jsx';
 import { fecha } from '../formato.js';
 import { puede } from '../sesion.jsx';
+import { InformeResultados } from '../componentes/Documentos.jsx';
+import { BotonImprimir } from '../componentes/Imprimible.jsx';
 import { DialogoResultados, TablaResultados } from './resultados.jsx';
 
 export const ESTADO_ORDEN = {
@@ -265,8 +267,9 @@ const ACCIONES_ORDEN = {
   en_proceso: ['anulada'],
 };
 
-function DetalleConsulta({ datos, consulta, usuario, recargar }) {
+function DetalleConsulta({ datos, consulta, paciente, usuario, recargar }) {
   const [capturando, setCapturando] = useState(null);
+  const [imprimiendo, setImprimiendo] = useState(false);
   const [confirmando, setConfirmando] = useState(null);
   const [agregando, setAgregando] = useState(false);
   if (!datos.numero) return null;
@@ -274,6 +277,8 @@ function DetalleConsulta({ datos, consulta, usuario, recargar }) {
   const editable = abierta && puede(usuario, 'atender');
   const acciones = puede(usuario, 'gestionarOrden') ? (ACCIONES_ORDEN[datos.estado] ?? []) : [];
   const listo = () => { setCapturando(null); setConfirmando(null); setAgregando(false); recargar(); };
+  // El informe lleva los exámenes ya validados (firmados). Recepción no recibe resultados.
+  const conInforme = paciente && datos.examenes.some((e) => e.estado === 'validado' && Array.isArray(e.parametros));
 
   const validar = (e) => setConfirmando({
     titulo: `Validar ${e.nombre}`,
@@ -301,8 +306,9 @@ function DetalleConsulta({ datos, consulta, usuario, recargar }) {
           <span className="codigo">{datos.numero}</span>
           <Estado mapa={ESTADO_ORDEN} valor={datos.estado} />
         </h4>
-        {(acciones.length > 0 || editable) && (
+        {(acciones.length > 0 || editable || conInforme) && (
           <span className="acciones">
+            {conInforme && <BotonImprimir texto="Informe de resultados" onClick={() => setImprimiendo(true)} />}
             {editable && (
               <button type="button" className="boton boton-secundario boton-chico" onClick={() => setAgregando(true)}>+ Exámenes</button>
             )}
@@ -327,6 +333,7 @@ function DetalleConsulta({ datos, consulta, usuario, recargar }) {
         <DialogoResultados ordenId={consulta.id} examen={capturando} onCerrar={() => setCapturando(null)} onListo={listo} />
       )}
       {confirmando && <DialogoConfirmar {...confirmando} onCerrar={() => setConfirmando(null)} onListo={listo} />}
+      {imprimiendo && <InformeResultados orden={consulta} datos={datos} paciente={paciente} onCerrar={() => setImprimiendo(false)} />}
       {agregando && (
         <DialogoAgregarExamenes ordenId={consulta.id} incluidos={datos.examenes.map((e) => e.tipoExamenId)}
           onCerrar={() => setAgregando(false)} onListo={listo} />

@@ -7,6 +7,8 @@ import { api } from '../api.js';
 import { Alerta, Campo, Dialogo, erroresDe, Selector } from '../componentes/ui.jsx';
 import { dinero, fecha, REFERENCIA_PAGO, textoReferencia } from '../formato.js';
 import { puede } from '../sesion.jsx';
+import { ComprobanteDental } from '../componentes/Documentos.jsx';
+import { BotonImprimir } from '../componentes/Imprimible.jsx';
 import { CampoReferencia, Quitar } from './comun.jsx';
 
 const PROCEDIMIENTO = { procedimientoId: '', piezaDental: '', observaciones: '' };
@@ -105,8 +107,9 @@ function saldoDe(datos = {}) {
   return Math.round((Number(datos.total ?? 0) - pagado) * 100) / 100;
 }
 
-function DetalleConsulta({ datos, consulta, usuario, recargar }) {
+function DetalleConsulta({ datos, consulta, paciente, usuario, recargar }) {
   const [cobrando, setCobrando] = useState(false);
+  const [imprimiendo, setImprimiendo] = useState(false);
   if (!datos.procedimientos?.length) return null;
   const saldo = saldoDe(datos);
   const puedeCobrar = saldo > 0 && puede(usuario, 'cobrar');
@@ -139,6 +142,7 @@ function DetalleConsulta({ datos, consulta, usuario, recargar }) {
       <div className="acciones" style={{ alignItems: 'center' }}>
         <small>Total {dinero(datos.total)}{saldo > 0 ? ` · saldo ${dinero(saldo)}` : ''}</small>
         {datos.estadoPago && <span className={`etiqueta ${ESTADO_PAGO[datos.estadoPago] ?? ''}`}>{datos.estadoPago}</span>}
+        {paciente && <BotonImprimir texto="Comprobante" onClick={() => setImprimiendo(true)} />}
         {puedeCobrar && (
           <button type="button" className="boton boton-primario boton-chico" onClick={() => setCobrando(true)}>Registrar pago</button>
         )}
@@ -146,6 +150,9 @@ function DetalleConsulta({ datos, consulta, usuario, recargar }) {
       {cobrando && (
         <DialogoPago consulta={consulta} saldo={saldo} onCerrar={() => setCobrando(false)}
           onListo={() => { setCobrando(false); recargar(); }} />
+      )}
+      {imprimiendo && (
+        <ComprobanteDental consulta={consulta} datos={datos} paciente={paciente} saldo={saldo} onCerrar={() => setImprimiendo(false)} />
       )}
     </div>
   );

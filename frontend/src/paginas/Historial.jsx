@@ -6,6 +6,8 @@ import { Alerta, Cargando, iniciales } from '../componentes/ui.jsx';
 import { conTipoSangre, edad, etiqueta, fecha, fechaHora, MOTIVOS_BAJA, nombreCompleto, SEXO } from '../formato.js';
 import { vistaDe } from '../instituciones/index.js';
 import { puede, useSesion } from '../sesion.jsx';
+import { RecetaImprimible } from '../componentes/Documentos.jsx';
+import { BotonImprimir } from '../componentes/Imprimible.jsx';
 import { DialogoAntecedente, PanelAntecedentes } from './Antecedentes.jsx';
 import { DialogoAgendar, DialogoCancelarCita, DialogoReprogramar, PanelCitas } from './Citas.jsx';
 import {
@@ -16,8 +18,11 @@ const Dato = ({ titulo, children }) => (
   <div className="dato"><small>{titulo}</small><span>{children || '—'}</span></div>
 );
 
-function Consulta({ consulta, vista, usuario, recargar, puedeAtender, onDiagnostico, onReceta }) {
+function Consulta({ consulta, paciente, vista, usuario, recargar, puedeAtender, onDiagnostico, onReceta }) {
   const { DetalleConsulta } = vista;
+  const [imprimiendo, setImprimiendo] = useState(false);
+  // En el laboratorio la "receta" es la medicación actual del paciente: no se imprime.
+  const recetaImprimible = consulta.receta && usuario.institucion !== 'laboratorio';
   return (
     <article className="consulta">
       <div className="consulta-cabecera">
@@ -50,11 +55,14 @@ function Consulta({ consulta, vista, usuario, recargar, puedeAtender, onDiagnost
         </div>
       )}
 
-      <DetalleConsulta datos={consulta.datosEspecificos ?? {}} consulta={consulta} usuario={usuario} recargar={recargar} />
+      <DetalleConsulta datos={consulta.datosEspecificos ?? {}} consulta={consulta} paciente={paciente} usuario={usuario} recargar={recargar} />
 
       {consulta.receta && (
         <div className="bloque">
-          <h4>{vista.textos.receta} · {fecha(consulta.receta.fechaEmision)}</h4>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+            <h4>{vista.textos.receta} · {fecha(consulta.receta.fechaEmision)}</h4>
+            {recetaImprimible && <BotonImprimir texto="Imprimir receta" onClick={() => setImprimiendo(true)} />}
+          </div>
           <ul className="items">
             {consulta.receta.items.map((i) => (
               <li key={i.id}>
@@ -67,6 +75,7 @@ function Consulta({ consulta, vista, usuario, recargar, puedeAtender, onDiagnost
           {consulta.receta.indicaciones && <small style={{ color: 'var(--tinta-suave)' }}>{consulta.receta.indicaciones}</small>}
         </div>
       )}
+      {imprimiendo && <RecetaImprimible consulta={consulta} paciente={paciente} onCerrar={() => setImprimiendo(false)} />}
     </article>
   );
 }
@@ -231,7 +240,7 @@ export function Historial() {
               : (
                 <div className="linea-tiempo">
                   {consultas.map((c) => (
-                    <Consulta key={c.id} consulta={c} vista={vista} usuario={usuario} recargar={cargar} puedeAtender={puedeAtender}
+                    <Consulta key={c.id} consulta={c} paciente={paciente} vista={vista} usuario={usuario} recargar={cargar} puedeAtender={puedeAtender}
                       onDiagnostico={() => setDialogo({ tipo: 'diagnostico', consulta: c })}
                       onReceta={() => setDialogo({ tipo: 'receta', consulta: c })} />
                   ))}
