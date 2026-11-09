@@ -8,6 +8,7 @@ import { crearRepositorioMedicos, crearRepositorioPersonalReferentes } from './m
 import { nombreCompleto, ROLES } from './modelo.js';
 import { crearRepositorioOrdenes } from './ordenes.js';
 import { crearRepositorioPacientes } from './pacientes.js';
+import { crearRepositorioRecepcionistas } from './recepcionistas.js';
 
 export function crearAdaptadorLaboratorioMongo(cliente, nombreDb, zonaHoraria) {
   const db = cliente.db(nombreDb);
@@ -47,8 +48,9 @@ export function crearAdaptadorLaboratorioMongo(cliente, nombreDb, zonaHoraria) {
     laboratorio: { ...laboratorio, ...crearRepositorioMedicos(db) },
     // Puerto opcional: antecedentes médicos, embebidos en el paciente.
     antecedentes: crearRepositorioAntecedentes(db, zonaHoraria),
-    // Puerto opcional: el admin edita y desactiva médicos referentes.
-    personal: crearRepositorioPersonalReferentes(db),
+    // Puerto opcional: el admin edita y desactiva médicos referentes y
+    // administra a las recepcionistas (con su cuenta).
+    personal: { ...crearRepositorioPersonalReferentes(db), ...crearRepositorioRecepcionistas(db) },
 
     catalogos: {
       // En el laboratorio, "médicos" son los médicos referentes: quienes

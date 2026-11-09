@@ -62,6 +62,7 @@ export const COLECCIONES = {
           apellidos: texto(100),
           rol: { enum: ROLES_LAB },
           numero_colegiado: textoONulo(10),
+          telefono: textoONulo(20),
           activo: { bsonType: 'bool' },
           ultimo_acceso: fechaONula,
         },

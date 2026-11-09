@@ -1,5 +1,5 @@
 import { Link, NavLink } from 'react-router-dom';
-import { CON_CUENTAS_DE_PERSONAL, NOMBRE_ROL, puede, useSesion } from '../sesion.jsx';
+import { NOMBRE_ROL, puede, useSesion } from '../sesion.jsx';
 import { IconoCruz, IconoSalir } from './Iconos.jsx';
 
 /** Barra flotante de vidrio, igual para las cuatro instituciones. */
@@ -21,9 +21,7 @@ export function Barra() {
         <NavLink to="/" end>Pacientes</NavLink>
         {puede(usuario, 'registrarPaciente') && <NavLink to="/pacientes/nuevo">Nuevo paciente</NavLink>}
         <NavLink to="/medicos">{usuario.institucion === 'odontologica' ? 'Odontólogos' : 'Médicos'}</NavLink>
-        {usuario.rol === 'admin' && CON_CUENTAS_DE_PERSONAL.includes(usuario.institucion) && (
-          <NavLink to="/recepcionistas">Recepcionistas</NavLink>
-        )}
+        {usuario.rol === 'admin' && <NavLink to="/recepcionistas">Recepcionistas</NavLink>}
       </nav>
       <div className="barra-usuario">
         <div className="chip-usuario">

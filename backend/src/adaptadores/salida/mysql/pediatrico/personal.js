@@ -89,6 +89,29 @@ export function crearRepositorioPersonal(pool) {
       });
     },
 
+    // Cuenta para un médico que ya está en el catálogo pero no tiene usuario.
+    crearCuentaMedico(id, { correo, passwordHash }) {
+      return enTransaccion(pool, async (cx) => {
+        const [[medico]] = await cx.query(
+          `SELECT m.activo, CONCAT(m.nombres, ' ', m.apellidos) AS nombre,
+                  EXISTS (SELECT 1 FROM usuario u WHERE u.medico_fk = m.id_medico) AS tiene_cuenta
+           FROM medico m WHERE m.id_medico = ? FOR UPDATE`,
+          [id],
+        );
+        if (!medico) throw new NoEncontrado('Médico no encontrado');
+        if (!medico.activo) throw new Conflicto('Reactiva al médico antes de crearle una cuenta');
+        if (medico.tiene_cuenta) throw new Conflicto('Ese médico ya tiene cuenta');
+        const [[repetido]] = await cx.query('SELECT 1 AS si FROM usuario WHERE correo = ?', [correo]);
+        if (repetido) throw new Conflicto('Ya hay un usuario con ese correo');
+
+        await cx.query(
+          `INSERT INTO usuario (correo, password_hash, nombre_mostrar, rol, medico_fk) VALUES (?, ?, ?, 'medico', ?)`,
+          [correo, passwordHash, medico.nombre.slice(0, 120), id],
+        );
+        return leerMedico(cx, id);
+      });
+    },
+
     async restablecerPassword(id, passwordHash) {
       const [r] = await pool.query('UPDATE usuario SET password_hash = ? WHERE medico_fk = ?', [passwordHash, id]);
       if (r.affectedRows === 0) throw new NoEncontrado('Ese médico no tiene usuario');

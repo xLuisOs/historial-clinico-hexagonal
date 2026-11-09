@@ -8,6 +8,7 @@ import { crearRepositorioCobros } from './cobros.js';
 import { crearRepositorioEncargados } from './encargados.js';
 import { crearRepositorioPacientes } from './pacientes.js';
 import { crearRepositorioPersonal } from './personal.js';
+import { crearRepositorioRecepcionistas } from './recepcionistas.js';
 import { crearRepositorioVacunas } from './vacunas.js';
 
 export function crearAdaptadorPediatricoMysql(pool) {
@@ -45,7 +46,7 @@ export function crearAdaptadorPediatricoMysql(pool) {
     // Puerto opcional: antecedentes médicos (incluye los perinatales).
     antecedentes: crearRepositorioAntecedentes(pool),
     // Puerto opcional: alta de médicos (con su usuario) por el administrador.
-    personal: crearRepositorioPersonal(pool),
+    personal: { ...crearRepositorioPersonal(pool), ...crearRepositorioRecepcionistas(pool) },
 
     // Puerto propio del pediátrico: vacunación, cobros y encargados.
     pediatrico: {

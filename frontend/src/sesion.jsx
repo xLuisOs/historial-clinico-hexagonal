@@ -47,11 +47,6 @@ export const PERMISOS = {
   gestionarOrden: ['medico', 'admin'],
 };
 
-// Instituciones cuyo backend ya permite crear cuentas para médicos que no la
-// tienen y administrar recepcionistas (puerto `personal`). Para sumar otra,
-// basta con implementar esos métodos en su adaptador y agregarla aquí.
-export const CON_CUENTAS_DE_PERSONAL = ['hospital', 'odontologica'];
-
 export const puede = (usuario, accion) => PERMISOS[accion]?.includes(usuario?.rol) ?? false;
 
 export const NOMBRE_ROL = { medico: 'Médico', recepcion: 'Recepción', admin: 'Administración' };

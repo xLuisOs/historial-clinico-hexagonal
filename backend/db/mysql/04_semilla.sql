@@ -56,11 +56,14 @@ INSERT INTO medico (id_medico, nombres, apellidos, especialidad, numero_colegiad
   (2, 'Carlos',     'Castillo Ruiz',   'Neumología pediátrica', '15872'),
   (3, 'Sofía',      'Hernández López', 'Pediatría general', '18230');
 
-INSERT INTO usuario (correo, password_hash, nombre_mostrar, rol, medico_fk) VALUES
-  ('dra.morales@pediatrico.gt', '$2b$10$3Y.vsq.9Pl6ylP6EJP9nr.zIKK6CsMaKZ1weysaz1wVQ18b3u/30i', 'Dra. Ana Lucía Morales', 'medico', 1),
-  ('dr.castillo@pediatrico.gt', '$2b$10$3Y.vsq.9Pl6ylP6EJP9nr.zIKK6CsMaKZ1weysaz1wVQ18b3u/30i', 'Dr. Carlos Castillo',    'medico', 2),
-  ('recepcion@pediatrico.gt',   '$2b$10$3Y.vsq.9Pl6ylP6EJP9nr.zIKK6CsMaKZ1weysaz1wVQ18b3u/30i', 'Recepción',              'recepcion', NULL),
-  ('admin@pediatrico.gt',       '$2b$10$3Y.vsq.9Pl6ylP6EJP9nr.zIKK6CsMaKZ1weysaz1wVQ18b3u/30i', 'Administración',         'admin', NULL);
+INSERT INTO recepcionista (id_recepcionista, nombres, apellidos, telefono) VALUES
+  (1, 'Rosa María', 'Coc Pérez', '5566-1188');
+
+INSERT INTO usuario (correo, password_hash, nombre_mostrar, rol, medico_fk, recepcionista_fk) VALUES
+  ('dra.morales@pediatrico.gt', '$2b$10$3Y.vsq.9Pl6ylP6EJP9nr.zIKK6CsMaKZ1weysaz1wVQ18b3u/30i', 'Dra. Ana Lucía Morales', 'medico', 1, NULL),
+  ('dr.castillo@pediatrico.gt', '$2b$10$3Y.vsq.9Pl6ylP6EJP9nr.zIKK6CsMaKZ1weysaz1wVQ18b3u/30i', 'Dr. Carlos Castillo',    'medico', 2, NULL),
+  ('recepcion@pediatrico.gt',   '$2b$10$3Y.vsq.9Pl6ylP6EJP9nr.zIKK6CsMaKZ1weysaz1wVQ18b3u/30i', 'Rosa María Coc Pérez',   'recepcion', NULL, 1),
+  ('admin@pediatrico.gt',       '$2b$10$3Y.vsq.9Pl6ylP6EJP9nr.zIKK6CsMaKZ1weysaz1wVQ18b3u/30i', 'Administración',         'admin', NULL, NULL);
 
 -- ------------------------------------------------------------- pacientes
 INSERT INTO encargado (id_encargado, nombres, apellidos, parentesco, dpi, telefono, direccion, correo) VALUES

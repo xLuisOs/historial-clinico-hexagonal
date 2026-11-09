@@ -15,6 +15,7 @@
 --   * cobro.monto_total se elimina (dato derivado): se calcula en v_cobro_resumen.
 --   * detalle_cobro.subtotal es columna generada: no puede quedar inconsistente.
 --   * USUARIO para autenticación y enrutamiento por institución.
+--   * RECEPCIONISTA: cada persona de recepción con su propia cuenta.
 --   * ANTECEDENTE: antecedentes médicos del paciente (patológicos, quirúrgicos,
 --     familiares, hábitos, medicamentos y perinatales).
 --   * Todas las FK con ON DELETE RESTRICT: un historial nunca se borra, se archiva.
@@ -83,6 +84,18 @@ CREATE TABLE medico (
   CONSTRAINT uq_medico_colegiado UNIQUE (numero_colegiado)
 ) ENGINE=InnoDB;
 
+-- Personal de recepción. Cada recepcionista tiene su propia cuenta (usuario):
+-- con una cuenta compartida no se sabe quién agendó o cobró. Nunca se borran:
+-- se desactivan.
+CREATE TABLE recepcionista (
+  id_recepcionista  INT AUTO_INCREMENT PRIMARY KEY,
+  nombres           VARCHAR(100) NOT NULL,
+  apellidos         VARCHAR(100) NOT NULL,
+  telefono          VARCHAR(20)  NULL,                 -- confidencial
+  activo            BOOLEAN      NOT NULL DEFAULT TRUE,
+  fecha_registro    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
 -- Credenciales de acceso. La contraseña se guarda como hash bcrypt (60 caracteres).
 CREATE TABLE usuario (
   id_usuario      INT AUTO_INCREMENT PRIMARY KEY,
@@ -91,6 +104,7 @@ CREATE TABLE usuario (
   nombre_mostrar  VARCHAR(120) NOT NULL,
   rol             VARCHAR(10)  NOT NULL,
   medico_fk       INT          NULL,
+  recepcionista_fk INT         NULL,
   activo          BOOLEAN      NOT NULL DEFAULT TRUE,
   ultimo_acceso   DATETIME     NULL,
   CONSTRAINT uq_usuario_correo UNIQUE (correo),
@@ -99,7 +113,12 @@ CREATE TABLE usuario (
   CONSTRAINT chk_usuario_medico CHECK (rol <> 'medico' OR medico_fk IS NOT NULL),
   -- ON UPDATE RESTRICT: MySQL no permite CHECK sobre columnas con acción en cascada.
   CONSTRAINT fk_usuario_medico FOREIGN KEY (medico_fk)
-    REFERENCES medico (id_medico) ON DELETE RESTRICT ON UPDATE RESTRICT
+    REFERENCES medico (id_medico) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  CONSTRAINT uq_usuario_recepcionista UNIQUE (recepcionista_fk),
+  -- Toda cuenta de recepción es de una recepcionista, y solo esas cuentas lo son.
+  CONSTRAINT chk_usuario_recepcionista CHECK ((rol = 'recepcion') = (recepcionista_fk IS NOT NULL)),
+  CONSTRAINT fk_usuario_recepcionista FOREIGN KEY (recepcionista_fk)
+    REFERENCES recepcionista (id_recepcionista) ON DELETE RESTRICT ON UPDATE RESTRICT
 ) ENGINE=InnoDB;
 
 -- Antecedentes médicos: lo que no sale de una consulta en particular
