@@ -7,6 +7,7 @@ import { crearRepositorioAtenciones } from './atenciones.js';
 import { crearRepositorioCobros } from './cobros.js';
 import { crearRepositorioEncargados } from './encargados.js';
 import { crearRepositorioPacientes } from './pacientes.js';
+import { crearRepositorioPersonal } from './personal.js';
 import { crearRepositorioVacunas } from './vacunas.js';
 
 export function crearAdaptadorPediatricoMysql(pool) {
@@ -32,6 +33,10 @@ export function crearAdaptadorPediatricoMysql(pool) {
       async registrarAcceso(usuarioId) {
         await pool.query('UPDATE usuario SET ultimo_acceso = NOW() WHERE id_usuario = ?', [usuarioId]);
       },
+      async estaActivo(usuarioId) {
+        const [[u]] = await pool.query('SELECT activo FROM usuario WHERE id_usuario = ?', [usuarioId]);
+        return Boolean(u?.activo);
+      },
     },
 
     // Puerto opcional (fuera del contrato común): citas.
@@ -39,6 +44,8 @@ export function crearAdaptadorPediatricoMysql(pool) {
 
     // Puerto opcional: antecedentes médicos (incluye los perinatales).
     antecedentes: crearRepositorioAntecedentes(pool),
+    // Puerto opcional: alta de médicos (con su usuario) por el administrador.
+    personal: crearRepositorioPersonal(pool),
 
     // Puerto propio del pediátrico: vacunación, cobros y encargados.
     pediatrico: {
