@@ -4,7 +4,7 @@
 
 import { aObjectId } from '../conexion.js';
 import { crearRepositorioAntecedentes } from './antecedentes.js';
-import { crearRepositorioMedicos } from './medicos.js';
+import { crearRepositorioMedicos, crearRepositorioPersonalReferentes } from './medicos.js';
 import { nombreCompleto, ROLES } from './modelo.js';
 import { crearRepositorioOrdenes } from './ordenes.js';
 import { crearRepositorioPacientes } from './pacientes.js';
@@ -36,6 +36,10 @@ export function crearAdaptadorLaboratorioMongo(cliente, nombreDb, zonaHoraria) {
           { $set: { ultimo_acceso: new Date() } },
         );
       },
+      async estaActivo(usuarioId) {
+        const u = await db.collection('usuarios').findOne({ _id: aObjectId(usuarioId, 'Usuario') }, { projection: { activo: 1 } });
+        return u?.activo === true;
+      },
     },
 
     pacientes: crearRepositorioPacientes(cliente, db, zonaHoraria),
@@ -43,6 +47,8 @@ export function crearAdaptadorLaboratorioMongo(cliente, nombreDb, zonaHoraria) {
     laboratorio: { ...laboratorio, ...crearRepositorioMedicos(db) },
     // Puerto opcional: antecedentes médicos, embebidos en el paciente.
     antecedentes: crearRepositorioAntecedentes(db, zonaHoraria),
+    // Puerto opcional: el admin edita y desactiva médicos referentes.
+    personal: crearRepositorioPersonalReferentes(db),
 
     catalogos: {
       // En el laboratorio, "médicos" son los médicos referentes: quienes
