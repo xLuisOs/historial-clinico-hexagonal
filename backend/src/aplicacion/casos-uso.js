@@ -77,7 +77,7 @@ export function agregarDiagnostico({ usuario, repos }, consultaId, datos) {
 export function agregarAntecedente({ usuario, repos }, pacienteId, datos) {
   exigirRol(usuario, 'medico');
   if (!repos.antecedentes) throw new NoDisponible('Esta institución no registra antecedentes médicos');
-  return repos.antecedentes.agregar(pacienteId, validarAntecedente(datos), usuario);
+  return repos.antecedentes.agregar(pacienteId, validarAntecedente(datos, usuario.institucion), usuario);
 }
 
 // Regla de negocio: recetar medicamento(s) en una consulta existente.

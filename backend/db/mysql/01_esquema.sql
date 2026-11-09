@@ -15,6 +15,8 @@
 --   * cobro.monto_total se elimina (dato derivado): se calcula en v_cobro_resumen.
 --   * detalle_cobro.subtotal es columna generada: no puede quedar inconsistente.
 --   * USUARIO para autenticación y enrutamiento por institución.
+--   * ANTECEDENTE: antecedentes médicos del paciente (patológicos, quirúrgicos,
+--     familiares, hábitos, medicamentos y perinatales).
 --   * Todas las FK con ON DELETE RESTRICT: un historial nunca se borra, se archiva.
 -- =====================================================================
 
@@ -98,6 +100,30 @@ CREATE TABLE usuario (
   -- ON UPDATE RESTRICT: MySQL no permite CHECK sobre columnas con acción en cascada.
   CONSTRAINT fk_usuario_medico FOREIGN KEY (medico_fk)
     REFERENCES medico (id_medico) ON DELETE RESTRICT ON UPDATE RESTRICT
+) ENGINE=InnoDB;
+
+-- Antecedentes médicos: lo que no sale de una consulta en particular
+-- (enfermedades de base, cirugías, antecedentes familiares, hábitos,
+-- medicamentos que toma y cómo fue el nacimiento). Los registra un médico;
+-- nunca se borran (pedi_app no tiene DELETE).
+CREATE TABLE antecedente (
+  id_antecedente  INT AUTO_INCREMENT PRIMARY KEY,
+  paciente_fk     INT          NOT NULL,
+  tipo            VARCHAR(12)  NOT NULL,
+  descripcion     VARCHAR(300) NOT NULL,               -- confidencial
+  anio_inicio     SMALLINT     NULL,                   -- año aproximado
+  registrado_por  INT          NOT NULL,
+  fecha_registro  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT chk_antecedente_tipo CHECK (tipo IN
+    ('patologico','quirurgico','familiar','habito','medicamento','perinatal')),
+  CONSTRAINT chk_antecedente_anio CHECK (anio_inicio IS NULL OR anio_inicio BETWEEN 1900 AND 2100),
+  -- El perinatal es del nacimiento: no lleva año.
+  CONSTRAINT chk_antecedente_perinatal CHECK (tipo <> 'perinatal' OR anio_inicio IS NULL),
+  CONSTRAINT fk_antecedente_paciente FOREIGN KEY (paciente_fk)
+    REFERENCES paciente (id_paciente) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT fk_antecedente_medico FOREIGN KEY (registrado_por)
+    REFERENCES medico (id_medico) ON DELETE RESTRICT ON UPDATE CASCADE,
+  INDEX idx_antecedente_paciente (paciente_fk)
 ) ENGINE=InnoDB;
 
 -- ---------------------------------------------------------------------

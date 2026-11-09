@@ -85,6 +85,11 @@ npm run dev                                   # API en http://localhost:4000/api
 5. Ejecutar `npm run db:mysql:semilla` **una sola vez** (lo hace una persona; la otra
    solo necesita el `.env`).
 
+Si la base se creó antes de que existiera la tabla `antecedente`, se agrega con
+`npm run db:mysql -- --solo 05_antecedentes.sql`: crea la tabla con su trigger y
+agrega antecedentes de prueba si está vacía. No toca lo demás y se puede correr más
+de una vez.
+
 > Para ahorrar crédito, el servidor se puede **Detener** desde el portal cuando no se usa.
 
 **MongoDB en Atlas**
@@ -153,7 +158,7 @@ ocultan los botones que no le corresponden (el backend igual lo verifica):
 | Registrar paciente                  | ✅     | ✅        | ✅    |
 | Actualizar contacto                 |        | ✅        | ✅    |
 | Consulta, diagnóstico y receta      | ✅     |           |       |
-| Agregar antecedentes médicos (hospital, odontológica) | ✅ |  |       |
+| Agregar antecedentes médicos (hospital, odontológica, pediátrico) | ✅ |  |       |
 | Mis citas de hoy (agenda propia)    | ✅     |           |       |
 | Agenda por médico                   |        | ✅        | ✅    |
 | Ver médicos por especialidad        | ✅     | ✅        | ✅    |
@@ -282,7 +287,7 @@ Todas las rutas (salvo login) requieren `Authorization: Bearer <token>`.
 | PATCH  | `/api/pacientes/:id/contacto`      | Actualizar teléfono, dirección o correo              |
 | POST   | `/api/pacientes/:id/baja`          | Archivar historial `{ motivo, detalle }`             |
 | GET    | `/api/pacientes/:id/historial`     | Historial completo (consultas, diagnósticos, recetas, extras) |
-| POST   | `/api/pacientes/:id/antecedentes`  | Antecedente médico `{ tipo, descripcion, anioInicio? }` (hospital y odontológica). Tipos: patologico, quirurgico, familiar, habito, medicamento |
+| POST   | `/api/pacientes/:id/antecedentes`  | Antecedente médico `{ tipo, descripcion, anioInicio? }` (hospital, odontológica y pediátrico). Tipos: patologico, quirurgico, familiar, habito, medicamento; en el pediátrico también perinatal |
 | POST   | `/api/pacientes/:id/consultas`     | Registrar consulta + diagnósticos + receta (atómico) |
 | POST   | `/api/consultas/:id/diagnosticos`  | Agregar diagnóstico                                  |
 | POST   | `/api/consultas/:id/recetas`       | Recetar medicamento(s)                               |

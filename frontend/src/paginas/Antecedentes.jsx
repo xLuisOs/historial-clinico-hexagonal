@@ -1,21 +1,27 @@
 // Antecedentes médicos del paciente (hospital y odontológica): enfermedades de
 // base, cirugías, antecedentes familiares, hábitos y medicamentos que toma.
-// Los ve todo el personal; los agrega el médico.
+// Los ve todo el personal; los agrega el médico. En el pediátrico también hay
+// antecedentes perinatales (cómo fue el nacimiento).
 
 import { useState } from 'react';
 import { api } from '../api.js';
 import { IconoMas } from '../componentes/Iconos.jsx';
 import { Alerta, Campo, Dialogo, erroresDe, Selector } from '../componentes/ui.jsx';
 import { fecha } from '../formato.js';
+import { useSesion } from '../sesion.jsx';
 
 // tipo → [título del grupo, nombre en el selector, ejemplo]
 const TIPOS = {
+  perinatal: ['Perinatales', 'Perinatal (nacimiento)', 'p. ej. Prematuro de 34 semanas, peso al nacer 2.1 kg'],
   patologico: ['Enfermedades', 'Enfermedad', 'p. ej. Diabetes mellitus tipo 2'],
   quirurgico: ['Cirugías', 'Cirugía', 'p. ej. Apendicectomía'],
   familiar: ['Familiares', 'Antecedente familiar', 'p. ej. Padre: hipertensión arterial'],
   habito: ['Hábitos', 'Hábito', 'p. ej. Fuma 10 cigarrillos al día'],
   medicamento: ['Medicamentos que toma', 'Medicamento que toma', 'p. ej. Losartán 50 mg cada 24 horas'],
 };
+
+// Tipos que solo existen en algunas instituciones (el backend valida lo mismo).
+const SOLO_EN = { perinatal: ['pediatrico'] };
 
 /** "desde 2012" para lo que sigue vigente; el año a secas para una cirugía. */
 const cuando = (a) => (a.anioInicio ? (a.tipo === 'quirurgico' ? String(a.anioInicio) : `desde ${a.anioInicio}`) : null);
@@ -59,12 +65,14 @@ export function PanelAntecedentes({ antecedentes, puedeAgregar, onAgregar }) {
 }
 
 export function DialogoAntecedente({ pacienteId, onCerrar, onListo }) {
+  const { usuario } = useSesion();
+  const tipos = Object.entries(TIPOS).filter(([tipo]) => !SOLO_EN[tipo] || SOLO_EN[tipo].includes(usuario?.institucion));
   const [datos, setDatos] = useState({ tipo: 'patologico', descripcion: '', anioInicio: '' });
   const [error, setError] = useState(null);
   const [enviando, setEnviando] = useState(false);
   const errores = erroresDe(error);
   const cambiar = (campo) => (e) => setDatos({ ...datos, [campo]: e.target.value });
-  const conAnio = datos.tipo !== 'familiar';
+  const conAnio = !['familiar', 'perinatal'].includes(datos.tipo);
 
   async function enviar(e) {
     e.preventDefault();
@@ -88,7 +96,7 @@ export function DialogoAntecedente({ pacienteId, onCerrar, onListo }) {
       <form className="formulario" onSubmit={enviar} noValidate>
         <Alerta>{error?.message}</Alerta>
         <Selector etiqueta="Tipo *" value={datos.tipo} onChange={cambiar('tipo')} vacio={null} error={errores.tipo}
-          opciones={Object.entries(TIPOS).map(([valor, [, texto]]) => ({ valor, texto }))} />
+          opciones={tipos.map(([valor, [, texto]]) => ({ valor, texto }))} />
         <Campo etiqueta="Descripción *" value={datos.descripcion} onChange={cambiar('descripcion')} error={errores.descripcion}
           placeholder={TIPOS[datos.tipo][2]} maxLength={300} />
         {conAnio && (

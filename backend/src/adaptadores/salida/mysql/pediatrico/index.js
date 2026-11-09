@@ -2,6 +2,7 @@
 // puertos/repositorios.js sobre el esquema de db/mysql/01_esquema.sql.
 
 import { crearRepositorioAgenda } from './agenda.js';
+import { crearRepositorioAntecedentes } from './antecedentes.js';
 import { crearRepositorioAtenciones } from './atenciones.js';
 import { crearRepositorioCobros } from './cobros.js';
 import { crearRepositorioEncargados } from './encargados.js';
@@ -35,6 +36,9 @@ export function crearAdaptadorPediatricoMysql(pool) {
 
     // Puerto opcional (fuera del contrato común): citas.
     agenda: crearRepositorioAgenda(pool),
+
+    // Puerto opcional: antecedentes médicos (incluye los perinatales).
+    antecedentes: crearRepositorioAntecedentes(pool),
 
     // Puerto propio del pediátrico: vacunación, cobros y encargados.
     pediatrico: {

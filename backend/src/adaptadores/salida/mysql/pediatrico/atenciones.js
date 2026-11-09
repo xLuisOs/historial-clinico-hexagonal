@@ -1,5 +1,6 @@
 import { Conflicto, NoEncontrado } from '../../../../dominio/errores.js';
 import { enTransaccion, traducirError } from '../conexion.js';
+import { cargarAntecedentes } from './antecedentes.js';
 import { cargarCobros } from './cobros.js';
 import { exigirPacienteActivo, filaAPaciente, SELECT_PACIENTE } from './pacientes.js';
 
@@ -245,6 +246,7 @@ export function crearRepositorioAtenciones(pool) {
 
       return {
         paciente: filaAPaciente(filas[0]),
+        antecedentes: await cargarAntecedentes(pool, pacienteId),
         consultas,
         extras: {
           crecimiento,

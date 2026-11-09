@@ -17,6 +17,16 @@ BEGIN
   END IF;
 END$$
 
+-- Tampoco se agregan antecedentes a un historial archivado.
+CREATE TRIGGER trg_antecedente_paciente_activo
+BEFORE INSERT ON antecedente
+FOR EACH ROW
+BEGIN
+  IF (SELECT activo FROM paciente WHERE id_paciente = NEW.paciente_fk) = FALSE THEN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El historial del paciente está archivado';
+  END IF;
+END$$
+
 -- Si la vacuna se aplicó durante una consulta, la consulta debe ser del mismo paciente.
 CREATE TRIGGER trg_vacuna_aplicada_consistente
 BEFORE INSERT ON vacuna_aplicada

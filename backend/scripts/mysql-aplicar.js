@@ -5,6 +5,8 @@
 //   npm run db:mysql                    esquema + triggers + usuarios
 //   npm run db:mysql:semilla            ... y además datos de prueba
 //   npm run db:mysql -- --reiniciar     BORRA la base y la vuelve a crear
+//   npm run db:mysql -- --solo 05_antecedentes.sql
+//                                       corre solo ese archivo (cambios sobre una base existente)
 //
 // Usa MYSQL_ADMIN_URL (un usuario con permisos de administración), no el
 // usuario de la aplicación, que a propósito no puede crear tablas.
@@ -21,6 +23,8 @@ dotenv.config({ quiet: true });
 const carpeta = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'db', 'mysql');
 const conSemilla = process.argv.includes('--semilla');
 const reiniciar = process.argv.includes('--reiniciar');
+const iSolo = process.argv.indexOf('--solo');
+const solo = iSolo >= 0 ? process.argv[iSolo + 1] : null;
 
 /** Divide un script en sentencias respetando DELIMITER (necesario para triggers). */
 function dividirSentencias(sql) {
@@ -70,8 +74,13 @@ try {
 
   const archivos = fs.readdirSync(carpeta)
     .filter((a) => a.endsWith('.sql'))
-    .filter((a) => conSemilla || !a.includes('semilla'))
+    .filter((a) => (solo ? a === solo : conSemilla || !a.includes('semilla')))
     .sort();
+  if (solo && archivos.length === 0) {
+    console.error(`No existe db/mysql/${solo}`);
+    process.exitCode = 1;
+    throw new Error();
+  }
 
   for (const archivo of archivos) {
     const sql = sustituirSecretos(fs.readFileSync(path.join(carpeta, archivo), 'utf8'));

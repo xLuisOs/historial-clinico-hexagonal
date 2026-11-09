@@ -144,6 +144,19 @@ INSERT INTO pago (cobro_fk, metodo_pago_fk, monto, fecha_pago, referencia) VALUE
   (1, 2, 225.00, '2026-06-15 10:35:00', '4821'),
   (2, 1, 100.00, '2026-09-20 16:45:00', NULL);
 
+-- ---------------------------------------------------------- antecedentes
+-- Antes de archivar al paciente 4: el trigger no deja agregarlos después.
+INSERT INTO antecedente (paciente_fk, tipo, descripcion, anio_inicio, registrado_por, fecha_registro) VALUES
+  (1, 'perinatal',   'A término (39 semanas), parto vaginal, peso al nacer 3.2 kg', NULL, 1, '2025-08-12 09:10:00'),
+  (1, 'familiar',    'Hermano: asma bronquial',                                     NULL, 1, '2025-08-12 09:10:00'),
+  (2, 'perinatal',   'Prematuro de 34 semanas, peso al nacer 2.1 kg; 5 días en incubadora', NULL, 2, '2026-08-05 11:10:00'),
+  (2, 'patologico',  'Asma bronquial',                                              2024, 2, '2026-08-05 11:10:00'),
+  (2, 'medicamento', 'Salbutamol inhalado, 2 disparos cuando hay sibilancias',       2024, 2, '2026-08-05 11:10:00'),
+  (2, 'familiar',    'Madre: rinitis alérgica',                                     NULL, 2, '2026-08-05 11:10:00'),
+  (3, 'quirurgico',  'Amigdalectomía',                                              2024, 1, '2025-02-10 08:30:00'),
+  (3, 'habito',      'Expuesto a humo de tabaco en casa (el padre fuma)',          NULL, 1, '2025-02-10 08:30:00'),
+  (4, 'perinatal',   'Cesárea por sufrimiento fetal; sin complicaciones posteriores', NULL, 1, '2021-09-01 11:20:00');
+
 -- ------------------------------------------------- historial archivado
 UPDATE paciente
 SET activo = FALSE, fecha_baja = '2025-01-20 14:00:00', motivo_baja = 'traslado',
