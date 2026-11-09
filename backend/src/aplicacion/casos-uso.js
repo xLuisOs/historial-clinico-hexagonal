@@ -12,6 +12,7 @@ import { Validador } from '../dominio/validacion.js';
 import { validarNuevoPaciente, validarContacto, validarBaja } from '../dominio/paciente.js';
 import { validarNuevaConsulta, validarDiagnostico, validarReceta } from '../dominio/atencion.js';
 import { validarAntecedente } from '../dominio/antecedente.js';
+import { historialParaRol, pacienteParaRol } from '../dominio/privacidad.js';
 import { validarCambioEstado, validarNuevaCita, validarReprogramacion } from '../dominio/cita.js';
 
 export function exigirRol(usuario, ...roles) {
@@ -22,22 +23,26 @@ export function exigirRol(usuario, ...roles) {
 
 // ---------------------------------------------------------------- pacientes
 
-export function registrarPaciente({ usuario, repos }, datos) {
+// Lo que devuelven pasa por pacienteParaRol: la recepción no recibe datos
+// clínicos más allá de las alergias (ver dominio/privacidad.js).
+
+export async function registrarPaciente({ usuario, repos }, datos) {
   exigirRol(usuario, 'recepcion', 'medico', 'admin');
-  return repos.pacientes.registrar(validarNuevoPaciente(datos, usuario.institucion));
+  return pacienteParaRol(await repos.pacientes.registrar(validarNuevoPaciente(datos, usuario.institucion)), usuario);
 }
 
-export function buscarPacientes({ repos }, { texto = '', incluirArchivados = false } = {}) {
-  return repos.pacientes.buscar({ texto: String(texto).trim(), incluirArchivados });
+export async function buscarPacientes({ usuario, repos }, { texto = '', incluirArchivados = false } = {}) {
+  const pacientes = await repos.pacientes.buscar({ texto: String(texto).trim(), incluirArchivados });
+  return pacientes.map((p) => pacienteParaRol(p, usuario));
 }
 
-export function obtenerPaciente({ repos }, pacienteId) {
-  return repos.pacientes.obtenerPorId(pacienteId);
+export async function obtenerPaciente({ usuario, repos }, pacienteId) {
+  return pacienteParaRol(await repos.pacientes.obtenerPorId(pacienteId), usuario);
 }
 
-export function actualizarContacto({ usuario, repos }, pacienteId, datos) {
+export async function actualizarContacto({ usuario, repos }, pacienteId, datos) {
   exigirRol(usuario, 'recepcion', 'admin');
-  return repos.pacientes.actualizarContacto(pacienteId, validarContacto(datos));
+  return pacienteParaRol(await repos.pacientes.actualizarContacto(pacienteId, validarContacto(datos)), usuario);
 }
 
 export function darDeBaja({ usuario, repos }, pacienteId, datos) {
@@ -47,8 +52,9 @@ export function darDeBaja({ usuario, repos }, pacienteId, datos) {
 
 // ---------------------------------------------------------------- historial
 
-export function obtenerHistorial({ repos }, pacienteId) {
-  return repos.atenciones.obtenerHistorial(pacienteId);
+// La recepción recibe la vista administrativa (sin datos clínicos): ver dominio/privacidad.js.
+export async function obtenerHistorial({ usuario, repos }, pacienteId) {
+  return historialParaRol(await repos.atenciones.obtenerHistorial(pacienteId), usuario);
 }
 
 // Regla de negocio: registrar consulta (con diagnóstico y, opcionalmente, receta).

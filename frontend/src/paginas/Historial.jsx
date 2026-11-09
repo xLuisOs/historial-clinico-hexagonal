@@ -33,18 +33,20 @@ function Consulta({ consulta, vista, usuario, recargar, puedeAtender, onDiagnost
 
       {consulta.observaciones && <p>{consulta.observaciones}</p>}
 
-      <div className="bloque">
-        <h4>Diagnósticos</h4>
-        <ul className="items">
-          {consulta.diagnosticos.map((d) => (
-            <li key={d.id}>
-              {d.codigoCie10 && <span className="codigo">{d.codigoCie10}</span>}
-              <span>{d.descripcion}</span>
-              {d.tipo === 'principal' && <span className="etiqueta">principal</span>}
-            </li>
-          ))}
-        </ul>
-      </div>
+      {consulta.diagnosticos.length > 0 && (
+        <div className="bloque">
+          <h4>Diagnósticos</h4>
+          <ul className="items">
+            {consulta.diagnosticos.map((d) => (
+              <li key={d.id}>
+                {d.codigoCie10 && <span className="codigo">{d.codigoCie10}</span>}
+                <span>{d.descripcion}</span>
+                {d.tipo === 'principal' && <span className="etiqueta">principal</span>}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <DetalleConsulta datos={consulta.datosEspecificos ?? {}} consulta={consulta} usuario={usuario} recargar={recargar} />
 
@@ -88,6 +90,8 @@ export function Historial() {
   }
 
   const { paciente, consultas, extras } = historial;
+  // La recepción recibe una vista administrativa, sin datos clínicos (lo decide el backend).
+  const administrativa = historial.vista === 'administrativa';
   const activo = paciente.estado.activo;
   const puedeAtender = activo && puede(usuario, 'atender');
   const alListo = () => { setDialogo(null); cargar(); setVersionCitas((v) => v + 1); };
@@ -140,7 +144,7 @@ export function Historial() {
             <Dato titulo="Edad">{edad(paciente.fechaNacimiento)} ({fecha(paciente.fechaNacimiento)})</Dato>
             <Dato titulo="Sexo">{SEXO[paciente.sexo]}</Dato>
             <Dato titulo="Documento">{paciente.documento}</Dato>
-            <Dato titulo="Tipo de sangre">{paciente.datosClinicos?.tipoSangre}</Dato>
+            {!administrativa && <Dato titulo="Tipo de sangre">{paciente.datosClinicos?.tipoSangre}</Dato>}
             <Dato titulo="Teléfono">{paciente.contacto?.telefono}</Dato>
             <Dato titulo="Dirección">{paciente.contacto?.direccion}</Dato>
             {paciente.contacto?.correo && <Dato titulo="Correo">{paciente.contacto.correo}</Dato>}
@@ -151,6 +155,12 @@ export function Historial() {
             )}
             <Dato titulo="Registrado">{fecha(paciente.estado.fechaRegistro)}</Dato>
           </div>
+
+          {administrativa && (
+            <p className="nota-privacidad">
+              Vista administrativa: diagnósticos, recetas, tratamientos y antecedentes solo los ve el personal médico.
+            </p>
+          )}
 
           {paciente.datosClinicos?.alergias && (
             <div className="alergias">

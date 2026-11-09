@@ -134,7 +134,7 @@ export function PanelFacturas({ facturas = [], consultas = [], internamientos = 
   // Lo que todavía se puede facturar: consultas e internamientos sin factura vigente.
   const facturado = new Set(facturas.filter((f) => f.estado !== 'anulada').map((f) => `${f.origen.tipo}:${f.origen.id}`));
   const origenes = [
-    ...consultas.map((c) => ({ valor: `consulta:${c.id}`, texto: `Consulta · ${fechaHora(c.fecha)} · ${c.motivo ?? 'sin motivo'}` })),
+    ...consultas.map((c) => ({ valor: `consulta:${c.id}`, texto: `Consulta · ${fechaHora(c.fecha)} · ${c.motivo ?? c.medico?.nombre ?? ''}` })),
     ...internamientos.map((i) => ({ valor: `internamiento:${i.id}`, texto: `Internamiento · habitación ${i.habitacion} · ${fecha(i.fechaIngreso)}` })),
   ].filter((o) => !facturado.has(o.valor));
 

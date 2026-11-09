@@ -237,6 +237,7 @@ a { color: var(--primario-oscuro); }
 .datos { display: grid; gap: 14px 22px; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); margin-top: 16px; }
 .dato small { display: block; font-size: 0.75rem; font-weight: 600; color: var(--tinta-tenue); text-transform: uppercase; letter-spacing: 0.04em; }
 .dato span { font-size: 0.95rem; }
+.nota-privacidad { margin-top: 14px; font-size: 0.85rem; color: var(--tinta-suave); }
 .alergias { display: flex; gap: 10px; align-items: center; margin-top: 16px; }
 
 .linea-tiempo { display: grid; gap: 14px; }

@@ -173,20 +173,23 @@ export function PanelInternamientos({ internamientos = [], paciente, usuario, re
                 {i.estado === 'activo' ? 'Internado' : 'Alta'}
               </span>
             </div>
-            <p>{i.motivoIngreso}{i.diagnosticoIngreso ? ` · ${i.diagnosticoIngreso}` : ''}</p>
+            {i.motivoIngreso && <p>{i.motivoIngreso}{i.diagnosticoIngreso ? ` · ${i.diagnosticoIngreso}` : ''}</p>}
             {i.diagnosticoAlta && <p><small style={{ color: 'var(--tinta-suave)' }}>Diagnóstico de alta:</small> {i.diagnosticoAlta}</p>}
-            <div className="bloque">
-              <h4>Médicos a cargo</h4>
-              <ul className="items">
-                {i.medicosACargo.map((m, n) => (
-                  <li key={n}>
-                    <strong>{m.medico}</strong>
-                    <small>{fechaHora(m.fechaInicio)}{m.fechaFin ? ` → ${fechaHora(m.fechaFin)}` : ' · a cargo'}{m.motivoCambio ? ` · ${m.motivoCambio}` : ''}</small>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            {i.tratamientos.length > 0 && (
+            {!i.medicosACargo && i.medicoResponsable && <p><small style={{ color: 'var(--tinta-suave)' }}>Médico responsable:</small> {i.medicoResponsable}</p>}
+            {i.medicosACargo?.length > 0 && (
+              <div className="bloque">
+                <h4>Médicos a cargo</h4>
+                <ul className="items">
+                  {i.medicosACargo.map((m, n) => (
+                    <li key={n}>
+                      <strong>{m.medico}</strong>
+                      <small>{fechaHora(m.fechaInicio)}{m.fechaFin ? ` → ${fechaHora(m.fechaFin)}` : ' · a cargo'}{m.motivoCambio ? ` · ${m.motivoCambio}` : ''}</small>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {i.tratamientos?.length > 0 && (
               <div className="bloque">
                 <h4>Tratamientos</h4>
                 <ul className="items">

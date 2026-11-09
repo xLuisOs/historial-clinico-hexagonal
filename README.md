@@ -149,7 +149,7 @@ ocultan los botones que no le corresponden (el backend igual lo verifica):
 
 | Acción                              | Médico | Recepción | Admin |
 |-------------------------------------|:------:|:---------:|:-----:|
-| Buscar pacientes y ver historial    | ✅     | ✅        | ✅    |
+| Buscar pacientes y ver historial    | ✅     | ✅ *      | ✅    |
 | Registrar paciente                  | ✅     | ✅        | ✅    |
 | Actualizar contacto                 |        | ✅        | ✅    |
 | Consulta, diagnóstico y receta      | ✅     |           |       |
@@ -164,6 +164,13 @@ ocultan los botones que no le corresponden (el backend igual lo verifica):
 | Facturar y cobrar (hospital)        |        | ✅        | ✅    |
 | Anular facturas sin pagos (hospital) |       |           | ✅    |
 | Archivar historial                  |        |           | ✅    |
+
+\* En el hospital y la odontológica, la recepción recibe una **vista administrativa**
+del historial (mínimo privilegio): ficha, contacto, alergias, citas y lo que se cobra
+(facturas, internamientos con su habitación, procedimientos con su precio y pagos), sin
+tipo de sangre, motivos, diagnósticos, recetas, notas, tratamientos ni antecedentes.
+El recorte se hace en el backend (`dominio/privacidad.js`), no solo en la pantalla,
+así que tampoco llega por la API. Médicos y admin ven el historial completo.
 
 ### Recrear las bases desde cero
 
