@@ -84,6 +84,11 @@ export const api = {
   cancelarCita: (citaId) => pedir('POST', `/citas/${q(citaId)}/cancelacion`),
 
   medicos: () => pedir('GET', '/catalogos/medicos'),
+  personal: () => pedir('GET', '/personal/medicos'),
+  registrarMedico: (datos) => pedir('POST', '/personal/medicos', datos),
+  actualizarMedico: (id, datos) => pedir('PATCH', `/personal/medicos/${q(id)}`, datos),
+  restablecerPasswordMedico: (id, datos) => pedir('POST', `/personal/medicos/${q(id)}/password`, datos),
+  cambiarEstadoMedico: (id, datos) => pedir('POST', `/personal/medicos/${q(id)}/estado`, datos),
   medicamentos: () => pedir('GET', '/catalogos/medicamentos'),
   procedimientosOdontologicos: () => pedir('GET', '/odontologica/procedimientos'),
   registrarPago: (consultaId, datos) => pedir('POST', `/consultas/${q(consultaId)}/pagos`, datos),

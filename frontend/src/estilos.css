@@ -224,6 +224,10 @@ a { color: var(--primario-oscuro); }
 }
 .tarjeta-paciente small { color: var(--tinta-suave); font-size: 0.82rem; }
 .tarjeta-paciente.cita:hover { transform: none; }
+.fila-medico { cursor: default; }
+.fila-medico:hover { transform: none; }
+.fila-medico .acciones { flex-wrap: wrap; justify-content: flex-end; }
+.fila-medico.inactivo > :not(.acciones) { opacity: 0.55; }
 .tarjeta-paciente.cita a:not(.boton) { color: inherit; text-decoration: none; }
 .tarjeta-paciente.cita a:not(.boton):hover { text-decoration: underline; }
 .hora { display: grid; place-items: center; min-width: 64px; padding: 8px 10px; border-radius: 14px; font-weight: 700; font-variant-numeric: tabular-nums; background: linear-gradient(140deg, #c9edef, #a6dbe0); color: var(--primario-oscuro); }
@@ -338,5 +342,6 @@ button.dosis:focus-visible { outline: 2px solid var(--primario); outline-offset:
   .tarjeta-paciente { grid-template-columns: auto 1fr; }
   .tarjeta-paciente:not(.cita) > :last-child { display: none; }
   .tarjeta-paciente.cita > :last-child { grid-column: 1 / -1; }
+  .tarjeta-paciente.fila-medico > :last-child { display: flex; grid-column: 1 / -1; justify-content: flex-start; }
   .login-intro, .login-form, .panel { padding: 22px; }
 }

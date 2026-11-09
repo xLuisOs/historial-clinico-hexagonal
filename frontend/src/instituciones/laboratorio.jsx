@@ -29,7 +29,7 @@ export const Estado = ({ mapa, valor }) => {
 
 const MEDICO_VACIO = { nombres: '', apellidos: '', numeroColegiado: '', especialidad: '', telefono: '', institucionProcedencia: '' };
 
-function DialogoMedicoReferente({ onCerrar, onListo }) {
+export function DialogoMedicoReferente({ onCerrar, onListo }) {
   const [datos, setDatos] = useState(MEDICO_VACIO);
   const [error, setError] = useState(null);
   const [enviando, setEnviando] = useState(false);

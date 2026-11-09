@@ -174,6 +174,7 @@ ocultan los botones que no le corresponden (el backend igual lo verifica):
 | Facturar y cobrar (hospital)        |        | ✅        | ✅    |
 | Anular facturas sin pagos (hospital) |       |           | ✅    |
 | Archivar historial                  |        |           | ✅    |
+| Registrar, editar, desactivar y reactivar médicos; restablecer su contraseña (en el laboratorio, médicos referentes) | | | ✅ |
 
 \* En las cuatro instituciones, la recepción recibe una **vista administrativa**
 del historial (mínimo privilegio): ficha, contacto, alergias, citas y lo que se cobra
@@ -184,6 +185,11 @@ laboratorio ve qué exámenes tiene cada orden y en qué estado van, pero no los
 ni su evolución.
 El recorte se hace en el backend (`dominio/privacidad.js`), no solo en la pantalla,
 así que tampoco llega por la API. Médicos y admin ven el historial completo.
+
+Un médico nunca se borra: se desactiva (él y su usuario) y solo si no tiene citas
+pendientes ni pacientes internados a su cargo. Una sesión abierta deja de servir en
+cuanto su usuario se desactiva: en cada petición se revisa que siga activo (la
+respuesta se recuerda 30 segundos).
 
 ### Recrear las bases desde cero
 
@@ -300,6 +306,11 @@ Todas las rutas (salvo login) requieren `Authorization: Bearer <token>`.
 | POST   | `/api/consultas/:id/diagnosticos`  | Agregar diagnóstico                                  |
 | POST   | `/api/consultas/:id/recetas`       | Recetar medicamento(s)                               |
 | GET    | `/api/catalogos/medicos`           | Catálogo de médicos                                  |
+| GET    | `/api/personal/medicos`            | Médicos activos e inactivos, con colegiado y correo (admin) |
+| POST   | `/api/personal/medicos`            | Alta de un médico con su usuario `{ nombres, apellidos, numeroColegiado, especialidad, telefono?, correo, password }` (admin; hospital, odontológica y pediátrico). El correo debe ser del dominio de la institución; médico y usuario se crean en una sola transacción |
+| PATCH  | `/api/personal/medicos/:id`        | Editar `{ nombres?, apellidos?, numeroColegiado?, especialidad?, telefono? }` (admin). El correo no se edita: es la cuenta |
+| POST   | `/api/personal/medicos/:id/password` | Nueva contraseña `{ password }` para un médico que olvidó la suya (admin) |
+| POST   | `/api/personal/medicos/:id/estado` | `{ activo }` (admin). Desactivar desactiva también su usuario y falla con 409 si tiene citas pendientes a futuro o pacientes internados a su cargo (la respuesta trae la lista). En el laboratorio aplica a los médicos referentes |
 | GET    | `/api/catalogos/medicamentos`      | Catálogo de medicamentos                             |
 | GET    | `/api/agenda?fecha=AAAA-MM-DD&medicoId=` | Citas de ese día (hoy por defecto): las del médico conectado, o las del `medicoId` para recepción y admin |
 | GET    | `/api/pacientes/:id/citas`         | Citas pendientes del paciente, de hoy en adelante    |
