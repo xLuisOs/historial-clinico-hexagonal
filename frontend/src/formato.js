@@ -64,3 +64,7 @@ export const REFERENCIA_PAGO = {
 /** 'Autorización 558812', 'Póliza POL-77120'… o '' si no hay referencia. */
 export const textoReferencia = (metodo, referencia) =>
   referencia ? `${REFERENCIA_PAGO[metodo]?.corto ?? 'Ref.'} ${referencia}` : '';
+
+// Dominio del correo de cada institución: es el que enruta el inicio de sesión
+// hacia su base de datos (el backend rechaza cualquier otro).
+export const DOMINIO_INSTITUCION = { hospital: 'hospital.gt', odontologica: 'odonto.gt', laboratorio: 'lab.gt', pediatrico: 'pediatrico.gt' };

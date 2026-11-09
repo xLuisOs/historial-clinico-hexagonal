@@ -13,6 +13,28 @@ export function Campo({ etiqueta, error, children, ...props }) {
   );
 }
 
+/**
+ * Correo de una cuenta nueva: se escribe solo lo de antes de la @ y el dominio
+ * de la institución queda fijo. `value` y `onChange` manejan esa primera parte;
+ * si pegan el correo completo, se queda con lo de antes de la @.
+ */
+export function CampoCorreo({ etiqueta, dominio, value, onChange, error }) {
+  return (
+    <label className={`campo${error ? ' con-error' : ''}`}>
+      <span>{etiqueta}</span>
+      <div className="correo-institucional">
+        <input type="text" inputMode="email" autoComplete="off" autoCapitalize="none" spellCheck={false} placeholder="nombre"
+          value={value} onChange={(e) => onChange(e.target.value.split('@')[0].replace(/\s/g, ''))} />
+        <span>@{dominio}</span>
+      </div>
+      {error && <small className="error-campo">{error}</small>}
+    </label>
+  );
+}
+
+/** Correo completo a partir de lo que se escribió en CampoCorreo, o null si está vacío. */
+export const correoCompleto = (usuario, dominio) => (usuario.trim() ? `${usuario.trim()}@${dominio}` : null);
+
 export function Selector({ etiqueta, error, opciones, vacio = 'Selecciona…', ...props }) {
   return (
     <Campo etiqueta={etiqueta} error={error}>

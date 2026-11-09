@@ -5,10 +5,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api } from '../api.js';
 import { IconoBuscar, IconoMas } from '../componentes/Iconos.jsx';
-import { Alerta, Campo, Cargando, Dialogo, erroresDe } from '../componentes/ui.jsx';
+import { Alerta, Campo, CampoCorreo, Cargando, correoCompleto, Dialogo, erroresDe } from '../componentes/ui.jsx';
+import { DOMINIO_INSTITUCION } from '../formato.js';
 import { useSesion } from '../sesion.jsx';
 
-const DOMINIO = { hospital: 'hospital.gt', odontologica: 'odonto.gt', laboratorio: 'lab.gt', pediatrico: 'pediatrico.gt' };
 const iniciales = (nombre) => nombre.split(' ').filter(Boolean).slice(0, 2).map((p) => p[0]).join('').toUpperCase();
 const sinTildes = (t) => t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
@@ -41,8 +41,12 @@ function DialogoNueva({ institucion, onCerrar, onListo }) {
   const [datos, setDatos] = useState({ nombres: '', apellidos: '', telefono: '', correo: '', password: '' });
   const cambiar = (campo) => (e) => setDatos({ ...datos, [campo]: e.target.value });
   const { error, errores, enviando, enviar } = useEnvio(() => {
-    const { password, ...resto } = datos;
-    return api.registrarRecepcionista({ ...Object.fromEntries(Object.entries(resto).map(([k, v]) => [k, v.trim() || null])), password });
+    const { password, correo, ...resto } = datos;
+    return api.registrarRecepcionista({
+      ...Object.fromEntries(Object.entries(resto).map(([k, v]) => [k, v.trim() || null])),
+      correo: correoCompleto(correo, DOMINIO_INSTITUCION[institucion]),
+      password,
+    });
   }, onListo);
 
   return (
@@ -56,8 +60,8 @@ function DialogoNueva({ institucion, onCerrar, onListo }) {
         </div>
         <h4 style={{ margin: '4px 0 0' }}>Acceso al sistema</h4>
         <div className="rejilla">
-          <Campo etiqueta="Correo *" type="email" autoComplete="off" placeholder={`nombre@${DOMINIO[institucion]}`}
-            value={datos.correo} onChange={cambiar('correo')} error={errores.correo} />
+          <CampoCorreo etiqueta="Correo *" dominio={DOMINIO_INSTITUCION[institucion]}
+            value={datos.correo} onChange={(correo) => setDatos({ ...datos, correo })} error={errores.correo} />
           <Campo etiqueta="Contraseña inicial *" type="password" autoComplete="new-password" placeholder="8 o más, con letras y números"
             value={datos.password} onChange={cambiar('password')} error={errores.password} />
         </div>

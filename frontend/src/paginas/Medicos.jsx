@@ -1,14 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api } from '../api.js';
 import { IconoBuscar, IconoMas } from '../componentes/Iconos.jsx';
-import { Alerta, Campo, Cargando, Dialogo, erroresDe } from '../componentes/ui.jsx';
-import { fechaHora } from '../formato.js';
+import { Alerta, Campo, CampoCorreo, Cargando, correoCompleto, Dialogo, erroresDe } from '../componentes/ui.jsx';
+import { DOMINIO_INSTITUCION, fechaHora } from '../formato.js';
 import { DialogoMedicoReferente } from '../instituciones/laboratorio.jsx';
 import { useSesion } from '../sesion.jsx';
 
-// El correo del médico nuevo debe ser del dominio de su institución: ese
-// dominio es el que enruta su inicio de sesión (el backend lo valida igual).
-const DOMINIO = { hospital: 'hospital.gt', odontologica: 'odonto.gt', laboratorio: 'lab.gt', pediatrico: 'pediatrico.gt' };
 const ESPECIALIDAD_SUGERIDA = { odontologica: 'Odontología general', pediatrico: 'Pediatría general' };
 
 /** Alta de un médico con su usuario (hospital, odontológica y pediátrico). */
@@ -28,9 +25,9 @@ function DialogoNuevoMedico({ institucion, onCerrar, onListo }) {
     setEnviando(true);
     setError(null);
     try {
-      const { password, ...resto } = datos;
+      const { password, correo, ...resto } = datos;
       const limpio = Object.fromEntries(Object.entries(resto).map(([k, v]) => [k, v.trim() || null]));
-      onListo(await api.registrarMedico({ ...limpio, password }));
+      onListo(await api.registrarMedico({ ...limpio, correo: correoCompleto(correo, DOMINIO_INSTITUCION[institucion]), password }));
     } catch (err) {
       setError(err);
       setEnviando(false);
@@ -53,8 +50,8 @@ function DialogoNuevoMedico({ institucion, onCerrar, onListo }) {
         </div>
         <h4 style={{ margin: '4px 0 0' }}>Acceso al sistema</h4>
         <div className="rejilla">
-          <Campo etiqueta="Correo *" type="email" autoComplete="off" placeholder={`nombre@${DOMINIO[institucion]}`}
-            value={datos.correo} onChange={cambiar('correo')} error={errores.correo} />
+          <CampoCorreo etiqueta="Correo *" dominio={DOMINIO_INSTITUCION[institucion]}
+            value={datos.correo} onChange={(correo) => setDatos({ ...datos, correo })} error={errores.correo} />
           <Campo etiqueta="Contraseña inicial *" type="password" autoComplete="new-password" placeholder="8 o más, con letras y números"
             value={datos.password} onChange={cambiar('password')} error={errores.password} />
         </div>
@@ -137,7 +134,9 @@ function DialogoCuenta({ medico, institucion, onCerrar, onListo }) {
     setEnviando(true);
     setError(null);
     try {
-      onListo(await api.crearCuentaMedico(medico.id, { correo: datos.correo.trim() || null, password: datos.password }));
+      onListo(await api.crearCuentaMedico(medico.id, {
+        correo: correoCompleto(datos.correo, DOMINIO_INSTITUCION[institucion]), password: datos.password,
+      }));
     } catch (err) {
       setError(err);
       setEnviando(false);
@@ -152,8 +151,8 @@ function DialogoCuenta({ medico, institucion, onCerrar, onListo }) {
         </p>
         <Alerta>{error?.message}</Alerta>
         <div className="rejilla">
-          <Campo etiqueta="Correo *" type="email" autoComplete="off" placeholder={`nombre@${DOMINIO[institucion]}`}
-            value={datos.correo} onChange={cambiar('correo')} error={errores.correo} />
+          <CampoCorreo etiqueta="Correo *" dominio={DOMINIO_INSTITUCION[institucion]}
+            value={datos.correo} onChange={(correo) => setDatos({ ...datos, correo })} error={errores.correo} />
           <Campo etiqueta="Contraseña inicial *" type="password" autoComplete="new-password" placeholder="8 o más, con letras y números"
             value={datos.password} onChange={cambiar('password')} error={errores.password} />
         </div>

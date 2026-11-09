@@ -152,6 +152,18 @@ a { color: var(--primario-oscuro); }
   transition: border-color 0.12s, box-shadow 0.12s;
 }
 .campo textarea { resize: vertical; min-height: 84px; }
+/* Correo con el dominio de la institución fijo a la derecha (CampoCorreo). */
+.correo-institucional {
+  display: flex; align-items: center; border-radius: var(--radio-sm);
+  background: rgba(255, 255, 255, 0.8); border: 1px solid rgba(15, 45, 54, 0.12);
+  transition: border-color 0.12s, box-shadow 0.12s;
+}
+.correo-institucional:focus-within { border-color: var(--primario); box-shadow: 0 0 0 4px rgba(46, 154, 166, 0.15); }
+.campo .correo-institucional input, .campo .correo-institucional input:focus {
+  border: none; background: transparent; box-shadow: none; min-width: 0; padding-right: 2px;
+}
+.correo-institucional > span { padding-right: 14px; color: var(--tinta-suave); white-space: nowrap; }
+.campo.con-error .correo-institucional { border-color: var(--peligro); }
 .campo input:focus, .campo select:focus, .campo textarea:focus, .buscador input:focus {
   outline: none; border-color: var(--primario); box-shadow: 0 0 0 4px rgba(46, 154, 166, 0.15);
 }
