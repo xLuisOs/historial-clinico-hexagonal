@@ -8,6 +8,7 @@ import { crearRepositorioAtenciones } from './atenciones.js';
 import { crearRepositorioFacturacion } from './facturacion.js';
 import { crearRepositorioInternamientos } from './internamientos.js';
 import { crearRepositorioPacientes } from './pacientes.js';
+import { crearRepositorioPersonal } from './personal.js';
 
 export function crearAdaptadorHospitalPostgres(pool) {
   return {
@@ -32,12 +33,18 @@ export function crearAdaptadorHospitalPostgres(pool) {
       async registrarAcceso(usuarioId) {
         await pool.query('UPDATE usuario SET ultimo_acceso = localtimestamp WHERE id_usuario = $1', [usuarioId]);
       },
+      async estaActivo(usuarioId) {
+        const { rows: [u] } = await pool.query('SELECT activo FROM usuario WHERE id_usuario = $1', [Number(usuarioId)]);
+        return Boolean(u?.activo);
+      },
     },
 
     // Puerto opcional (fuera del contrato común): citas.
     agenda: crearRepositorioAgenda(pool),
     // Puerto opcional: antecedentes médicos.
     antecedentes: crearRepositorioAntecedentes(pool),
+    // Puerto opcional: alta de médicos (con su usuario) por el administrador.
+    personal: crearRepositorioPersonal(pool),
     // Puertos propios del hospital (fuera del contrato común).
     internamientos: crearRepositorioInternamientos(pool),
     facturacion: crearRepositorioFacturacion(pool),

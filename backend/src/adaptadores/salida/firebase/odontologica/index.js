@@ -8,6 +8,7 @@ import { crearRepositorioAtenciones } from './atenciones.js';
 import { COLECCIONES, nombreCompleto, ROLES } from './modelo.js';
 import { registrarPago } from './pagos.js';
 import { crearRepositorioPacientes } from './pacientes.js';
+import { crearRepositorioPersonal } from './personal.js';
 
 const ordenarPorApellido = (a, b) => (a.get('apellidos') ?? '').localeCompare(b.get('apellidos') ?? '', 'es');
 
@@ -33,12 +34,18 @@ export function crearAdaptadorOdontologicaFirebase(db, zonaHoraria) {
       async registrarAcceso(usuarioId) {
         await col('usuarios').doc(usuarioId).update({ ultimo_acceso: FieldValue.serverTimestamp() });
       },
+      async estaActivo(usuarioId) {
+        const u = await col('usuarios').doc(usuarioId).get();
+        return u.exists && u.get('activo') !== false;
+      },
     },
 
     // Puerto opcional (fuera del contrato común): citas.
     agenda: crearRepositorioAgenda(db, zonaHoraria),
     // Puerto opcional: antecedentes médicos.
     antecedentes: crearRepositorioAntecedentes(db, zonaHoraria),
+    // Puerto opcional: alta de odontólogos (con su usuario) por el administrador.
+    personal: crearRepositorioPersonal(db, zonaHoraria),
 
     pacientes: crearRepositorioPacientes(db, zonaHoraria),
     atenciones: crearRepositorioAtenciones(db, zonaHoraria),
@@ -60,7 +67,7 @@ export function crearAdaptadorOdontologicaFirebase(db, zonaHoraria) {
         return snap.docs.sort(ordenarPorApellido).map((d) => ({
           id: d.id,
           nombre: nombreCompleto(d.data()),
-          especialidad: 'Odontología',
+          especialidad: d.get('especialidad') ?? 'Odontología',
         }));
       },
       async listarMedicamentos() {
