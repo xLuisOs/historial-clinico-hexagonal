@@ -11,6 +11,7 @@ import { DatosInvalidos, NoDisponible, SinPermiso } from '../dominio/errores.js'
 import { Validador } from '../dominio/validacion.js';
 import { validarNuevoPaciente, validarContacto, validarBaja } from '../dominio/paciente.js';
 import { validarNuevaConsulta, validarDiagnostico, validarReceta } from '../dominio/atencion.js';
+import { validarAntecedente } from '../dominio/antecedente.js';
 import { validarCambioEstado, validarNuevaCita, validarReprogramacion } from '../dominio/cita.js';
 
 export function exigirRol(usuario, ...roles) {
@@ -63,6 +64,14 @@ export function registrarConsulta({ usuario, repos }, pacienteId, datos) {
 export function agregarDiagnostico({ usuario, repos }, consultaId, datos) {
   exigirRol(usuario, 'medico');
   return repos.atenciones.agregarDiagnostico(consultaId, validarDiagnostico(datos));
+}
+
+// Antecedentes médicos del paciente (enfermedades de base, cirugías,
+// familiares, hábitos, medicamentos). Los registra el médico que atiende.
+export function agregarAntecedente({ usuario, repos }, pacienteId, datos) {
+  exigirRol(usuario, 'medico');
+  if (!repos.antecedentes) throw new NoDisponible('Esta institución no registra antecedentes médicos');
+  return repos.antecedentes.agregar(pacienteId, validarAntecedente(datos), usuario);
 }
 
 // Regla de negocio: recetar medicamento(s) en una consulta existente.

@@ -1,6 +1,7 @@
 import pg from 'pg';
 import { Conflicto, NoEncontrado } from '../../../../dominio/errores.js';
 import { enTransaccion, traducirError } from '../conexion.js';
+import { cargarAntecedentes } from './antecedentes.js';
 import { exigirPacienteActivo, filaAPaciente, idNumerico, SELECT_PACIENTE } from './pacientes.js';
 
 const MENSAJES_RECETA = {
@@ -328,8 +329,9 @@ export function crearRepositorioAtenciones(pool) {
     const { rows } = await pool.query(`${SELECT_PACIENTE} WHERE p.id_paciente = $1`, [id]);
     if (rows.length === 0) throw new NoEncontrado('Paciente no encontrado');
 
-    const [consultas, internamientos, facturas, { rows: citas }] = await Promise.all([
+    const [consultas, antecedentes, internamientos, facturas, { rows: citas }] = await Promise.all([
       cargarConsultas(pool, 'co.paciente_fk = $1', [id]),
+      cargarAntecedentes(pool, id),
       cargarInternamientos(pool, id),
       cargarFacturas(pool, id),
       pool.query(
@@ -343,6 +345,7 @@ export function crearRepositorioAtenciones(pool) {
 
     return {
       paciente: filaAPaciente(rows[0]),
+      antecedentes,
       consultas,
       extras: {
         internamientos,

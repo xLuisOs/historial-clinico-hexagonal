@@ -71,6 +71,7 @@ export const api = {
   actualizarContacto: (id, datos) => pedir('PATCH', `/pacientes/${q(id)}/contacto`, datos),
   darDeBaja: (id, datos) => pedir('POST', `/pacientes/${q(id)}/baja`, datos),
 
+  agregarAntecedente: (pacienteId, datos) => pedir('POST', `/pacientes/${q(pacienteId)}/antecedentes`, datos),
   registrarConsulta: (pacienteId, datos) => pedir('POST', `/pacientes/${q(pacienteId)}/consultas`, datos),
   agregarDiagnostico: (consultaId, datos) => pedir('POST', `/consultas/${q(consultaId)}/diagnosticos`, datos),
   recetar: (consultaId, datos) => pedir('POST', `/consultas/${q(consultaId)}/recetas`, datos),

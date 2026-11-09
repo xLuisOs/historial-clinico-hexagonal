@@ -260,6 +260,38 @@ const consultas = [
 ];
 informar('consultas', consultas);
 
+// ------------------------------------------------ antecedentes médicos
+// Arreglo dentro del paciente. Solo se llena si el paciente aún no tiene
+// antecedentes, así no pisa los que se hayan registrado desde la aplicación.
+
+const antecedente = (tipo, descripcion, anioInicio, odontologo, dias) => ({
+  tipo, descripcion, anio_inicio: anioInicio, registrado_por: odontologo, fecha_registro: instante(dias, '09:00'),
+});
+const antecedentesSemilla = [
+  [perez, [
+    antecedente('patologico', 'Hipertensión arterial controlada', 2019, odoRamirez, -60),
+    antecedente('medicamento', 'Enalapril 10 mg cada 24 horas', 2019, odoRamirez, -60),
+    antecedente('habito', 'Bruxismo nocturno, usa guarda oclusal', 2021, odoRamirez, -60),
+  ]],
+  [cifuentes, [
+    antecedente('quirurgico', 'Extracción de terceros molares inferiores', 2020, odoEstrada, -40),
+    antecedente('habito', 'Fumadora ocasional', null, odoEstrada, -40),
+  ]],
+  [diaz, [
+    antecedente('patologico', 'Asma leve intermitente', 2019, odoRamirez, -30),
+    antecedente('familiar', 'Madre: diabetes tipo 2', null, odoRamirez, -30),
+  ]],
+];
+let conAntecedentes = 0;
+for (const [paciente, lista] of antecedentesSemilla) {
+  const ref = col('pacientes').doc(paciente.id);
+  if (!(await ref.get()).get('antecedentes')?.length) {
+    await ref.update({ antecedentes: lista });
+    conAntecedentes++;
+  }
+}
+console.log(`· antecedentes de prueba agregados a ${conAntecedentes} pacientes`);
+
 // ------------------------------------------- términos de búsqueda (todos)
 
 const todos = await col('pacientes').get();

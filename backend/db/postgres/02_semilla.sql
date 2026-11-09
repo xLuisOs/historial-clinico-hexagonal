@@ -141,6 +141,21 @@ INSERT INTO pago (factura_fk, fecha_pago, monto, metodo_pago, referencia) VALUES
   (2, date_trunc('day', localtimestamp) - interval '12 days' + interval '11 hours 2 minutes', 300.00,  'tarjeta',  '558812'),
   (3, date_trunc('day', localtimestamp) - interval '2 days'  + interval '9 hours 30 minutes', 5000.00, 'seguro',   'POL-77120');
 
+-- ------------------------------------------------------------ antecedentes
+INSERT INTO antecedente (paciente_fk, tipo, descripcion, anio_inicio, registrado_por, fecha_registro) VALUES
+  (1, 'patologico',  'Hipertensión arterial',                         2012, 1, localtimestamp - interval '200 days'),
+  (1, 'patologico',  'Diabetes mellitus tipo 2',                      2018, 1, localtimestamp - interval '200 days'),
+  (1, 'familiar',    'Padre: infarto agudo de miocardio a los 60 años', NULL, 1, localtimestamp - interval '200 days'),
+  (1, 'medicamento', 'Losartán 50 mg cada 24 horas',                  2012, 1, localtimestamp - interval '200 days'),
+  (1, 'medicamento', 'Metformina 850 mg cada 12 horas',               2018, 1, localtimestamp - interval '200 days'),
+  (2, 'quirurgico',  'Cesárea',                                       2016, 2, localtimestamp - interval '120 days'),
+  (2, 'familiar',    'Madre: hipotiroidismo',                         NULL, 2, localtimestamp - interval '120 days'),
+  (3, 'patologico',  'Enfermedad pulmonar obstructiva crónica (EPOC)', 2015, 4, localtimestamp - interval '60 days'),
+  (3, 'quirurgico',  'Colecistectomía',                               2010, 4, localtimestamp - interval '60 days'),
+  (3, 'habito',      'Exfumador: una cajetilla diaria por 30 años, dejó en 2015', NULL, 4, localtimestamp - interval '60 days'),
+  (4, 'patologico',  'Asma bronquial',                                2014, 2, localtimestamp - interval '30 days'),
+  (4, 'familiar',    'Madre: asma',                                   NULL, 2, localtimestamp - interval '30 days');
+
 -- Como varios inserts llevan id explícito, cada tabla sigue numerando desde su último id.
 DO $$
 DECLARE r record;

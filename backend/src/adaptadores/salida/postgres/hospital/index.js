@@ -3,6 +3,7 @@
 // El esquema (hospital01) lo fija el usuario hospital_app con su search_path.
 
 import { crearRepositorioAgenda } from './agenda.js';
+import { crearRepositorioAntecedentes } from './antecedentes.js';
 import { crearRepositorioAtenciones } from './atenciones.js';
 import { crearRepositorioFacturacion } from './facturacion.js';
 import { crearRepositorioInternamientos } from './internamientos.js';
@@ -35,6 +36,8 @@ export function crearAdaptadorHospitalPostgres(pool) {
 
     // Puerto opcional (fuera del contrato común): citas.
     agenda: crearRepositorioAgenda(pool),
+    // Puerto opcional: antecedentes médicos.
+    antecedentes: crearRepositorioAntecedentes(pool),
     // Puertos propios del hospital (fuera del contrato común).
     internamientos: crearRepositorioInternamientos(pool),
     facturacion: crearRepositorioFacturacion(pool),

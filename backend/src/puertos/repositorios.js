@@ -44,7 +44,8 @@ export const PUERTOS = {
     agregarDiagnostico: '(consultaId, diagnostico)',
     // → Consulta. Crea la receta si no existe y le agrega los medicamentos.
     recetar: '(consultaId, receta)',
-    // → { paciente, consultas: Consulta[], extras: {...propio de la institución} }
+    // → { paciente, consultas: Consulta[], extras: {...propio de la institución},
+    //     antecedentes?: Antecedente[] (solo si el adaptador trae el puerto antecedentes) }
     obtenerHistorial: '(pacienteId)',
   },
 
@@ -55,6 +56,12 @@ export const PUERTOS = {
     listarMedicamentos: '()',
   },
 };
+
+// Puertos opcionales que un adaptador puede traer o no (los casos de uso
+// responden "no disponible" si falta):
+//   agenda:       citas (ver aplicacion/casos-uso.js)
+//   antecedentes: { agregar(pacienteId, antecedente, usuario) → Antecedente[] }
+//                 antecedentes médicos (ver dominio/antecedente.js)
 
 // Puerto adicional, solo para el adaptador del Laboratorio Clínico (sea cual
 // sea su motor). Si un adaptador trae `laboratorio`, debe implementarlo completo.

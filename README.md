@@ -110,6 +110,11 @@ npm run dev                                   # API en http://localhost:4000/api
 3. *Connect* → **Session pooler**: copiar la cadena, cambiar `postgres.<ref>` por
    `hospital_app.<ref>` y poner la contraseña del paso 1. Va en `POSTGRES_URL`.
 
+Si la base se creó antes de que existiera la tabla `antecedente`, basta con pegar
+`backend/db/postgres/03_antecedentes.sql` en el *SQL Editor*: crea la tabla con su RLS,
+trigger y permisos, y agrega antecedentes de prueba si está vacía. No toca lo demás y
+se puede correr más de una vez.
+
 Las tablas viven en el esquema `hospital01`, que la API automática de Supabase no expone;
 además tienen RLS activado. El backend entra como `hospital_app`, que solo puede leer,
 insertar y actualizar en ese esquema (no puede borrar historiales).
@@ -120,7 +125,9 @@ insertar y actualizar en ese esquema (no puede borrar historiales).
    y compartirlo por privado.
 2. En `.env`, llenar `FIREBASE_PROJECT_ID` y `FIREBASE_CREDENTIALS` (ruta al JSON).
 3. Ejecutar `npm run db:firebase:semilla`. No borra nada: solo agrega lo que falte y
-   reutiliza lo que ya se creó a mano en la consola.
+   reutiliza lo que ya se creó a mano en la consola. A los pacientes de prueba que aún
+   no tengan antecedentes médicos les agrega unos de ejemplo (arreglo `antecedentes`
+   dentro del documento del paciente).
 
 Las reglas de Firestore quedan en `allow read, write: if false`: nadie entra directo
 desde un navegador; el backend entra con la clave de la cuenta de servicio, que no
@@ -146,6 +153,7 @@ ocultan los botones que no le corresponden (el backend igual lo verifica):
 | Registrar paciente                  | ✅     | ✅        | ✅    |
 | Actualizar contacto                 |        | ✅        | ✅    |
 | Consulta, diagnóstico y receta      | ✅     |           |       |
+| Agregar antecedentes médicos (hospital, odontológica) | ✅ |  |       |
 | Mis citas de hoy (agenda propia)    | ✅     |           |       |
 | Agenda por médico                   |        | ✅        | ✅    |
 | Ver médicos por especialidad        | ✅     | ✅        | ✅    |
@@ -267,6 +275,7 @@ Todas las rutas (salvo login) requieren `Authorization: Bearer <token>`.
 | PATCH  | `/api/pacientes/:id/contacto`      | Actualizar teléfono, dirección o correo              |
 | POST   | `/api/pacientes/:id/baja`          | Archivar historial `{ motivo, detalle }`             |
 | GET    | `/api/pacientes/:id/historial`     | Historial completo (consultas, diagnósticos, recetas, extras) |
+| POST   | `/api/pacientes/:id/antecedentes`  | Antecedente médico `{ tipo, descripcion, anioInicio? }` (hospital y odontológica). Tipos: patologico, quirurgico, familiar, habito, medicamento |
 | POST   | `/api/pacientes/:id/consultas`     | Registrar consulta + diagnósticos + receta (atómico) |
 | POST   | `/api/consultas/:id/diagnosticos`  | Agregar diagnóstico                                  |
 | POST   | `/api/consultas/:id/recetas`       | Recetar medicamento(s)                               |

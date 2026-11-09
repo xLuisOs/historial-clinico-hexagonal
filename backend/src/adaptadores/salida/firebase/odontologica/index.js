@@ -3,6 +3,7 @@
 
 import { FieldValue } from 'firebase-admin/firestore';
 import { crearRepositorioAgenda } from './agenda.js';
+import { crearRepositorioAntecedentes } from './antecedentes.js';
 import { crearRepositorioAtenciones } from './atenciones.js';
 import { COLECCIONES, nombreCompleto, ROLES } from './modelo.js';
 import { registrarPago } from './pagos.js';
@@ -36,6 +37,8 @@ export function crearAdaptadorOdontologicaFirebase(db, zonaHoraria) {
 
     // Puerto opcional (fuera del contrato común): citas.
     agenda: crearRepositorioAgenda(db, zonaHoraria),
+    // Puerto opcional: antecedentes médicos.
+    antecedentes: crearRepositorioAntecedentes(db, zonaHoraria),
 
     pacientes: crearRepositorioPacientes(db, zonaHoraria),
     atenciones: crearRepositorioAtenciones(db, zonaHoraria),

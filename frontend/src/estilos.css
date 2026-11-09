@@ -262,6 +262,8 @@ a { color: var(--primario-oscuro); }
 .cifra small { display: block; color: var(--tinta-suave); font-size: 0.8rem; }
 .cifra strong { font-size: 1.35rem; font-variant-numeric: tabular-nums; }
 
+.antecedentes { display: grid; gap: 16px 28px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.antecedentes .bloque, .antecedentes .items { gap: 6px; align-content: start; }
 .pila { display: grid; gap: 22px; grid-template-columns: minmax(0, 1fr); }
 .columnas { display: grid; gap: 22px; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); align-items: start; }
 

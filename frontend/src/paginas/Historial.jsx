@@ -6,6 +6,7 @@ import { Alerta, Cargando, iniciales } from '../componentes/ui.jsx';
 import { edad, etiqueta, fecha, fechaHora, MOTIVOS_BAJA, nombreCompleto, SEXO } from '../formato.js';
 import { vistaDe } from '../instituciones/index.js';
 import { puede, useSesion } from '../sesion.jsx';
+import { DialogoAntecedente, PanelAntecedentes } from './Antecedentes.jsx';
 import { DialogoAgendar, DialogoCancelarCita, DialogoReprogramar, PanelCitas } from './Citas.jsx';
 import { DialogoBaja, DialogoContacto, DialogoDiagnostico, DialogoReceta } from './Dialogos.jsx';
 
@@ -160,6 +161,11 @@ export function Historial() {
         </div>
       </section>
 
+      {Array.isArray(historial.antecedentes) && (
+        <PanelAntecedentes antecedentes={historial.antecedentes} puedeAgregar={puedeAtender}
+          onAgregar={() => setDialogo({ tipo: 'antecedente' })} />
+      )}
+
       <div className="columnas">
         <section className="panel vidrio">
           <div className="titulo-panel">
@@ -189,6 +195,7 @@ export function Historial() {
         </div>
       </div>
 
+      {dialogo?.tipo === 'antecedente' && <DialogoAntecedente pacienteId={id} onCerrar={() => setDialogo(null)} onListo={alListo} />}
       {dialogo?.tipo === 'contacto' && <DialogoContacto paciente={paciente} onCerrar={() => setDialogo(null)} onListo={alListo} />}
       {dialogo?.tipo === 'baja' && <DialogoBaja paciente={paciente} onCerrar={() => setDialogo(null)} onListo={alListo} />}
       {dialogo?.tipo === 'diagnostico' && <DialogoDiagnostico consulta={dialogo.consulta} onCerrar={() => setDialogo(null)} onListo={alListo} />}

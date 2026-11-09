@@ -1,6 +1,7 @@
 import { FieldValue } from 'firebase-admin/firestore';
 import { Conflicto, NoEncontrado } from '../../../../dominio/errores.js';
 import { enTransaccion, timestampATexto } from '../conexion.js';
+import { documentoAAntecedentes } from './antecedentes.js';
 import { COLECCIONES, nombreCompleto } from './modelo.js';
 import { documentoAPaciente, exigirPacienteActivo } from './pacientes.js';
 
@@ -251,6 +252,7 @@ export function crearRepositorioAtenciones(db, zonaHoraria) {
 
       return {
         paciente: documentoAPaciente(paciente, zonaHoraria),
+        antecedentes: documentoAAntecedentes(paciente, zonaHoraria),
         consultas,
         extras: {
           procedimientos,

@@ -68,6 +68,9 @@ rutas.post('/pacientes/:id/baja', async (req, res) => {
 rutas.get('/pacientes/:id/historial', async (req, res) => {
   res.json(await casos.obtenerHistorial(req.contexto, req.params.id));
 });
+rutas.post('/pacientes/:id/antecedentes', async (req, res) => {
+  res.status(201).json(await casos.agregarAntecedente(req.contexto, req.params.id, req.body));
+});
 rutas.post('/pacientes/:id/consultas', async (req, res) => {
   res.status(201).json(await casos.registrarConsulta(req.contexto, req.params.id, req.body));
 });
