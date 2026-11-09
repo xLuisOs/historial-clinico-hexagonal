@@ -375,21 +375,48 @@ function PanelEvolucion({ evolucion = [] }) {
   );
 }
 
-function Extras({ extras }) {
+/** Arriba del historial: cómo van las órdenes del paciente. */
+function Resumen({ extras, consultas, administrativa }) {
+  const ultima = consultas[0];
+  // Parámetros fuera de rango en la orden más reciente (no llegan a recepción).
+  const fuera = !administrativa && ultima
+    ? ultima.datosEspecificos.examenes.flatMap((e) => e.parametros ?? []).filter((p) => p.fueraDeRango).length
+    : null;
   return (
-    <>
-      {extras.ordenesEnCurso > 0 && (
-        <section className="panel vidrio">
-          <h2>Órdenes en curso</h2>
-          <p style={{ color: 'var(--tinta-suave)' }}>
-            {extras.ordenesEnCurso} {extras.ordenesEnCurso === 1 ? 'orden pendiente' : 'órdenes pendientes'} de resultados o validación.
-          </p>
-        </section>
-      )}
-      <PanelEvolucion evolucion={extras.evolucion} />
-    </>
+    <section className="panel vidrio resumen-historial">
+      <h2>Resumen</h2>
+      <div className="resumen">
+        <div className="cifra">
+          <small>Órdenes en curso</small>
+          <strong>{extras.ordenesEnCurso ?? 0}</strong>
+          <small>pendientes de resultados o validación</small>
+        </div>
+        <div className="cifra">
+          <small>Última orden</small>
+          <strong>{ultima ? fecha(ultima.fecha) : '—'}</strong>
+          <small>{consultas.length} {consultas.length === 1 ? 'orden' : 'órdenes'} en total</small>
+        </div>
+        {fuera != null && (
+          <div className="cifra">
+            <small>Fuera de rango</small>
+            <strong style={fuera > 0 ? { color: 'var(--peligro)' } : undefined}>{fuera}</strong>
+            <small>{fuera === 1 ? 'parámetro' : 'parámetros'} en la última orden</small>
+          </div>
+        )}
+      </div>
+    </section>
   );
 }
+
+const secciones = [
+  {
+    id: 'evolucion',
+    titulo: 'Evolución de resultados',
+    // Solo con 2 o más mediciones de algún parámetro; no llega a recepción.
+    visible: ({ extras }) => (extras.evolucion ?? []).some((x) => x.puntos.length >= 2),
+    Componente: ({ extras }) => <PanelEvolucion evolucion={extras.evolucion} />,
+  },
+];
 
 export const laboratorio = {
   datosIniciales: { medicoReferenteId: '', examenes: [] },
@@ -412,5 +439,6 @@ export const laboratorio = {
   },
   CamposConsulta,
   DetalleConsulta,
-  Extras,
+  Resumen,
+  secciones,
 };

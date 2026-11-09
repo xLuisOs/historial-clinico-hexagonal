@@ -1,8 +1,10 @@
-// Hospital General: la consulta lleva tratamientos y si fue por emergencia; el
-// historial suma internamientos y facturación.
+// Hospital General: la consulta lleva tratamientos y si fue por emergencia. En
+// el historial, arriba va un resumen (internamiento actual y saldo) y el menú
+// suma internamientos y facturas.
 
 import { Campo } from '../componentes/ui.jsx';
-import { fecha } from '../formato.js';
+import { dinero, fecha, fechaHora } from '../formato.js';
+import { puede } from '../sesion.jsx';
 import { Quitar } from './comun.jsx';
 import { PanelFacturas } from './facturacion.jsx';
 import { PanelInternamientos } from './internamientos.jsx';
@@ -69,16 +71,56 @@ function DetalleConsulta({ datos }) {
   );
 }
 
-function Extras({ extras, paciente, consultas, usuario, recargar }) {
+function Resumen({ extras }) {
+  const internamientos = extras.internamientos ?? [];
+  const facturas = extras.facturas ?? [];
+  const actual = internamientos.find((i) => i.estado === 'activo');
+  const pendientes = facturas.filter((f) => f.estado === 'pendiente');
   return (
-    <>
-      <PanelInternamientos internamientos={extras.internamientos} paciente={paciente} usuario={usuario} recargar={recargar} />
-
-      <PanelFacturas facturas={extras.facturas} consultas={consultas} internamientos={extras.internamientos}
-        paciente={paciente} usuario={usuario} recargar={recargar} />
-    </>
+    <section className="panel vidrio resumen-historial">
+      <h2>Resumen</h2>
+      <div className="resumen">
+        <div className="cifra">
+          <small>Internamiento</small>
+          <strong>{actual ? `Habitación ${actual.habitacion}` : 'No está internado'}</strong>
+          {actual && <small>Desde {fechaHora(actual.fechaIngreso)}</small>}
+        </div>
+        <div className="cifra">
+          <small>Saldo por cobrar</small>
+          <strong>{dinero(pendientes.reduce((s, f) => s + f.saldo, 0))}</strong>
+          <small>{pendientes.length} {pendientes.length === 1 ? 'factura pendiente' : 'facturas pendientes'}</small>
+        </div>
+        <div className="cifra">
+          <small>Internamientos</small>
+          <strong>{internamientos.length}</strong>
+          <small>en su historial</small>
+        </div>
+      </div>
+    </section>
   );
 }
+
+const secciones = [
+  {
+    id: 'internamientos',
+    titulo: 'Internamientos',
+    visible: ({ extras, paciente, usuario }) => extras.internamientos?.length > 0 || (puede(usuario, 'internar') && paciente.estado.activo),
+    insignia: ({ extras }) => (extras.internamientos ?? []).some((i) => i.estado === 'activo') ? 'internado' : null,
+    Componente: ({ extras, paciente, usuario, recargar }) => (
+      <PanelInternamientos internamientos={extras.internamientos} paciente={paciente} usuario={usuario} recargar={recargar} />
+    ),
+  },
+  {
+    id: 'facturas',
+    titulo: 'Facturas',
+    visible: ({ extras, usuario }) => extras.facturas?.length > 0 || puede(usuario, 'facturar'),
+    insignia: ({ extras }) => (extras.facturas ?? []).filter((f) => f.estado === 'pendiente').length || null,
+    Componente: ({ extras, paciente, consultas, usuario, recargar }) => (
+      <PanelFacturas facturas={extras.facturas} consultas={consultas} internamientos={extras.internamientos}
+        paciente={paciente} usuario={usuario} recargar={recargar} />
+    ),
+  },
+];
 
 export const hospital = {
   datosIniciales: { esEmergencia: false, tratamientos: [] },
@@ -95,5 +137,6 @@ export const hospital = {
   conObservaciones: false, // su modelo registra la atención como diagnósticos y tratamientos
   CamposConsulta,
   DetalleConsulta,
-  Extras,
+  Resumen,
+  secciones,
 };

@@ -1,18 +1,13 @@
-// Esquema de vacunación del pediátrico: cada dosis aplicada, pendiente (ya le
-// toca por edad) o próxima. El médico aplica la siguiente dosis de cada vacuna;
-// el backend verifica el orden, que no se repita y la fecha.
+// Esquema de vacunación del pediátrico: una fila por vacuna y una bolita por
+// dosis (aplicada, le toca por edad o próxima). Al tocar una bolita se ve su
+// detalle; si es la siguiente dosis de esa vacuna, el médico puede aplicarla.
+// El backend verifica el orden, que no se repita y la fecha.
 
 import { useState } from 'react';
 import { api } from '../api.js';
 import { Alerta, Campo, Dialogo, erroresDe, Selector } from '../componentes/ui.jsx';
 import { fecha } from '../formato.js';
 import { puede } from '../sesion.jsx';
-
-const ESTADO_VACUNA = {
-  aplicada: ['etiqueta-exito', 'Aplicada'],
-  pendiente: ['etiqueta-peligro', 'Pendiente'],
-  proxima: ['etiqueta-gris', 'Próxima'],
-};
 
 const hoy = () => new Date(Date.now() - 6 * 3_600_000).toISOString().slice(0, 10);
 
@@ -79,58 +74,89 @@ function DialogoVacuna({ paciente, dosis, consultas, onCerrar, onListo }) {
   );
 }
 
+/** Agrupa las dosis por vacuna, en el orden en que le toca la primera dosis. */
+function porVacuna(vacunas) {
+  const grupos = new Map();
+  for (const v of vacunas) {
+    if (!grupos.has(v.vacunaId)) grupos.set(v.vacunaId, { vacunaId: v.vacunaId, nombre: v.vacuna, dosis: [] });
+    grupos.get(v.vacunaId).dosis.push(v);
+  }
+  for (const g of grupos.values()) g.dosis.sort((a, b) => a.numeroDosis - b.numeroDosis);
+  return [...grupos.values()];
+}
+
+const edadTexto = (meses) => (meses === 0 ? 'al nacer' : meses % 12 === 0 && meses >= 24 ? `a los ${meses / 12} años` : `a los ${meses} meses`);
+
+function describir(d) {
+  const base = `${d.vacuna} · dosis ${d.dosis} · ${edadTexto(d.edadRecomendadaMeses)}`;
+  if (d.estado === 'aplicada') return `${base} · aplicada el ${fecha(d.fechaAplicacion)}${d.lote ? ` · lote ${d.lote}` : ''}`;
+  return `${base} · ${d.estado === 'pendiente' ? 'le toca ya' : 'todavía no le toca'}`;
+}
+
 export function PanelVacunacion({ vacunas = [], paciente, consultas = [], usuario, recargar }) {
+  const [elegida, setElegida] = useState(null);
   const [aplicando, setAplicando] = useState(null);
   if (vacunas.length === 0) return null;
 
   const puedeAplicar = paciente?.estado?.activo && puede(usuario, 'aplicarVacuna');
-  const siguientes = puedeAplicar ? siguientesDosis(vacunas) : new Set();
-  const pendientes = vacunas.filter((v) => v.estado === 'pendiente').length;
+  const siguientes = siguientesDosis(vacunas);
+  const grupos = porVacuna(vacunas);
+  // "Le toca": la siguiente dosis de cada vacuna que ya está en edad.
+  const leToca = [...siguientes].filter((d) => d.estado === 'pendiente');
+  const clave = (d) => `${d.vacunaId}-${d.numeroDosis}`;
+  const detalle = elegida && vacunas.find((d) => clave(d) === elegida);
 
   return (
     <section className="panel vidrio">
       <div className="titulo-panel">
         <h2>Esquema de vacunación</h2>
-        {pendientes > 0 && <span className="etiqueta etiqueta-peligro">{pendientes} pendiente{pendientes > 1 ? 's' : ''}</span>}
+        {leToca.length > 0 && <span className="etiqueta etiqueta-peligro">{leToca.length} pendiente{leToca.length > 1 ? 's' : ''}</span>}
       </div>
-      <div className="tabla-envoltura">
-        <table className="tabla">
-          <thead><tr><th>Vacuna</th><th>Estado</th>{puedeAplicar && <th />}</tr></thead>
-          <tbody>
-            {vacunas.map((v) => {
-              const [clase, texto] = ESTADO_VACUNA[v.estado] ?? ['etiqueta-gris', v.estado];
-              return (
-                <tr key={`${v.vacunaId}-${v.numeroDosis}`}>
-                  <td style={{ whiteSpace: 'normal' }}>
-                    <strong>{v.vacuna}</strong>
-                    <br />
-                    <small style={{ color: 'var(--tinta-suave)' }}>Dosis {v.dosis} · {v.edadRecomendadaMeses} meses</small>
-                  </td>
-                  <td>
-                    <span className={`etiqueta ${clase}`}>{texto}</span>
-                    {v.fechaAplicacion && (
-                      <>
-                        <br />
-                        <small style={{ color: 'var(--tinta-suave)' }}>{fecha(v.fechaAplicacion)}{v.lote && ` · ${v.lote}`}</small>
-                      </>
-                    )}
-                  </td>
-                  {puedeAplicar && (
-                    <td className="numero">
-                      {siguientes.has(v) && (
-                        <button type="button" className="boton boton-primario boton-chico" onClick={() => setAplicando(v)}>Aplicar</button>
-                      )}
-                    </td>
-                  )}
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+
+      <p style={{ color: 'var(--tinta-suave)', marginTop: 0 }}>
+        {leToca.length > 0
+          ? <>Le toca: <strong style={{ color: 'var(--tinta)' }}>{leToca.map((d) => `${d.vacuna} ${d.numeroDosis}`).join(', ')}</strong></>
+          : 'Está al día con las vacunas que le tocan por edad.'}
+      </p>
+
+      <div className="vacunas">
+        {grupos.map((g) => {
+          const aplicadas = g.dosis.filter((d) => d.estado === 'aplicada').length;
+          return (
+            <div key={g.vacunaId} className="fila-vacuna">
+              <span className="nombre-vacuna">{g.nombre}</span>
+              <span className="dosis-vacuna">
+                {g.dosis.map((d) => (
+                  <button key={clave(d)} type="button" className={`dosis dosis-${d.estado}`}
+                    aria-pressed={elegida === clave(d)} aria-label={describir(d)} title={describir(d)}
+                    onClick={() => setElegida(elegida === clave(d) ? null : clave(d))} />
+                ))}
+              </span>
+              <small className="avance-vacuna">{aplicadas} de {g.dosis.length}</small>
+            </div>
+          );
+        })}
       </div>
+
+      <div className="leyenda-vacunas" aria-hidden="true">
+        <span><i className="dosis dosis-aplicada" /> Aplicada</span>
+        <span><i className="dosis dosis-pendiente" /> Le toca</span>
+        <span><i className="dosis dosis-proxima" /> Próxima</span>
+        <span>· Toca una dosis para ver su fecha y lote</span>
+      </div>
+
+      {detalle && (
+        <div className="detalle-dosis">
+          <span>{describir(detalle)}</span>
+          {puedeAplicar && siguientes.has(detalle) && (
+            <button type="button" className="boton boton-primario boton-chico" onClick={() => setAplicando(detalle)}>Aplicar</button>
+          )}
+        </div>
+      )}
+
       {aplicando && (
         <DialogoVacuna paciente={paciente} dosis={aplicando} consultas={consultas}
-          onCerrar={() => setAplicando(null)} onListo={() => { setAplicando(null); recargar(); }} />
+          onCerrar={() => setAplicando(null)} onListo={() => { setAplicando(null); setElegida(null); recargar(); }} />
       )}
     </section>
   );

@@ -1,5 +1,6 @@
 // Clínica Odontológica: la consulta lleva los procedimientos realizados y la
-// pieza dental (notación FDI); el historial muestra el saldo por cobrar.
+// pieza dental (notación FDI). En el historial, arriba va la cuenta del paciente
+// y el menú suma los cobros pendientes y el historial dental por pieza.
 
 import { useEffect, useState } from 'react';
 import { api } from '../api.js';
@@ -150,70 +151,96 @@ function DetalleConsulta({ datos, consulta, usuario, recargar }) {
   );
 }
 
-function Extras({ extras, consultas = [], usuario, recargar }) {
+const pendientesDe = (consultas) => consultas
+  .map((c) => ({ consulta: c, saldo: saldoDe(c.datosEspecificos) }))
+  .filter((p) => p.saldo > 0);
+
+function Resumen({ extras }) {
+  if (!extras.cuenta) return null;
+  return (
+    <section className="panel vidrio resumen-historial">
+      <h2>Cuenta del paciente</h2>
+      <div className="resumen">
+        <div className="cifra"><small>Total atendido</small><strong>{dinero(extras.cuenta.total)}</strong></div>
+        <div className="cifra"><small>Pagado</small><strong>{dinero(extras.cuenta.pagado)}</strong></div>
+        <div className="cifra"><small>Saldo pendiente</small><strong>{dinero(extras.cuenta.saldoPendiente)}</strong></div>
+      </div>
+    </section>
+  );
+}
+
+function PanelPorCobrar({ consultas = [], usuario, recargar }) {
   const [cobrando, setCobrando] = useState(null);
-  const pendientes = consultas
-    .map((c) => ({ consulta: c, saldo: saldoDe(c.datosEspecificos) }))
-    .filter((p) => p.saldo > 0);
+  const pendientes = pendientesDe(consultas);
   const puedeCobrar = puede(usuario, 'cobrar');
 
   return (
-    <>
-      {extras.cuenta && (
-        <section className="panel vidrio">
-          <h2>Cuenta del paciente</h2>
-          <div className="resumen">
-            <div className="cifra"><small>Total atendido</small><strong>{dinero(extras.cuenta.total)}</strong></div>
-            <div className="cifra"><small>Pagado</small><strong>{dinero(extras.cuenta.pagado)}</strong></div>
-            <div className="cifra"><small>Saldo pendiente</small><strong>{dinero(extras.cuenta.saldoPendiente)}</strong></div>
-          </div>
-          {pendientes.length > 0 && (
-            <>
-              <h4 style={{ marginTop: 18 }}>Consultas por cobrar</h4>
-              <ul className="items">
-                {pendientes.map(({ consulta, saldo }) => (
-                  <li key={consulta.id} style={{ justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span>
-                      <strong>{consulta.motivo || 'Consulta'}</strong>
-                      <br />
-                      <small>{fecha(consulta.fecha)} · total {dinero(consulta.datosEspecificos.total)} · saldo {dinero(saldo)}</small>
-                    </span>
-                    {puedeCobrar && (
-                      <button type="button" className="boton boton-primario boton-chico" onClick={() => setCobrando({ consulta, saldo })}>Cobrar</button>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </>
-          )}
-        </section>
-      )}
+    <section className="panel vidrio">
+      <h2>Consultas por cobrar</h2>
+      {pendientes.length === 0
+        ? <p className="vacio">No hay consultas con saldo pendiente.</p>
+        : (
+          <ul className="items">
+            {pendientes.map(({ consulta, saldo }) => (
+              <li key={consulta.id} style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+                <span>
+                  <strong>{consulta.motivo || 'Consulta'}</strong>
+                  <br />
+                  <small>{fecha(consulta.fecha)} · total {dinero(consulta.datosEspecificos.total)} · saldo {dinero(saldo)}</small>
+                </span>
+                {puedeCobrar && (
+                  <button type="button" className="boton boton-primario boton-chico" onClick={() => setCobrando({ consulta, saldo })}>Cobrar</button>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
       {cobrando && (
         <DialogoPago consulta={cobrando.consulta} saldo={cobrando.saldo} onCerrar={() => setCobrando(null)}
           onListo={() => { setCobrando(null); recargar(); }} />
       )}
-      {extras.procedimientos?.length > 0 && (
-        <section className="panel vidrio">
-          <h2>Historial dental</h2>
-          <div className="tabla-envoltura">
-            <table className="tabla">
-              <thead><tr><th>Fecha</th><th>Pieza</th><th>Procedimiento</th></tr></thead>
-              <tbody>
-                {extras.procedimientos.map((p, n) => (
-                  <tr key={n}>
-                    <td>{fecha(p.fecha)}</td>
-                    <td>{p.piezaDental ?? '—'}</td>
-                    <td>{p.procedimiento}{p.observaciones ? <small style={{ color: 'var(--tinta-suave)' }}> · {p.observaciones}</small> : null}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      )}
-    </>
+    </section>
   );
 }
+
+function PanelHistorialDental({ procedimientos = [] }) {
+  return (
+    <section className="panel vidrio">
+      <h2>Historial dental</h2>
+      <div className="tabla-envoltura">
+        <table className="tabla">
+          <thead><tr><th>Fecha</th><th>Pieza</th><th>Procedimiento</th></tr></thead>
+          <tbody>
+            {procedimientos.map((p, n) => (
+              <tr key={n}>
+                <td>{fecha(p.fecha)}</td>
+                <td>{p.piezaDental ?? '—'}</td>
+                <td>{p.procedimiento}{p.observaciones ? <small style={{ color: 'var(--tinta-suave)' }}> · {p.observaciones}</small> : null}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
+const secciones = [
+  {
+    id: 'cobros',
+    titulo: 'Por cobrar',
+    visible: ({ extras }) => Boolean(extras.cuenta),
+    insignia: ({ consultas }) => pendientesDe(consultas).length || null,
+    Componente: ({ consultas, usuario, recargar }) => <PanelPorCobrar consultas={consultas} usuario={usuario} recargar={recargar} />,
+  },
+  {
+    id: 'dental',
+    titulo: 'Historial dental',
+    // Es clínico: no llega en la vista administrativa de recepción.
+    visible: ({ extras }) => extras.procedimientos?.length > 0,
+    Componente: ({ extras }) => <PanelHistorialDental procedimientos={extras.procedimientos} />,
+  },
+];
 
 export const odontologica = {
   datosIniciales: { procedimientos: [] },
@@ -227,5 +254,6 @@ export const odontologica = {
   conObservaciones: true,
   CamposConsulta,
   DetalleConsulta,
-  Extras,
+  Resumen,
+  secciones,
 };

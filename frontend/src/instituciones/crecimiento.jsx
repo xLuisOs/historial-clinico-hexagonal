@@ -1,6 +1,6 @@
-// Curva de crecimiento del pediátrico. Peso, talla y perímetro cefálico tienen
-// escalas distintas (kg vs cm), así que van en gráficas pequeñas separadas,
-// nunca en una sola con dos ejes. El eje X es tiempo real (no una consulta por
+// Curva de crecimiento del pediátrico, en la franja de arriba del historial.
+// Peso, talla y perímetro cefálico tienen escalas distintas (kg vs cm), así que
+// van en gráficas pequeñas separadas, lado a lado, nunca en una sola con dos ejes. El eje X es tiempo real (no una consulta por
 // columna), para que se note si pasaron 2 o 6 meses entre controles.
 
 import { GraficaLinea } from '../componentes/GraficaLinea.jsx';
@@ -22,9 +22,11 @@ export function PanelCrecimiento({ crecimiento = [] }) {
     .filter((s) => s.puntos.length > 0);
 
   return (
-    <section className="panel vidrio">
+    <section className="panel vidrio resumen-historial">
       <h2>Crecimiento</h2>
-      {series.map((s) => <GraficaLinea key={s.campo} titulo={s.titulo} unidad={s.unidad} puntos={s.puntos} />)}
+      <div className="graficas-fila">
+        {series.map((s) => <GraficaLinea key={s.campo} titulo={s.titulo} unidad={s.unidad} puntos={s.puntos} />)}
+      </div>
       <details style={{ marginTop: 14 }}>
         <summary style={{ cursor: 'pointer', color: 'var(--tinta-suave)', fontSize: '0.85rem' }}>Ver como tabla</summary>
         <div className="tabla-envoltura">

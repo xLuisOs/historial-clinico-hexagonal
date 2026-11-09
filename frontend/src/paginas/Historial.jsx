@@ -77,6 +77,7 @@ export function Historial() {
   const [error, setError] = useState(null);
   const [dialogo, setDialogo] = useState(null); // { tipo, consulta?, cita? }
   const [versionCitas, setVersionCitas] = useState(0);
+  const [seccion, setSeccion] = useState('consultas');
 
   const cargar = useCallback(() => {
     api.historial(id).then((h) => { setHistorial(h); setError(null); }).catch(setError);
@@ -97,7 +98,19 @@ export function Historial() {
   const alListo = () => { setDialogo(null); cargar(); setVersionCitas((v) => v + 1); };
   const conAgenda = usuario.institucion !== 'laboratorio'; // el laboratorio trabaja con órdenes
   const puedeAgendar = activo && conAgenda && puede(usuario, 'agendar');
-  const { Extras } = vista;
+  const { Resumen } = vista;
+
+  // Lo que se pasa a la franja de resumen y a cada sección de la institución.
+  const ctx = { extras: extras ?? {}, paciente, consultas, usuario, recargar: cargar, administrativa };
+  // "Consultas" va siempre primero; después, las secciones propias de la
+  // institución que tengan algo que mostrar para este paciente y este rol.
+  const secciones = [
+    { id: 'consultas', titulo: vista.textos.consultas, insignia: consultas.length || null },
+    ...vista.secciones
+      .filter((x) => !x.visible || x.visible(ctx))
+      .map((x) => ({ ...x, insignia: x.insignia?.(ctx) ?? null })),
+  ];
+  const actual = secciones.find((x) => x.id === seccion) ?? secciones[0];
 
   return (
     <>
@@ -176,33 +189,48 @@ export function Historial() {
           onAgregar={() => setDialogo({ tipo: 'antecedente' })} />
       )}
 
-      <div className="columnas">
-        <section className="panel vidrio">
-          <div className="titulo-panel">
-            <h2>{vista.textos.consultas}</h2>
-            <small style={{ color: 'var(--tinta-suave)' }}>{consultas.length} {consultas.length === 1 ? 'registro' : 'registros'}</small>
-          </div>
-          {consultas.length === 0
-            ? <p className="vacio">Todavía no hay consultas registradas.</p>
-            : (
-              <div className="linea-tiempo">
-                {consultas.map((c) => (
-                  <Consulta key={c.id} consulta={c} vista={vista} usuario={usuario} recargar={cargar} puedeAtender={puedeAtender}
-                    onDiagnostico={() => setDialogo({ tipo: 'diagnostico', consulta: c })}
-                    onReceta={() => setDialogo({ tipo: 'receta', consulta: c })} />
-                ))}
-              </div>
-            )}
-        </section>
+      {/* Franja de arriba: próximas citas y el resumen propio de la institución. */}
+      <div className="franja">
+        {conAgenda && (
+          <PanelCitas pacienteId={id} puedeAgendar={puedeAgendar} version={versionCitas}
+            onReprogramar={(cita) => setDialogo({ tipo: 'reprogramar', cita })}
+            onCancelar={(cita) => setDialogo({ tipo: 'cancelarCita', cita })} />
+        )}
+        {Resumen && <Resumen {...ctx} />}
+      </div>
 
-        <div className="pila">
-          {conAgenda && (
-            <PanelCitas pacienteId={id} puedeAgendar={puedeAgendar} version={versionCitas}
-              onReprogramar={(cita) => setDialogo({ tipo: 'reprogramar', cita })}
-              onCancelar={(cita) => setDialogo({ tipo: 'cancelarCita', cita })} />
-          )}
-          <Extras extras={extras ?? {}} paciente={paciente} consultas={consultas} usuario={usuario} recargar={cargar} />
-        </div>
+      {/* Menú de secciones a la izquierda y su contenido a la derecha. */}
+      <div className={secciones.length > 1 ? 'historial-cuerpo' : undefined}>
+        {secciones.length > 1 && (
+          <nav className="panel vidrio menu-secciones" aria-label="Secciones del historial">
+            {secciones.map((x) => (
+              <button key={x.id} type="button" aria-current={x.id === actual.id ? 'true' : undefined} onClick={() => setSeccion(x.id)}>
+                <span>{x.titulo}</span>
+                {x.insignia != null && <span className={`insignia ${x.alerta ? 'insignia-alerta' : ''}`}>{x.insignia}</span>}
+              </button>
+            ))}
+          </nav>
+        )}
+
+        {actual.id === 'consultas' ? (
+          <section className="panel vidrio">
+            <div className="titulo-panel">
+              <h2>{vista.textos.consultas}</h2>
+              <small style={{ color: 'var(--tinta-suave)' }}>{consultas.length} {consultas.length === 1 ? 'registro' : 'registros'}</small>
+            </div>
+            {consultas.length === 0
+              ? <p className="vacio">Todavía no hay consultas registradas.</p>
+              : (
+                <div className="linea-tiempo">
+                  {consultas.map((c) => (
+                    <Consulta key={c.id} consulta={c} vista={vista} usuario={usuario} recargar={cargar} puedeAtender={puedeAtender}
+                      onDiagnostico={() => setDialogo({ tipo: 'diagnostico', consulta: c })}
+                      onReceta={() => setDialogo({ tipo: 'receta', consulta: c })} />
+                  ))}
+                </div>
+              )}
+          </section>
+        ) : <actual.Componente {...ctx} />}
       </div>
 
       {dialogo?.tipo === 'antecedente' && <DialogoAntecedente pacienteId={id} onCerrar={() => setDialogo(null)} onListo={alListo} />}

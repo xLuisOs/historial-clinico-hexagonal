@@ -22,12 +22,16 @@ export function DatosGenericos({ datos }) {
 export function ExtrasGenericos({ extras }) {
   const entradas = Object.entries(extras ?? {});
   if (entradas.length === 0) return null;
-  return entradas.map(([k, v]) => (
-    <section className="panel vidrio" key={k}>
-      <h2 style={{ textTransform: 'capitalize' }}>{k}</h2>
-      <pre style={{ margin: 0, whiteSpace: 'pre-wrap', fontSize: '0.82rem' }}>{JSON.stringify(v, null, 2)}</pre>
-    </section>
-  ));
+  return (
+    <div className="pila">
+      {entradas.map(([k, v]) => (
+        <section className="panel vidrio" key={k}>
+          <h2 style={{ textTransform: 'capitalize' }}>{k}</h2>
+          <pre style={{ margin: 0, whiteSpace: 'pre-wrap', fontSize: '0.82rem' }}>{JSON.stringify(v, null, 2)}</pre>
+        </section>
+      ))}
+    </div>
+  );
 }
 
 /** Botón para quitar una fila de una lista editable. */

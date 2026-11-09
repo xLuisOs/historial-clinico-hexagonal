@@ -1,7 +1,9 @@
-// Centro Médico Pediátrico: la consulta lleva las medidas de crecimiento; el
-// historial muestra la curva de crecimiento y el esquema de vacunación.
+// Centro Médico Pediátrico: la consulta lleva las medidas de crecimiento. En el
+// historial, la curva de crecimiento va arriba (junto a las citas) y el menú
+// suma el esquema de vacunación y los cobros.
 
 import { Campo } from '../componentes/ui.jsx';
+import { puede } from '../sesion.jsx';
 import { PanelCobros } from './cobrosPediatrico.jsx';
 import { PanelCrecimiento } from './crecimiento.jsx';
 import { PanelVacunacion } from './vacunacion.jsx';
@@ -39,15 +41,28 @@ function DetalleConsulta({ datos }) {
   );
 }
 
-function Extras({ extras, paciente, consultas, usuario, recargar }) {
-  return (
-    <>
-      <PanelCrecimiento crecimiento={extras.crecimiento} />
+const secciones = [
+  {
+    id: 'vacunas',
+    titulo: 'Esquema de vacunación',
+    // No llega en la vista administrativa de recepción.
+    visible: ({ extras }) => extras.vacunas?.length > 0,
+    insignia: ({ extras }) => extras.vacunas.filter((v) => v.estado === 'pendiente').length || null,
+    alerta: true,
+    Componente: ({ extras, paciente, consultas, usuario, recargar }) => (
       <PanelVacunacion vacunas={extras.vacunas} paciente={paciente} consultas={consultas} usuario={usuario} recargar={recargar} />
+    ),
+  },
+  {
+    id: 'cobros',
+    titulo: 'Cobros',
+    visible: ({ extras, usuario }) => extras.cobros?.length > 0 || puede(usuario, 'cobrar'),
+    insignia: ({ extras }) => extras.cobros.filter((c) => c.estado === 'pendiente').length || null,
+    Componente: ({ extras, consultas, usuario, recargar }) => (
       <PanelCobros cobros={extras.cobros} consultas={consultas} usuario={usuario} recargar={recargar} />
-    </>
-  );
-}
+    ),
+  },
+];
 
 export const pediatrico = {
   datosIniciales: { pesoKg: '', tallaCm: '', perimetroCefalicoCm: '' },
@@ -58,5 +73,6 @@ export const pediatrico = {
   },
   CamposConsulta,
   DetalleConsulta,
-  Extras,
+  Resumen: ({ extras }) => <PanelCrecimiento crecimiento={extras.crecimiento} />,
+  secciones,
 };

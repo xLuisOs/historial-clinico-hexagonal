@@ -155,7 +155,6 @@ export function PanelCobros({ cobros = [], consultas = [], usuario, recargar }) 
   const conCobro = new Set(cobros.map((c) => c.consultaId));
   const porCobrar = consultas.filter((c) => !conCobro.has(c.id));
   const porId = new Map(consultas.map((c) => [c.id, c]));
-  if (cobros.length === 0 && (porCobrar.length === 0 || !puedeCobrar)) return null;
 
   const vigentes = cobros.filter((c) => c.estado !== 'anulado');
   const suma = (campo) => vigentes.reduce((s, c) => s + c[campo], 0);
@@ -164,6 +163,7 @@ export function PanelCobros({ cobros = [], consultas = [], usuario, recargar }) 
   return (
     <section className="panel vidrio">
       <h2>Cobros</h2>
+      {cobros.length === 0 && porCobrar.length === 0 && <p className="vacio">Todavía no hay consultas que cobrar.</p>}
       {vigentes.length > 0 && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 8, marginTop: 10 }}>
           {[['Cobrado', 'total'], ['Pagado', 'pagado'], ['Saldo', 'saldo']].map(([texto, campo]) => (

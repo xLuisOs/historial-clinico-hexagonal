@@ -268,6 +268,43 @@ a { color: var(--primario-oscuro); }
 .pila { display: grid; gap: 22px; grid-template-columns: minmax(0, 1fr); }
 .columnas { display: grid; gap: 22px; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); align-items: start; }
 
+/* Historial: franja de resumen arriba y menú de secciones a la izquierda.
+   Si el resumen no tiene nada, las citas ocupan todo el ancho (flex-wrap). */
+.franja { display: flex; flex-wrap: wrap; gap: 22px; align-items: stretch; }
+.franja:empty { display: none; }
+.franja > * { flex: 1 1 280px; min-width: 0; }
+.franja > .resumen-historial { flex: 2.4 1 460px; }
+.graficas-fila { display: grid; gap: 4px 18px; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+.historial-cuerpo { display: grid; gap: 22px; grid-template-columns: 220px minmax(0, 1fr); align-items: start; }
+.menu-secciones { padding: 10px; display: grid; gap: 4px; position: sticky; top: 96px; }
+.menu-secciones button {
+  display: flex; justify-content: space-between; align-items: center; gap: 10px; width: 100%;
+  padding: 11px 14px; border: 0; border-radius: var(--radio-sm); background: transparent;
+  font: inherit; font-size: 0.92rem; color: var(--tinta-suave); text-align: left; cursor: pointer;
+}
+.menu-secciones button:hover { background: rgba(255, 255, 255, 0.7); color: var(--tinta); }
+.menu-secciones button[aria-current="true"] { background: var(--primario-suave); color: var(--primario-oscuro); font-weight: 600; }
+.menu-secciones button:focus-visible { outline: 2px solid var(--primario); outline-offset: 2px; }
+.insignia { min-width: 22px; padding: 1px 7px; border-radius: 999px; background: rgba(15, 45, 54, 0.07); font-size: 0.75rem; font-weight: 600; text-align: center; font-variant-numeric: tabular-nums; }
+.insignia-alerta { background: var(--peligro-suave); color: var(--peligro); }
+
+/* Esquema de vacunación: una fila por vacuna y una bolita por dosis. */
+.vacunas { display: grid; }
+.fila-vacuna { display: grid; grid-template-columns: minmax(130px, 210px) minmax(0, 1fr) 56px; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid rgba(15, 45, 54, 0.06); }
+.nombre-vacuna { font-weight: 600; }
+.dosis-vacuna { display: flex; gap: 8px; flex-wrap: wrap; }
+.avance-vacuna { color: var(--tinta-suave); text-align: right; font-variant-numeric: tabular-nums; }
+.dosis { display: inline-block; width: 22px; height: 22px; padding: 0; border-radius: 50%; border: 2px solid var(--tinta-tenue); background: transparent; cursor: pointer; vertical-align: middle; }
+.dosis-aplicada { background: var(--primario); border-color: var(--primario); }
+.dosis-pendiente { border-color: var(--peligro); background: var(--peligro-suave); }
+.dosis-proxima { border-color: rgba(15, 45, 54, 0.25); }
+button.dosis:hover { transform: scale(1.12); }
+button.dosis[aria-pressed="true"] { outline: 3px solid var(--primario-suave); outline-offset: 2px; }
+button.dosis:focus-visible { outline: 2px solid var(--primario); outline-offset: 2px; }
+.leyenda-vacunas { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 12px; font-size: 0.8rem; color: var(--tinta-suave); }
+.leyenda-vacunas .dosis { width: 12px; height: 12px; border-width: 2px; cursor: default; margin-right: 4px; }
+.detalle-dosis { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 14px; padding: 12px 14px; border-radius: var(--radio-sm); background: rgba(255, 255, 255, 0.6); font-size: 0.9rem; }
+
 /* -------------------------------------------------------------- diálogos */
 .fondo-dialogo {
   position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 16px;
@@ -283,6 +320,10 @@ a { color: var(--primario-oscuro); }
 @media (max-width: 900px) {
   .login-caja, .columnas { grid-template-columns: minmax(0, 1fr); }
   .barra nav { display: none; }
+  /* El menú del historial pasa a ser una fila de pestañas que se desliza. */
+  .historial-cuerpo { grid-template-columns: minmax(0, 1fr); }
+  .menu-secciones { position: static; display: flex; overflow-x: auto; }
+  .menu-secciones button { width: auto; flex: 0 0 auto; white-space: nowrap; }
 }
 @media (max-width: 900px) {
   /* En pantallas angostas, el formulario de inicio de sesión va primero. */
