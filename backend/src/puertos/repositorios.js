@@ -71,11 +71,21 @@ export const PUERTOS = {
 //         médico + usuario en una sola operación atómica; colegiado o correo
 //         repetidos → Conflicto
 //     actualizarMedico(id, cambios)         → Medico
+//     crearCuentaMedico(id, { correo, passwordHash }) → Medico
+//         usuario para un médico activo que no tenía; correo repetido o
+//         médico con cuenta → Conflicto
 //     restablecerPassword(id, passwordHash)
 //     cambiarEstadoMedico(id, activo)       → Medico
 //         desactivar cambia médico y usuario a la vez, y falla con Conflicto
 //         (detalles: { citas, internamientos }) si tiene citas pendientes a
 //         futuro o pacientes internados a su cargo
+//     Recepcionista = { id, nombre, nombres, apellidos, telefono, correo, activo }
+//     listarRecepcionistas()                → Recepcionista[] (activas e inactivas)
+//     registrarRecepcionista({ nombres, apellidos, telefono, correo,
+//                              passwordHash })  → Recepcionista (con su usuario)
+//     actualizarRecepcionista(id, cambios)  → Recepcionista
+//     restablecerPasswordRecepcionista(id, passwordHash)
+//     cambiarEstadoRecepcionista(id, activo) → Recepcionista (y su usuario)
 //     Cada método es opcional: el laboratorio trae listar, actualizar y
 //     cambiar estado de sus médicos referentes, que no inician sesión.
 //   usuarios.estaActivo(usuarioId) → boolean (opcional): con él, una sesión

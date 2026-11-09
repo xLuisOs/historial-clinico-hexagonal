@@ -95,12 +95,32 @@ rutas.post('/personal/medicos', async (req, res) => {
 rutas.patch('/personal/medicos/:id', async (req, res) => {
   res.json(await casos.actualizarMedico(req.contexto, req.params.id, req.body));
 });
+rutas.post('/personal/medicos/:id/cuenta', async (req, res) => {
+  res.status(201).json(await casos.crearCuentaMedico(req.contexto, req.params.id, req.body));
+});
 rutas.post('/personal/medicos/:id/password', async (req, res) => {
   await casos.restablecerPasswordMedico(req.contexto, req.params.id, req.body);
   res.status(204).end();
 });
 rutas.post('/personal/medicos/:id/estado', async (req, res) => {
   res.json(await casos.cambiarEstadoMedico(req.contexto, req.params.id, req.body));
+});
+// Recepcionistas (solo admin).
+rutas.get('/personal/recepcionistas', async (req, res) => {
+  res.json(await casos.listarRecepcionistas(req.contexto));
+});
+rutas.post('/personal/recepcionistas', async (req, res) => {
+  res.status(201).json(await casos.registrarRecepcionista(req.contexto, req.body));
+});
+rutas.patch('/personal/recepcionistas/:id', async (req, res) => {
+  res.json(await casos.actualizarRecepcionista(req.contexto, req.params.id, req.body));
+});
+rutas.post('/personal/recepcionistas/:id/password', async (req, res) => {
+  await casos.restablecerPasswordRecepcionista(req.contexto, req.params.id, req.body);
+  res.status(204).end();
+});
+rutas.post('/personal/recepcionistas/:id/estado', async (req, res) => {
+  res.json(await casos.cambiarEstadoRecepcionista(req.contexto, req.params.id, req.body));
 });
 rutas.get('/catalogos/medicamentos', async (req, res) => {
   res.json(await casos.listarMedicamentos(req.contexto));

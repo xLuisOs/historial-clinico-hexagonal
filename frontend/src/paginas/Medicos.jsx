@@ -4,7 +4,7 @@ import { IconoBuscar, IconoMas } from '../componentes/Iconos.jsx';
 import { Alerta, Campo, Cargando, Dialogo, erroresDe } from '../componentes/ui.jsx';
 import { fechaHora } from '../formato.js';
 import { DialogoMedicoReferente } from '../instituciones/laboratorio.jsx';
-import { useSesion } from '../sesion.jsx';
+import { CON_CUENTAS_DE_PERSONAL, useSesion } from '../sesion.jsx';
 
 // El correo del médico nuevo debe ser del dominio de su institución: ese
 // dominio es el que enruta su inicio de sesión (el backend lo valida igual).
@@ -118,6 +118,48 @@ function DialogoEditarMedico({ medico, institucion, onCerrar, onListo }) {
         <footer>
           <button type="button" className="boton boton-secundario" onClick={onCerrar}>Volver</button>
           <button className="boton boton-primario" disabled={enviando}>{enviando ? 'Guardando…' : 'Guardar cambios'}</button>
+        </footer>
+      </form>
+    </Dialogo>
+  );
+}
+
+/** Cuenta para un médico que está en el catálogo pero nunca tuvo usuario. */
+function DialogoCuenta({ medico, institucion, onCerrar, onListo }) {
+  const [datos, setDatos] = useState({ correo: '', password: '' });
+  const [error, setError] = useState(null);
+  const [enviando, setEnviando] = useState(false);
+  const errores = erroresDe(error);
+  const cambiar = (campo) => (e) => setDatos({ ...datos, [campo]: e.target.value });
+
+  async function enviar(e) {
+    e.preventDefault();
+    setEnviando(true);
+    setError(null);
+    try {
+      onListo(await api.crearCuentaMedico(medico.id, { correo: datos.correo.trim() || null, password: datos.password }));
+    } catch (err) {
+      setError(err);
+      setEnviando(false);
+    }
+  }
+
+  return (
+    <Dialogo titulo={`Cuenta para ${medico.nombre}`} onCerrar={onCerrar}>
+      <form className="formulario" onSubmit={enviar} noValidate>
+        <p style={{ color: 'var(--tinta-suave)', margin: 0 }}>
+          Todavía no puede iniciar sesión. Con esta cuenta entra con su correo y la contraseña que le entregues en persona.
+        </p>
+        <Alerta>{error?.message}</Alerta>
+        <div className="rejilla">
+          <Campo etiqueta="Correo *" type="email" autoComplete="off" placeholder={`nombre@${DOMINIO[institucion]}`}
+            value={datos.correo} onChange={cambiar('correo')} error={errores.correo} />
+          <Campo etiqueta="Contraseña inicial *" type="password" autoComplete="new-password" placeholder="8 o más, con letras y números"
+            value={datos.password} onChange={cambiar('password')} error={errores.password} />
+        </div>
+        <footer>
+          <button type="button" className="boton boton-secundario" onClick={onCerrar}>Volver</button>
+          <button className="boton boton-primario" disabled={enviando}>{enviando ? 'Guardando…' : 'Crear cuenta'}</button>
         </footer>
       </form>
     </Dialogo>
@@ -239,6 +281,7 @@ export function Medicos() {
   // exámenes): no inician sesión, así que no tienen contraseña.
   const laboratorio = usuario.institucion === 'laboratorio';
   const admin = usuario.rol === 'admin';
+  const conCuentas = CON_CUENTAS_DE_PERSONAL.includes(usuario.institucion);
 
   const cargar = useCallback(() => {
     (admin ? api.personal() : api.medicos()).then(setMedicos).catch((e) => setError(e.message));
@@ -306,6 +349,9 @@ export function Medicos() {
                 {m.correo && m.activo && (
                   <button type="button" className="boton boton-fantasma boton-chico" onClick={() => setDialogo({ tipo: 'password', medico: m })}>Contraseña</button>
                 )}
+                {!m.correo && m.activo && conCuentas && (
+                  <button type="button" className="boton boton-fantasma boton-chico" onClick={() => setDialogo({ tipo: 'cuenta', medico: m })}>Crear cuenta</button>
+                )}
                 <button type="button" className="boton boton-fantasma boton-chico" onClick={() => setDialogo({ tipo: 'estado', medico: m })}>
                   {m.activo ? 'Desactivar' : 'Reactivar'}
                 </button>
@@ -328,6 +374,10 @@ export function Medicos() {
       {dialogo?.tipo === 'editar' && (
         <DialogoEditarMedico medico={dialogo.medico} institucion={usuario.institucion} onCerrar={() => setDialogo(null)}
           onListo={(m) => terminar(`Se guardaron los cambios de ${m.nombre}.`)} />
+      )}
+      {dialogo?.tipo === 'cuenta' && (
+        <DialogoCuenta medico={dialogo.medico} institucion={usuario.institucion} onCerrar={() => setDialogo(null)}
+          onListo={(m) => terminar(`${m.nombre} ya puede iniciar sesión con ${m.correo}.`)} />
       )}
       {dialogo?.tipo === 'password' && (
         <DialogoPassword medico={dialogo.medico} onCerrar={() => setDialogo(null)}

@@ -106,6 +106,33 @@ export function crearRepositorioPersonal(db, zonaHoraria) {
       return aMedico(odontologo, usuario.docs[0]);
     },
 
+    // Cuenta para un odontólogo que ya está en el catálogo pero no tiene usuario.
+    async crearCuentaMedico(id, { correo, passwordHash }) {
+      await enTransaccion(db, async (t) => {
+        const odontologo = await exigirOdontologo(t, id);
+        const [usuario, repetido] = await Promise.all([
+          usuarioDe(id, t),
+          t.get(col('usuarios').where('correo', '==', correo).limit(1)),
+        ]);
+        if (odontologo.get('activo') === false) throw new Conflicto('Reactiva al odontólogo antes de crearle una cuenta');
+        if (!usuario.empty) throw new Conflicto('Ese odontólogo ya tiene cuenta');
+        if (!repetido.empty) throw new Conflicto('Ya hay un usuario con ese correo');
+        t.set(col('usuarios').doc(), {
+          correo,
+          password_hash: passwordHash,
+          nombres: odontologo.get('nombres'),
+          apellidos: odontologo.get('apellidos'),
+          rol: 'odontologo',
+          odontologo_id: id,
+          recepcionista_id: null,
+          activo: true,
+          ultimo_acceso: null,
+        });
+      });
+      const [odontologo, usuario] = await Promise.all([col('odontologos').doc(id).get(), usuarioDe(id)]);
+      return aMedico(odontologo, usuario.docs[0]);
+    },
+
     async restablecerPassword(id, passwordHash) {
       const usuario = await usuarioDe(id);
       if (usuario.empty) throw new NoEncontrado('Ese odontólogo no tiene usuario');

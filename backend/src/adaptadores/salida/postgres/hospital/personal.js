@@ -113,6 +113,30 @@ export function crearRepositorioPersonal(pool) {
       });
     },
 
+    // Cuenta para un médico que ya está en el catálogo pero no tiene usuario.
+    crearCuentaMedico(medicoId, { correo, passwordHash }) {
+      const id = idNumerico(medicoId, 'Médico');
+      return enTransaccion(pool, async (cx) => {
+        const { rows: [medico] } = await cx.query(
+          `SELECT m.estado, m.nombres || ' ' || m.apellidos AS nombre,
+                  EXISTS (SELECT 1 FROM usuario u WHERE u.medico_fk = m.id_medico) AS tiene_cuenta
+           FROM medico m WHERE m.id_medico = $1 FOR UPDATE`,
+          [id],
+        );
+        if (!medico) throw new NoEncontrado('Médico no encontrado');
+        if (medico.estado !== 'activo') throw new Conflicto('Reactiva al médico antes de crearle una cuenta');
+        if (medico.tiene_cuenta) throw new Conflicto('Ese médico ya tiene cuenta');
+        const { rows: [repetido] } = await cx.query('SELECT 1 FROM usuario WHERE lower(correo) = $1', [correo]);
+        if (repetido) throw new Conflicto('Ya hay un usuario con ese correo');
+
+        await cx.query(
+          `INSERT INTO usuario (correo, password_hash, nombre_mostrar, rol, medico_fk) VALUES ($1, $2, $3, 'medico', $4)`,
+          [correo, passwordHash, medico.nombre.slice(0, 120), id],
+        );
+        return leerMedico(cx, id);
+      });
+    },
+
     async restablecerPassword(medicoId, passwordHash) {
       const { rowCount } = await pool.query(
         'UPDATE usuario SET password_hash = $1 WHERE medico_fk = $2', [passwordHash, idNumerico(medicoId, 'Médico')],

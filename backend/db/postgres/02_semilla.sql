@@ -44,11 +44,14 @@ INSERT INTO medico (id_medico, nombres, apellidos, numero_colegiado, especialida
   (3, 'Marta Lucía',    'Pineda Orellana','19022', 3, 1, '5552-5566', 'marta.pineda@hospital.gt'),
   (4, 'José Antonio',   'Cruz Méndez',    '22451', 4, 3, '5563-7788', 'jose.cruz@hospital.gt');
 
-INSERT INTO usuario (correo, password_hash, nombre_mostrar, rol, medico_fk) VALUES
-  ('dra.lopez@hospital.gt',  '$2b$10$KMDiG3udU.uRRe3.gjyM5etW8zdwusgORDFxPRiHJsuUeXaYG6z36', 'Dra. Gabriela López', 'medico', 1),
-  ('dr.herrera@hospital.gt', '$2b$10$KMDiG3udU.uRRe3.gjyM5etW8zdwusgORDFxPRiHJsuUeXaYG6z36', 'Dr. Andrés Herrera',  'medico', 2),
-  ('recepcion@hospital.gt',  '$2b$10$KMDiG3udU.uRRe3.gjyM5etW8zdwusgORDFxPRiHJsuUeXaYG6z36', 'Recepción',           'recepcion', NULL),
-  ('admin@hospital.gt',      '$2b$10$KMDiG3udU.uRRe3.gjyM5etW8zdwusgORDFxPRiHJsuUeXaYG6z36', 'Administración',      'admin', NULL);
+INSERT INTO recepcionista (id_recepcionista, nombres, apellidos, telefono) VALUES
+  (1, 'Mónica Alejandra', 'Ruiz Barrios', '5577-2233');
+
+INSERT INTO usuario (correo, password_hash, nombre_mostrar, rol, medico_fk, recepcionista_fk) VALUES
+  ('dra.lopez@hospital.gt',  '$2b$10$KMDiG3udU.uRRe3.gjyM5etW8zdwusgORDFxPRiHJsuUeXaYG6z36', 'Dra. Gabriela López', 'medico', 1, NULL),
+  ('dr.herrera@hospital.gt', '$2b$10$KMDiG3udU.uRRe3.gjyM5etW8zdwusgORDFxPRiHJsuUeXaYG6z36', 'Dr. Andrés Herrera',  'medico', 2, NULL),
+  ('recepcion@hospital.gt',  '$2b$10$KMDiG3udU.uRRe3.gjyM5etW8zdwusgORDFxPRiHJsuUeXaYG6z36', 'Mónica Alejandra Ruiz Barrios', 'recepcion', NULL, 1),
+  ('admin@hospital.gt',      '$2b$10$KMDiG3udU.uRRe3.gjyM5etW8zdwusgORDFxPRiHJsuUeXaYG6z36', 'Administración',      'admin', NULL, NULL);
 
 -- ------------------------------------------------------------ pacientes
 INSERT INTO paciente (id_paciente, nombres, apellidos, fecha_nacimiento, sexo, dpi, telefono, direccion, correo, tipo_sangre, fecha_registro) VALUES

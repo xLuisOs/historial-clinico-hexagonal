@@ -9,6 +9,7 @@ import { crearRepositorioFacturacion } from './facturacion.js';
 import { crearRepositorioInternamientos } from './internamientos.js';
 import { crearRepositorioPacientes } from './pacientes.js';
 import { crearRepositorioPersonal } from './personal.js';
+import { crearRepositorioRecepcionistas } from './recepcionistas.js';
 
 export function crearAdaptadorHospitalPostgres(pool) {
   return {
@@ -43,8 +44,8 @@ export function crearAdaptadorHospitalPostgres(pool) {
     agenda: crearRepositorioAgenda(pool),
     // Puerto opcional: antecedentes médicos.
     antecedentes: crearRepositorioAntecedentes(pool),
-    // Puerto opcional: alta de médicos (con su usuario) por el administrador.
-    personal: crearRepositorioPersonal(pool),
+    // Puerto opcional: médicos y recepcionistas (con su usuario), por el administrador.
+    personal: { ...crearRepositorioPersonal(pool), ...crearRepositorioRecepcionistas(pool) },
     // Puertos propios del hospital (fuera del contrato común).
     internamientos: crearRepositorioInternamientos(pool),
     facturacion: crearRepositorioFacturacion(pool),

@@ -9,6 +9,7 @@ import { COLECCIONES, nombreCompleto, ROLES } from './modelo.js';
 import { registrarPago } from './pagos.js';
 import { crearRepositorioPacientes } from './pacientes.js';
 import { crearRepositorioPersonal } from './personal.js';
+import { crearRepositorioRecepcionistas } from './recepcionistas.js';
 
 const ordenarPorApellido = (a, b) => (a.get('apellidos') ?? '').localeCompare(b.get('apellidos') ?? '', 'es');
 
@@ -44,8 +45,8 @@ export function crearAdaptadorOdontologicaFirebase(db, zonaHoraria) {
     agenda: crearRepositorioAgenda(db, zonaHoraria),
     // Puerto opcional: antecedentes médicos.
     antecedentes: crearRepositorioAntecedentes(db, zonaHoraria),
-    // Puerto opcional: alta de odontólogos (con su usuario) por el administrador.
-    personal: crearRepositorioPersonal(db, zonaHoraria),
+    // Puerto opcional: odontólogos y recepcionistas (con su usuario), por el administrador.
+    personal: { ...crearRepositorioPersonal(db, zonaHoraria), ...crearRepositorioRecepcionistas(db) },
 
     pacientes: crearRepositorioPacientes(db, zonaHoraria),
     atenciones: crearRepositorioAtenciones(db, zonaHoraria),

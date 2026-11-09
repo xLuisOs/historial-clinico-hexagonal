@@ -14,7 +14,10 @@ import { Validador } from '../dominio/validacion.js';
 import { validarNuevoPaciente, validarContacto, validarBaja } from '../dominio/paciente.js';
 import { validarNuevaConsulta, validarDiagnostico, validarReceta } from '../dominio/atencion.js';
 import { validarAntecedente } from '../dominio/antecedente.js';
-import { validarCambiosMedico, validarEstadoMedico, validarNuevaPassword, validarNuevoMedico } from '../dominio/medico.js';
+import {
+  validarCambiosMedico, validarCuentaNueva, validarEstadoMedico, validarNuevaPassword, validarNuevoMedico,
+} from '../dominio/medico.js';
+import { validarCambiosRecepcionista, validarNuevaRecepcionista } from '../dominio/recepcionista.js';
 import { historialParaRol, pacienteParaRol } from '../dominio/privacidad.js';
 import { validarCambioEstado, validarNuevaCita, validarReprogramacion } from '../dominio/cita.js';
 
@@ -125,6 +128,14 @@ export function actualizarMedico({ usuario, repos }, medicoId, datos) {
   return repoPersonal(repos, 'actualizarMedico').actualizarMedico(medicoId, validarCambiosMedico(datos));
 }
 
+// Cuenta para un médico que ya estaba en el catálogo sin usuario.
+export async function crearCuentaMedico({ usuario, repos }, medicoId, datos) {
+  exigirRol(usuario, 'admin');
+  const personal = repoPersonal(repos, 'crearCuentaMedico');
+  const { correo, password } = validarCuentaNueva(datos, INSTITUCIONES[usuario.institucion]);
+  return personal.crearCuentaMedico(medicoId, { correo, passwordHash: await bcrypt.hash(password, 10) });
+}
+
 export async function restablecerPasswordMedico({ usuario, repos }, medicoId, datos) {
   exigirRol(usuario, 'admin');
   const personal = repoPersonal(repos, 'restablecerPassword');
@@ -137,6 +148,35 @@ export async function restablecerPasswordMedico({ usuario, repos }, medicoId, da
 export function cambiarEstadoMedico({ usuario, repos }, medicoId, datos) {
   exigirRol(usuario, 'admin');
   return repoPersonal(repos, 'cambiarEstadoMedico').cambiarEstadoMedico(medicoId, validarEstadoMedico(datos));
+}
+
+// Recepcionistas: cada una con su cuenta (ver dominio/recepcionista.js).
+export function listarRecepcionistas({ usuario, repos }) {
+  exigirRol(usuario, 'admin');
+  return repoPersonal(repos, 'listarRecepcionistas').listarRecepcionistas();
+}
+
+export async function registrarRecepcionista({ usuario, repos }, datos) {
+  exigirRol(usuario, 'admin');
+  const personal = repoPersonal(repos, 'registrarRecepcionista');
+  const { password, ...recepcionista } = validarNuevaRecepcionista(datos, INSTITUCIONES[usuario.institucion]);
+  return personal.registrarRecepcionista({ ...recepcionista, passwordHash: await bcrypt.hash(password, 10) });
+}
+
+export function actualizarRecepcionista({ usuario, repos }, recepcionistaId, datos) {
+  exigirRol(usuario, 'admin');
+  return repoPersonal(repos, 'actualizarRecepcionista').actualizarRecepcionista(recepcionistaId, validarCambiosRecepcionista(datos));
+}
+
+export async function restablecerPasswordRecepcionista({ usuario, repos }, recepcionistaId, datos) {
+  exigirRol(usuario, 'admin');
+  const personal = repoPersonal(repos, 'restablecerPasswordRecepcionista');
+  await personal.restablecerPasswordRecepcionista(recepcionistaId, await bcrypt.hash(validarNuevaPassword(datos), 10));
+}
+
+export function cambiarEstadoRecepcionista({ usuario, repos }, recepcionistaId, datos) {
+  exigirRol(usuario, 'admin');
+  return repoPersonal(repos, 'cambiarEstadoRecepcionista').cambiarEstadoRecepcionista(recepcionistaId, validarEstadoMedico(datos));
 }
 
 export function listarMedicamentos({ repos }) {

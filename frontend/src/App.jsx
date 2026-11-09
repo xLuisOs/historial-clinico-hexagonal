@@ -7,6 +7,7 @@ import { Medicos } from './paginas/Medicos.jsx';
 import { NuevaConsulta } from './paginas/NuevaConsulta.jsx';
 import { NuevoPaciente } from './paginas/NuevoPaciente.jsx';
 import { Pacientes } from './paginas/Pacientes.jsx';
+import { Recepcionistas } from './paginas/Recepcionistas.jsx';
 import { ProveedorSesion, useSesion } from './sesion.jsx';
 
 const Manchas = () => (
@@ -43,6 +44,7 @@ export function App() {
             <Route index element={<Pacientes />} />
             <Route path="agenda" element={<Agenda />} />
             <Route path="medicos" element={<Medicos />} />
+            <Route path="recepcionistas" element={<Recepcionistas />} />
             <Route path="pacientes/nuevo" element={<NuevoPaciente />} />
             <Route path="pacientes/:id" element={<Historial />} />
             <Route path="pacientes/:id/consulta" element={<NuevaConsulta />} />

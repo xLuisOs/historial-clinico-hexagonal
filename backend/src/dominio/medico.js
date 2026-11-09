@@ -20,18 +20,29 @@ import { Validador } from './validacion.js';
 //                              especialidad, telefono, correo, activo }
 
 const COLEGIADO = /^\d{3,10}$/;
-const TELEFONO = /^[0-9+\-\s]{8,20}$/;
+export const TELEFONO = /^[0-9+\-\s]{8,20}$/;
 
-function validarPassword(v, password) {
+/** Contraseña inicial o nueva: 8 a 72 caracteres, con letras y números. */
+export function validarPassword(v, password) {
   const texto = typeof password === 'string' ? password : '';
   if (texto.length < 8 || texto.length > 72) v.error('password', 'De 8 a 72 caracteres');
   else if (!/[A-Za-z]/.test(texto) || !/\d/.test(texto)) v.error('password', 'Debe tener letras y números');
   return texto;
 }
 
+/**
+ * Correo de una cuenta: del dominio de la institución, porque ese dominio es
+ * el que enruta el inicio de sesión hacia su base de datos.
+ */
+export function validarCorreoInstitucional(v, valor, dominio) {
+  const correo = typeof valor === 'string' ? valor.trim().toLowerCase() : valor;
+  const limpio = v.patron('correo', correo, /^[a-z0-9._-]+@[a-z0-9.-]+$/, 'Correo inválido', { requerido: true, max: 120 });
+  if (limpio && !limpio.endsWith(`@${dominio}`)) v.error('correo', `Debe ser un correo @${dominio}`);
+  return limpio;
+}
+
 export function validarNuevoMedico(datos = {}, { dominio }) {
   const v = new Validador();
-  const correo = typeof datos.correo === 'string' ? datos.correo.trim().toLowerCase() : datos.correo;
   const medico = {
     nombres: v.texto('nombres', datos.nombres, { requerido: true, max: 100 }),
     apellidos: v.texto('apellidos', datos.apellidos, { requerido: true, max: 100 }),
@@ -39,11 +50,8 @@ export function validarNuevoMedico(datos = {}, { dominio }) {
       COLEGIADO, 'Solo números (3 a 10 dígitos)', { requerido: true }),
     especialidad: v.texto('especialidad', datos.especialidad, { requerido: true, max: 80 }),
     telefono: v.patron('telefono', datos.telefono, TELEFONO, 'Teléfono inválido'),
-    correo: v.patron('correo', correo, /^[a-z0-9._-]+@[a-z0-9.-]+$/, 'Correo inválido', { requerido: true, max: 120 }),
+    correo: validarCorreoInstitucional(v, datos.correo, dominio),
   };
-  if (medico.correo && !medico.correo.endsWith(`@${dominio}`)) {
-    v.error('correo', `Debe ser un correo @${dominio}`);
-  }
   // Contraseña inicial: el médico entra con ella. No se recorta ni se guarda tal cual.
   const password = validarPassword(v, datos.password);
   v.lanzarSiHayErrores();
@@ -66,6 +74,18 @@ export function validarCambiosMedico(datos = {}) {
   v.lanzarSiHayErrores();
   if (Object.keys(cambios).length === 0) throw new DatosInvalidos('No hay cambios');
   return cambios;
+}
+
+/**
+ * Cuenta para un médico que ya está en el catálogo pero nunca tuvo usuario
+ * (p. ej. los que se cargaron directo en la base): { correo, password }.
+ */
+export function validarCuentaNueva(datos = {}, { dominio }) {
+  const v = new Validador();
+  const correo = validarCorreoInstitucional(v, datos.correo, dominio);
+  const password = validarPassword(v, datos.password);
+  v.lanzarSiHayErrores();
+  return { correo, password };
 }
 
 /** Nueva contraseña que el admin le asigna a un médico que olvidó la suya. */

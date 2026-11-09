@@ -125,6 +125,12 @@ Si la base se creó antes de que existiera la tabla `antecedente`, basta con peg
 trigger y permisos, y agrega antecedentes de prueba si está vacía. No toca lo demás y
 se puede correr más de una vez.
 
+Del mismo modo, si la base no tiene la tabla `recepcionista`, pegar
+`backend/db/postgres/04_recepcionistas.sql`. Crea la tabla, liga cada cuenta de recepción
+que ya exista a su recepcionista (la cuenta "Recepción" queda como "Recepción General",
+para corregir el nombre desde el sistema) y agrega la regla de que toda cuenta de
+recepción sea de una recepcionista. Tampoco borra nada y se puede correr dos veces.
+
 Las tablas viven en el esquema `hospital01`, que la API automática de Supabase no expone;
 además tienen RLS activado. El backend entra como `hospital_app`, que solo puede leer,
 insertar y actualizar en ese esquema (no puede borrar historiales).
@@ -175,6 +181,8 @@ ocultan los botones que no le corresponden (el backend igual lo verifica):
 | Anular facturas sin pagos (hospital) |       |           | ✅    |
 | Archivar historial                  |        |           | ✅    |
 | Registrar, editar, desactivar y reactivar médicos; restablecer su contraseña (en el laboratorio, médicos referentes) | | | ✅ |
+| Crear la cuenta de un médico que no la tiene (hospital, odontológica) | | | ✅ |
+| Registrar, editar, desactivar y reactivar recepcionistas, cada una con su cuenta (hospital, odontológica) | | | ✅ |
 
 \* En las cuatro instituciones, la recepción recibe una **vista administrativa**
 del historial (mínimo privilegio): ficha, contacto, alergias, citas y lo que se cobra
@@ -309,7 +317,13 @@ Todas las rutas (salvo login) requieren `Authorization: Bearer <token>`.
 | GET    | `/api/personal/medicos`            | Médicos activos e inactivos, con colegiado y correo (admin) |
 | POST   | `/api/personal/medicos`            | Alta de un médico con su usuario `{ nombres, apellidos, numeroColegiado, especialidad, telefono?, correo, password }` (admin; hospital, odontológica y pediátrico). El correo debe ser del dominio de la institución; médico y usuario se crean en una sola transacción |
 | PATCH  | `/api/personal/medicos/:id`        | Editar `{ nombres?, apellidos?, numeroColegiado?, especialidad?, telefono? }` (admin). El correo no se edita: es la cuenta |
+| POST   | `/api/personal/medicos/:id/cuenta` | Crear la cuenta `{ correo, password }` de un médico activo que está en el catálogo sin usuario (admin; hospital y odontológica) |
 | POST   | `/api/personal/medicos/:id/password` | Nueva contraseña `{ password }` para un médico que olvidó la suya (admin) |
+| GET    | `/api/personal/recepcionistas`     | Recepcionistas activas e inactivas, con su correo (admin; hospital y odontológica) |
+| POST   | `/api/personal/recepcionistas`     | Alta con su usuario `{ nombres, apellidos, telefono?, correo, password }` (admin). Correo del dominio de la institución |
+| PATCH  | `/api/personal/recepcionistas/:id` | Editar `{ nombres?, apellidos?, telefono? }` (admin). El correo no se edita |
+| POST   | `/api/personal/recepcionistas/:id/password` | Nueva contraseña `{ password }` (admin) |
+| POST   | `/api/personal/recepcionistas/:id/estado` | `{ activo }` (admin). Desactiva también su usuario; sin requisitos previos |
 | POST   | `/api/personal/medicos/:id/estado` | `{ activo }` (admin). Desactivar desactiva también su usuario y falla con 409 si tiene citas pendientes a futuro o pacientes internados a su cargo (la respuesta trae la lista). En el laboratorio aplica a los médicos referentes |
 | GET    | `/api/catalogos/medicamentos`      | Catálogo de medicamentos                             |
 | GET    | `/api/agenda?fecha=AAAA-MM-DD&medicoId=` | Citas de ese día (hoy por defecto): las del médico conectado, o las del `medicoId` para recepción y admin |
