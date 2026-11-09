@@ -106,6 +106,10 @@ de una vez.
 5. En *Connect* → *Drivers*, copiar la cadena `mongodb+srv://…` para cada usuario.
 6. Ejecutar `npm run db:mongo:semilla` **una sola vez**.
 
+Si la base ya existe, volver a correr `npm run db:mongo:semilla` actualiza los
+validadores y agrega a los pacientes de prueba los antecedentes médicos que les falten
+(arreglo `antecedentes` dentro del paciente). No borra ni cambia nada más.
+
 **PostgreSQL en Supabase**
 1. En el proyecto de Supabase: *SQL Editor* → *New query*. Pegar
    `backend/db/postgres/01_esquema.sql`, cambiar `CAMBIA_ESTA_CLAVE` por una contraseña
@@ -158,7 +162,7 @@ ocultan los botones que no le corresponden (el backend igual lo verifica):
 | Registrar paciente                  | ✅     | ✅        | ✅    |
 | Actualizar contacto                 |        | ✅        | ✅    |
 | Consulta, diagnóstico y receta      | ✅     |           |       |
-| Agregar antecedentes médicos (hospital, odontológica, pediátrico) | ✅ |  |       |
+| Agregar antecedentes médicos (las cuatro instituciones) | ✅ |  |       |
 | Mis citas de hoy (agenda propia)    | ✅     |           |       |
 | Agenda por médico                   |        | ✅        | ✅    |
 | Ver médicos por especialidad        | ✅     | ✅        | ✅    |
@@ -287,7 +291,7 @@ Todas las rutas (salvo login) requieren `Authorization: Bearer <token>`.
 | PATCH  | `/api/pacientes/:id/contacto`      | Actualizar teléfono, dirección o correo              |
 | POST   | `/api/pacientes/:id/baja`          | Archivar historial `{ motivo, detalle }`             |
 | GET    | `/api/pacientes/:id/historial`     | Historial completo (consultas, diagnósticos, recetas, extras) |
-| POST   | `/api/pacientes/:id/antecedentes`  | Antecedente médico `{ tipo, descripcion, anioInicio? }` (hospital, odontológica y pediátrico). Tipos: patologico, quirurgico, familiar, habito, medicamento; en el pediátrico también perinatal |
+| POST   | `/api/pacientes/:id/antecedentes`  | Antecedente médico `{ tipo, descripcion, anioInicio? }` (las cuatro instituciones). Tipos: patologico, quirurgico, familiar, habito, medicamento; en el pediátrico también perinatal |
 | POST   | `/api/pacientes/:id/consultas`     | Registrar consulta + diagnósticos + receta (atómico) |
 | POST   | `/api/consultas/:id/diagnosticos`  | Agregar diagnóstico                                  |
 | POST   | `/api/consultas/:id/recetas`       | Recetar medicamento(s)                               |

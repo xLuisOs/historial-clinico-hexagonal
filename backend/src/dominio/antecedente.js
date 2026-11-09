@@ -12,6 +12,10 @@ import { Validador } from './validacion.js';
 
 export const TIPOS_ANTECEDENTE = ['patologico', 'quirurgico', 'familiar', 'habito', 'medicamento'];
 
+// Tope por paciente: donde van embebidos en el documento del paciente
+// (laboratorio en MongoDB), evita que ese documento crezca sin límite.
+export const MAX_ANTECEDENTES = 100;
+
 // En pediatría también se pregunta cómo fue el nacimiento: semanas de
 // gestación, peso al nacer, complicaciones del parto (antecedente perinatal).
 const TIPOS_EXTRA = { pediatrico: ['perinatal'] };

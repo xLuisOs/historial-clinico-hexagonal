@@ -5,6 +5,11 @@
 // Decisiones de embeber / referenciar:
 //   * pacientes      contacto, responsable y estado de baja van EMBEBIDOS: son
 //                    pocos datos, pertenecen solo a ese paciente y se leen juntos.
+//                    Los antecedentes médicos también van EMBEBIDOS (arreglo
+//                    `antecedentes`): son pocos, solo los tiene ese paciente y
+//                    se muestran siempre con él. El arreglo tiene tope
+//                    (MAX_ANTECEDENTES) para que el documento no crezca sin
+//                    límite; quien los registró va como referencia extendida.
 //   * ordenes        REFERENCIAN al paciente (paciente_id): un paciente acumula
 //                    cientos de órdenes en su vida; embeberlas haría crecer el
 //                    documento del paciente sin límite (tope de 16 MB).
@@ -26,6 +31,8 @@
 // papel de los CHECK, los índices únicos el de UNIQUE, y la existencia de las
 // referencias se verifica en el adaptador dentro de transacciones.
 // =====================================================================
+
+import { MAX_ANTECEDENTES, TIPOS_ANTECEDENTE } from '../../src/dominio/antecedente.js';
 
 const texto = (maxLength = 200) => ({ bsonType: 'string', maxLength });
 const textoONulo = (maxLength = 200) => ({ bsonType: ['string', 'null'], maxLength });
@@ -99,6 +106,28 @@ export const COLECCIONES = {
               datos_clinicos: {
                 bsonType: 'object',
                 properties: { tipo_sangre: textoONulo(3), alergias: textoONulo(500) },
+              },
+              antecedentes: {
+                bsonType: 'array',
+                maxItems: MAX_ANTECEDENTES,
+                items: {
+                  bsonType: 'object',
+                  required: ['_id', 'tipo', 'descripcion', 'anio_inicio', 'registrado_por', 'fecha_registro'],
+                  additionalProperties: false,
+                  properties: {
+                    _id: { bsonType: 'objectId' },
+                    tipo: { enum: TIPOS_ANTECEDENTE },
+                    descripcion: texto(300),
+                    anio_inicio: { bsonType: ['int', 'null'], minimum: 1900, maximum: 2100 },
+                    // Referencia extendida al químico biólogo que lo registró.
+                    registrado_por: {
+                      bsonType: 'object',
+                      required: ['id', 'nombre'],
+                      properties: { id: { bsonType: 'objectId' }, nombre: texto(220) },
+                    },
+                    fecha_registro: { bsonType: 'date' },
+                  },
+                },
               },
               estado: {
                 bsonType: 'object',

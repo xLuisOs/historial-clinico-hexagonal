@@ -1,6 +1,7 @@
 import { Conflicto, DatosInvalidos, NoEncontrado } from '../../../../dominio/errores.js';
 import { interpretarValor, TRANSICIONES_ORDEN } from '../../../../dominio/laboratorio.js';
 import { aObjectId, dateATexto, enTransaccionMongo } from '../conexion.js';
+import { documentoAAntecedentes } from './antecedentes.js';
 import { nombreCompleto } from './modelo.js';
 import { documentoAPaciente, exigirPacienteActivo } from './pacientes.js';
 
@@ -289,6 +290,7 @@ export function crearRepositorioOrdenes(cliente, db, zonaHoraria) {
 
       return {
         paciente: documentoAPaciente(paciente, zonaHoraria),
+        antecedentes: documentoAAntecedentes(paciente, zonaHoraria),
         consultas: ordenes.map(aConsulta),
         extras: {
           ordenesEnCurso: ordenes.filter((o) => ['pendiente', 'en_proceso'].includes(o.estado)).length,

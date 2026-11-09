@@ -154,6 +154,33 @@ const lucia = paciente({
   documento: '1678904320101', telefono: '5000-1122', registro: '2024-03-11T10:20:00',
 });
 
+// ---------------------------------------------------------------- antecedentes
+// Embebidos en el paciente. En un laboratorio importan los que alteran los
+// resultados: la diabetes (glucosa), la warfarina (coagulación), la
+// levotiroxina (perfil tiroideo).
+
+const antecedente = (tipo, descripcion, anio_inicio, quien, registro) => ({
+  _id: new ObjectId(), tipo, descripcion, anio_inicio, registrado_por: firma(quien), fecha_registro: fecha(registro),
+});
+
+roberto.antecedentes = [
+  antecedente('patologico', 'Diabetes mellitus tipo 2', 2016, lopez, '2025-02-03T08:15:00'),
+  antecedente('patologico', 'Hipertensión arterial', 2019, lopez, '2025-02-03T08:15:00'),
+  antecedente('medicamento', 'Metformina 850 mg cada 12 horas', 2016, lopez, '2025-02-03T08:15:00'),
+  antecedente('medicamento', 'Warfarina 5 mg diarios (fibrilación auricular)', 2023, lopez, '2025-02-03T08:15:00'),
+];
+ana.antecedentes = [
+  antecedente('patologico', 'Hipotiroidismo', 2020, mendez, '2026-07-14T07:45:00'),
+  antecedente('medicamento', 'Levotiroxina 50 mcg en ayunas', 2020, mendez, '2026-07-14T07:45:00'),
+];
+pedro.antecedentes = [
+  antecedente('familiar', 'Madre: anemia ferropénica', null, lopez, '2026-10-28T09:05:00'),
+];
+lucia.antecedentes = [
+  antecedente('quirurgico', 'Apendicectomía', 2010, mendez, '2024-03-11T10:25:00'),
+  antecedente('habito', 'Fuma 5 cigarrillos al día', 2005, mendez, '2024-03-11T10:25:00'),
+];
+
 // --------------------------------------------------------------------- órdenes
 
 /**
