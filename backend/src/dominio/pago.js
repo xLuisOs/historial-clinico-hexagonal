@@ -54,7 +54,7 @@ export function validarPago(datos = {}) {
   return pago;
 }
 
-/** Pago con referencia según el método (odontológica). */
+/** Pago con referencia según el método (odontológica y pediátrico). */
 export function validarPagoConReferencia(datos = {}) {
   const v = new Validador();
   const monto = v.numero('monto', datos.monto, { requerido: true, min: 0.01, max: 1_000_000 });

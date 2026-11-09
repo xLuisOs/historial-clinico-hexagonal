@@ -1,4 +1,4 @@
-import { METODOS_PAGO, validarPago } from './pago.js';
+import { METODOS_PAGO, validarPagoConReferencia } from './pago.js';
 import { Validador } from './validacion.js';
 
 // Reglas propias del Centro Médico Pediátrico que no dependen del motor.
@@ -50,14 +50,10 @@ export function validarCobro(datos = {}) {
 /**
  * Pago contra un cobro = { monto, metodoPago, referencia }
  * Mismos métodos que el catálogo metodo_pago (efectivo, tarjeta, transferencia).
- * La referencia (voucher o número de transferencia) es opcional.
+ * La referencia sigue la misma regla que en el hospital y la odontológica
+ * (dominio/pago.js): obligatoria y con el formato del método, salvo en
+ * efectivo, que no lleva. El trigger trg_pago_validar repite la regla en MySQL.
  */
-export function validarPagoCobro(datos = {}) {
-  const pago = validarPago(datos);
-  const v = new Validador();
-  const referencia = v.texto('referencia', datos.referencia, { max: 40 });
-  v.lanzarSiHayErrores();
-  return { ...pago, referencia };
-}
+export const validarPagoCobro = (datos = {}) => validarPagoConReferencia(datos);
 
 export { METODOS_PAGO };

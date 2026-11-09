@@ -88,7 +88,8 @@ npm run dev                                   # API en http://localhost:4000/api
 Si la base se creó antes de que existiera la tabla `antecedente`, se agrega con
 `npm run db:mysql -- --solo 05_antecedentes.sql`: crea la tabla con su trigger y
 agrega antecedentes de prueba si está vacía. No toca lo demás y se puede correr más
-de una vez.
+de una vez. Igual, `--solo 06_referencia_pago.sql` actualiza el trigger de pagos para
+que también revise la referencia según el método.
 
 > Para ahorrar crédito, el servidor se puede **Detener** desde el portal cuando no se usa.
 
@@ -316,7 +317,7 @@ Todas las rutas (salvo login) requieren `Authorization: Bearer <token>`.
 | POST   | `/api/pacientes/:id/facturas`      | Facturar `{ consultaId \| internamientoId, items: [{ descripcion, cantidad, precioUnitario }] }` |
 | POST   | `/api/facturas/:id/pagos`          | Pago `{ monto, metodoPago, referencia? }` (efectivo, tarjeta, transferencia, seguro) |
 
-En los pagos del hospital y de la odontológica, la referencia depende del método:
+En los pagos del hospital, la odontológica y el pediátrico, la referencia depende del método:
 el efectivo no lleva; la tarjeta pide el **No. de autorización** del voucher
 (6 letras o números, con al menos un número); la transferencia, el **No. de boleta
 o transacción** (6 a 20 dígitos), y el seguro, el **No. de póliza** (5 a 20 letras,
@@ -341,7 +342,7 @@ Exclusivas del pediátrico:
 | POST   | `/api/pacientes/:id/vacunas`  | Registrar dosis aplicada `{ vacunaId, numeroDosis, lote, fechaAplicacion?, consultaId? }` (médico). Las dosis van en orden y no se repiten. Devuelve el esquema actualizado |
 | GET    | `/api/pediatrico/servicios`   | Catálogo de servicios facturables con su precio vigente            |
 | POST   | `/api/consultas/:id/cobro`    | Generar el cobro de la consulta `{ items: [{ servicioId, cantidad }] }` (recepción/admin). El precio se copia del catálogo; un solo cobro por consulta, a nombre del encargado |
-| POST   | `/api/cobros/:id/pagos`       | Abono `{ monto, metodoPago, referencia? }` (recepción/admin). No puede exceder el saldo; al completarse, el trigger marca el cobro como pagado |
+| POST   | `/api/cobros/:id/pagos`       | Abono `{ monto, metodoPago, referencia? }` (recepción/admin; efectivo, tarjeta, transferencia). No puede exceder el saldo y la referencia sigue la regla de arriba; el trigger `trg_pago_validar` revisa ambas cosas y, al completarse, `trg_pago_cerrar_cobro` marca el cobro como pagado |
 | POST   | `/api/pediatrico/encargados/busqueda` | Buscar encargado `{ dpi }` para asociarle otro niño (hermanos). El DPI va en el cuerpo y no en la URL, para que no quede en los registros |
 
 El historial del pediátrico incluye en `extras.cobros` cada cobro con su detalle, pagos y saldo.

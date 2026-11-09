@@ -5,9 +5,9 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api.js';
 import { Alerta, Campo, Dialogo, erroresDe, Selector } from '../componentes/ui.jsx';
-import { dinero, fecha, fechaHora } from '../formato.js';
+import { dinero, fecha, fechaHora, REFERENCIA_PAGO, textoReferencia } from '../formato.js';
 import { puede } from '../sesion.jsx';
-import { Quitar } from './comun.jsx';
+import { CampoReferencia, Quitar } from './comun.jsx';
 
 const METODOS = { efectivo: 'Efectivo', tarjeta: 'Tarjeta', transferencia: 'Transferencia' };
 const ESTADO = {
@@ -96,7 +96,7 @@ function DialogoPago({ cobro, onCerrar, onListo }) {
   const { error, errores, enviando, enviar } = useEnvio(() => api.pagarCobro(cobro.id, {
     monto: monto === '' ? null : Number(monto),
     metodoPago,
-    referencia: referencia.trim() || null,
+    referencia: REFERENCIA_PAGO[metodoPago] ? referencia.trim() || null : null,
   }), onListo);
 
   return (
@@ -109,13 +109,10 @@ function DialogoPago({ cobro, onCerrar, onListo }) {
         <div className="rejilla">
           <Campo etiqueta="Monto (Q) *" type="number" min="0.01" step="0.01" max={cobro.saldo} value={monto}
             onChange={(e) => setMonto(e.target.value)} error={errores.monto} />
-          <Selector etiqueta="Método *" value={metodoPago} onChange={(e) => setMetodoPago(e.target.value)} vacio={null}
+          <Selector etiqueta="Método *" value={metodoPago} onChange={(e) => { setMetodoPago(e.target.value); setReferencia(''); }} vacio={null}
             error={errores.metodoPago} opciones={Object.entries(METODOS).map(([valor, texto]) => ({ valor, texto }))} />
         </div>
-        {metodoPago !== 'efectivo' && (
-          <Campo etiqueta="Referencia (voucher o transferencia)" maxLength={40} value={referencia}
-            onChange={(e) => setReferencia(e.target.value)} error={errores.referencia} />
-        )}
+        <CampoReferencia metodo={metodoPago} value={referencia} onChange={(e) => setReferencia(e.target.value)} error={errores.referencia} />
         <Pie onCerrar={onCerrar} enviando={enviando} texto="Registrar pago" />
       </form>
     </Dialogo>
@@ -139,7 +136,7 @@ function Cobro({ cobro, consulta, puedeCobrar, onPagar }) {
       </small>
       {cobro.pagos.length > 0 && (
         <small style={{ color: 'var(--tinta-suave)' }}>
-          Pagos: {cobro.pagos.map((p) => `${dinero(p.monto)} ${METODOS[p.metodo]?.toLowerCase() ?? p.metodo} (${fechaHora(p.fecha)})`).join(' · ')}
+          Pagos: {cobro.pagos.map((p) => `${dinero(p.monto)} ${METODOS[p.metodo]?.toLowerCase() ?? p.metodo}${p.referencia ? ` · ${textoReferencia(p.metodo, p.referencia)}` : ''} (${fechaHora(p.fecha)})`).join(' · ')}
         </small>
       )}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

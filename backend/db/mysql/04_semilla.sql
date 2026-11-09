@@ -141,7 +141,7 @@ INSERT INTO detalle_cobro (cobro_fk, servicio_fk, cantidad, precio_unitario) VAL
 
 -- El cobro 1 queda pagado (lo cierra el trigger); el 2 queda con saldo pendiente.
 INSERT INTO pago (cobro_fk, metodo_pago_fk, monto, fecha_pago, referencia) VALUES
-  (1, 2, 225.00, '2026-06-15 10:35:00', '4821'),
+  (1, 2, 225.00, '2026-06-15 10:35:00', '482155'),
   (2, 1, 100.00, '2026-09-20 16:45:00', NULL);
 
 -- ---------------------------------------------------------- antecedentes
