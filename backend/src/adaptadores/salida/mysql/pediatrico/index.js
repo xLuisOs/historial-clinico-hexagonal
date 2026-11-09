@@ -1,6 +1,7 @@
 // Adaptador MySQL del Centro Médico Pediátrico: implementa los puertos de
 // puertos/repositorios.js sobre el esquema de db/mysql/01_esquema.sql.
 
+import { listaDeEspecialidades } from '../../../../dominio/especialidades.js';
 import { crearRepositorioAgenda } from './agenda.js';
 import { crearRepositorioAntecedentes } from './antecedentes.js';
 import { crearRepositorioAtenciones } from './atenciones.js';
@@ -91,6 +92,11 @@ export function crearAdaptadorPediatricoMysql(pool) {
     atenciones: crearRepositorioAtenciones(pool),
 
     catalogos: {
+      // → string[]: las especialidades en uso.
+      async listarEspecialidades() {
+        const [filas] = await pool.query('SELECT DISTINCT especialidad FROM medico');
+        return listaDeEspecialidades(filas.map((f) => f.especialidad));
+      },
       async listarMedicos() {
         const [filas] = await pool.query(
           `SELECT id_medico, CONCAT(nombres, ' ', apellidos) AS nombre, especialidad

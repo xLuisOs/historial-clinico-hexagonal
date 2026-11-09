@@ -262,6 +262,23 @@ a { color: var(--primario-oscuro); }
 .fila-medico.inactivo > :not(.acciones) { opacity: 0.55; }
 /* Catálogos: sin avatar, texto a la izquierda y acciones a la derecha. */
 .fila-catalogo { grid-template-columns: minmax(0, 1fr) auto; cursor: default; }
+/* Buscador de médicos (agenda y agendar cita). */
+.buscador-medico { position: relative; min-width: 280px; }
+.buscador-medico input {
+  width: 100%; padding: 11px 14px; border-radius: var(--radio-sm); font: inherit; font-size: 0.95rem; color: var(--tinta);
+  background: rgba(255, 255, 255, 0.8); border: 1px solid rgba(15, 45, 54, 0.12);
+}
+.buscador-medico input:focus { outline: none; border-color: var(--primario); box-shadow: 0 0 0 4px rgba(46, 154, 166, 0.15); }
+.buscador-medico-lista {
+  position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 40; max-height: 280px; overflow-y: auto;
+  margin: 0; padding: 6px; list-style: none; border-radius: 14px; background: var(--vidrio-fuerte); box-shadow: var(--sombra-suave);
+}
+.buscador-medico-lista li { display: grid; padding: 8px 10px; border-radius: 10px; cursor: pointer; }
+.buscador-medico-lista li small { color: var(--tinta-suave); font-size: 0.78rem; }
+.buscador-medico-lista li.marcado { background: var(--primario-suave); }
+.buscador-medico-lista li[aria-selected="true"] strong { color: var(--primario-oscuro); }
+.buscador-medico-lista .vacio-lista { color: var(--tinta-suave); cursor: default; }
+
 /* Reportes del admin: periodo, cifras y tablas. */
 .filtros-reporte { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; padding: 14px 18px; }
 .campo-en-linea { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--tinta-suave); }

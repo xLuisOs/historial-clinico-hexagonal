@@ -150,6 +150,25 @@ export function crearRepositorioPacientes(pool) {
       });
     },
 
+    // Corregir datos personales (admin). El UNIQUE de dpi es la última defensa.
+    actualizarDatosPersonales(pacienteId, cambios) {
+      return enTransaccion(pool, async (cx) => {
+        const id = idNumerico(pacienteId, 'Paciente');
+        await exigirPacienteActivo(cx, id);
+        if (cambios.documento) {
+          const { rows } = await cx.query('SELECT 1 FROM paciente WHERE dpi = $1 AND id_paciente <> $2', [cambios.documento, id]);
+          if (rows.length > 0) throw new Conflicto('Ya hay otro paciente con ese documento');
+        }
+        const columnas = { nombres: 'nombres', apellidos: 'apellidos', fechaNacimiento: 'fecha_nacimiento', sexo: 'sexo', documento: 'dpi' };
+        const campos = Object.keys(cambios).filter((c) => columnas[c]);
+        await cx.query(
+          `UPDATE paciente SET ${campos.map((c, i) => `${columnas[c]} = $${i + 1}`).join(', ')} WHERE id_paciente = $${campos.length + 1}`,
+          [...campos.map((c) => cambios[c]), id],
+        );
+        return obtenerPorId(id, cx);
+      });
+    },
+
     // Tipo de sangre y alergias: solo lo que viene; null = sin registrar.
     actualizarDatosClinicos(pacienteId, datos) {
       return enTransaccion(pool, async (cx) => {

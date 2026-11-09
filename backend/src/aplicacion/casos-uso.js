@@ -11,10 +11,13 @@ import bcrypt from 'bcryptjs';
 import { INSTITUCIONES } from '../config/instituciones.js';
 import { DatosInvalidos, NoDisponible, SinPermiso } from '../dominio/errores.js';
 import { Validador } from '../dominio/validacion.js';
-import { validarNuevoPaciente, validarContacto, validarBaja, validarDatosClinicos } from '../dominio/paciente.js';
+import {
+  validarBaja, validarContacto, validarDatosClinicos, validarDatosPersonales, validarNuevoPaciente,
+} from '../dominio/paciente.js';
 import { exigirPasswordCorrecta, validarCambioPassword } from '../dominio/cuenta.js';
 import { validarNuevaConsulta, validarDiagnostico, validarReceta } from '../dominio/atencion.js';
 import { validarAntecedente } from '../dominio/antecedente.js';
+import { normalizarEspecialidad } from '../dominio/especialidades.js';
 import {
   catalogosDe, definicionCatalogo, validarCambiosRegistro, validarEstadoRegistro, validarNuevoRegistro,
 } from '../dominio/catalogos.js';
@@ -73,6 +76,14 @@ export async function obtenerPaciente({ usuario, repos }, pacienteId) {
 export async function actualizarContacto({ usuario, repos }, pacienteId, datos) {
   exigirRol(usuario, 'recepcion', 'admin');
   return pacienteParaRol(await repos.pacientes.actualizarContacto(pacienteId, validarContacto(datos)), usuario);
+}
+
+// Corregir datos personales mal capturados (nombre, fecha de nacimiento, sexo,
+// documento): lo hace la administración. El contacto lo actualiza recepción y
+// los datos clínicos el médico.
+export async function actualizarDatosPersonales({ usuario, repos }, pacienteId, datos) {
+  exigirRol(usuario, 'admin');
+  return repos.pacientes.actualizarDatosPersonales(pacienteId, validarDatosPersonales(datos));
 }
 
 // Tipo de sangre y alergias después del registro: los actualiza el médico.
@@ -150,16 +161,34 @@ export function listarPersonal({ usuario, repos }) {
 }
 
 // Alta: queda en el catálogo y con su usuario, en una sola operación atómica.
+/**
+ * Especialidad a guardar: si ya existe escrita de otra forma ("Cardiologia" vs
+ * "Cardiología"), se usa la que ya existe (ver dominio/especialidades.js).
+ */
+export async function especialidadParaGuardar(repos, especialidad) {
+  if (!especialidad || typeof repos.catalogos.listarEspecialidades !== 'function') return especialidad;
+  return normalizarEspecialidad(especialidad, await repos.catalogos.listarEspecialidades());
+}
+
+/** Especialidades que se ofrecen al registrar o editar un médico. */
+export function listarEspecialidades({ repos }) {
+  return repos.catalogos.listarEspecialidades?.() ?? [];
+}
+
 export async function registrarMedico({ usuario, repos }, datos) {
   exigirRol(usuario, 'admin');
   const personal = repoPersonal(repos, 'registrarMedico');
   const { password, ...medico } = validarNuevoMedico(datos, INSTITUCIONES[usuario.institucion]);
+  medico.especialidad = await especialidadParaGuardar(repos, medico.especialidad);
   return personal.registrarMedico({ ...medico, passwordHash: await bcrypt.hash(password, 10) });
 }
 
-export function actualizarMedico({ usuario, repos }, medicoId, datos) {
+export async function actualizarMedico({ usuario, repos }, medicoId, datos) {
   exigirRol(usuario, 'admin');
-  return repoPersonal(repos, 'actualizarMedico').actualizarMedico(medicoId, validarCambiosMedico(datos));
+  const personal = repoPersonal(repos, 'actualizarMedico');
+  const cambios = validarCambiosMedico(datos);
+  if (cambios.especialidad) cambios.especialidad = await especialidadParaGuardar(repos, cambios.especialidad);
+  return personal.actualizarMedico(medicoId, cambios);
 }
 
 // Cuenta para un médico que ya estaba en el catálogo sin usuario.

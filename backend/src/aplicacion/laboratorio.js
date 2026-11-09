@@ -3,6 +3,7 @@
 
 import { NoDisponible, SinPermiso } from '../dominio/errores.js';
 import { validarCambioEstado, validarExamenesNuevos, validarMedicoReferente, validarResultados } from '../dominio/laboratorio.js';
+import { especialidadParaGuardar } from './casos-uso.js';
 
 function repoLaboratorio(repos) {
   if (!repos.laboratorio) throw new NoDisponible('Operación exclusiva del Laboratorio Clínico');
@@ -37,9 +38,11 @@ export function cambiarEstadoOrden({ usuario, repos }, ordenId, datos) {
 
 // Registrar un médico referente nuevo si no está en el catálogo. Lo hace quien
 // recibe la orden: recepción, el químico biólogo o el admin.
-export function registrarMedicoReferente({ usuario, repos }, datos) {
+export async function registrarMedicoReferente({ usuario, repos }, datos) {
   exigirRol(usuario, 'recepcion', 'medico', 'admin');
-  return repoLaboratorio(repos).registrarMedicoReferente(validarMedicoReferente(datos));
+  const medico = validarMedicoReferente(datos);
+  medico.especialidad = await especialidadParaGuardar(repos, medico.especialidad);
+  return repoLaboratorio(repos).registrarMedicoReferente(medico);
 }
 
 // Agregar exámenes a una orden que todavía no se completa (químico biólogo).

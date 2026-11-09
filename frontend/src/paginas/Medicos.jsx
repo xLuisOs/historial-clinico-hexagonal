@@ -3,16 +3,16 @@ import { api } from '../api.js';
 import { IconoBuscar, IconoMas } from '../componentes/Iconos.jsx';
 import { Alerta, Campo, CampoCorreo, Cargando, correoCompleto, Dialogo, erroresDe } from '../componentes/ui.jsx';
 import { DOMINIO_INSTITUCION, fechaHora } from '../formato.js';
+import { CampoEspecialidad } from '../componentes/CampoEspecialidad.jsx';
 import { DialogoMedicoReferente } from '../instituciones/laboratorio.jsx';
 import { useSesion } from '../sesion.jsx';
 
-const ESPECIALIDAD_SUGERIDA = { odontologica: 'Odontología general', pediatrico: 'Pediatría general' };
 
 /** Alta de un médico con su usuario (hospital, odontológica y pediátrico). */
 function DialogoNuevoMedico({ institucion, onCerrar, onListo }) {
   const odonto = institucion === 'odontologica';
   const [datos, setDatos] = useState({
-    nombres: '', apellidos: '', numeroColegiado: '', especialidad: ESPECIALIDAD_SUGERIDA[institucion] ?? '',
+    nombres: '', apellidos: '', numeroColegiado: '', especialidad: '',
     telefono: '', correo: '', password: '',
   });
   const [error, setError] = useState(null);
@@ -43,9 +43,9 @@ function DialogoNuevoMedico({ institucion, onCerrar, onListo }) {
           <Campo etiqueta="Apellidos *" value={datos.apellidos} onChange={cambiar('apellidos')} error={errores.apellidos} />
           <Campo etiqueta="Colegiado *" inputMode="numeric" maxLength={10} value={datos.numeroColegiado}
             onChange={cambiar('numeroColegiado')} error={errores.numeroColegiado} />
-          <Campo etiqueta="Especialidad *" value={datos.especialidad} onChange={cambiar('especialidad')} error={errores.especialidad} />
+          <CampoEspecialidad requerido value={datos.especialidad} onChange={(especialidad) => setDatos({ ...datos, especialidad })} error={errores.especialidad} />
           {institucion !== 'pediatrico' && (
-            <Campo etiqueta="Teléfono" type="tel" value={datos.telefono} onChange={cambiar('telefono')} error={errores.telefono} />
+            <Campo etiqueta="Teléfono" type="tel" inputMode="numeric" maxLength={9} placeholder="5555-1234" value={datos.telefono} onChange={cambiar('telefono')} error={errores.telefono} />
           )}
         </div>
         <h4 style={{ margin: '4px 0 0' }}>Acceso al sistema</h4>
@@ -108,8 +108,8 @@ function DialogoEditarMedico({ medico, institucion, onCerrar, onListo }) {
           <Campo etiqueta="Apellidos *" value={datos.apellidos} onChange={cambiar('apellidos')} error={errores.apellidos} />
           <Campo etiqueta="Colegiado *" inputMode="numeric" maxLength={10} value={datos.numeroColegiado}
             onChange={cambiar('numeroColegiado')} error={errores.numeroColegiado} />
-          <Campo etiqueta="Especialidad *" value={datos.especialidad} onChange={cambiar('especialidad')} error={errores.especialidad} />
-          {conTelefono && <Campo etiqueta="Teléfono" type="tel" value={datos.telefono} onChange={cambiar('telefono')} error={errores.telefono} />}
+          <CampoEspecialidad requerido value={datos.especialidad} onChange={(especialidad) => setDatos({ ...datos, especialidad })} error={errores.especialidad} />
+          {conTelefono && <Campo etiqueta="Teléfono" type="tel" inputMode="numeric" maxLength={9} placeholder="5555-1234" value={datos.telefono} onChange={cambiar('telefono')} error={errores.telefono} />}
         </div>
         {medico.correo && <small style={{ color: 'var(--tinta-suave)' }}>Inicia sesión con {medico.correo}. El correo no se cambia: es su cuenta.</small>}
         <footer>

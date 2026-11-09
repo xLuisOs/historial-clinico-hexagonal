@@ -1,6 +1,7 @@
 // Adaptador Firebase (Firestore) de la Clínica Odontológica: implementa los
 // puertos de puertos/repositorios.js sobre el modelo documental de modelo.js.
 
+import { listaDeEspecialidades } from '../../../../dominio/especialidades.js';
 import { FieldValue } from 'firebase-admin/firestore';
 import { timestampATexto } from '../conexion.js';
 import { crearRepositorioAgenda } from './agenda.js';
@@ -92,6 +93,11 @@ export function crearAdaptadorOdontologicaFirebase(db, zonaHoraria) {
     },
 
     catalogos: {
+      // → string[]: las especialidades en uso (los odontólogos sin una son de odontología general).
+      async listarEspecialidades() {
+        const snap = await col('odontologos').get();
+        return listaDeEspecialidades(snap.docs.map((d) => d.get('especialidad') ?? 'Odontología'));
+      },
       async listarMedicos() {
         const snap = await col('odontologos').where('activo', '==', true).get();
         return snap.docs.sort(ordenarPorApellido).map((d) => ({

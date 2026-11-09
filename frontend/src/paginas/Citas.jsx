@@ -1,9 +1,10 @@
 // Citas del paciente: el panel del historial y los diálogos para agendar,
 // reprogramar y cancelar (recepción y admin).
 
+import { BuscadorMedico } from '../componentes/BuscadorMedico.jsx';
 import { useEffect, useState } from 'react';
 import { api } from '../api.js';
-import { Alerta, Campo, Dialogo, erroresDe, Selector } from '../componentes/ui.jsx';
+import { Alerta, Campo, Dialogo, erroresDe } from '../componentes/ui.jsx';
 import { fechaHora } from '../formato.js';
 import { useSesion } from '../sesion.jsx';
 import { puedeConfirmar, puedeMarcarAusencia } from './Agenda.jsx';
@@ -131,9 +132,8 @@ export function DialogoAgendar({ paciente, institucion, onCerrar, onListo }) {
     <Dialogo titulo="Agendar cita" onCerrar={onCerrar}>
       <form className="formulario" onSubmit={enviar} noValidate>
         <Alerta>{error?.message}</Alerta>
-        <Selector etiqueta={institucion === 'odontologica' ? 'Odontólogo *' : 'Médico *'} value={datos.medicoId}
-          onChange={cambiar('medicoId')} error={errores.medicoId}
-          opciones={medicos.map((m) => ({ valor: m.id, texto: m.especialidad ? `${m.nombre} · ${m.especialidad}` : m.nombre }))} />
+        <BuscadorMedico etiqueta={institucion === 'odontologica' ? 'Odontólogo *' : 'Médico *'} medicos={medicos}
+          value={datos.medicoId} onChange={(medicoId) => setDatos({ ...datos, medicoId })} error={errores.medicoId} />
         <div className="rejilla">
           <Campo etiqueta="Fecha y hora *" type="datetime-local" min={ahoraEntrada()} step="300"
             value={datos.fechaHora} onChange={cambiar('fechaHora')} error={errores.fechaHora} />

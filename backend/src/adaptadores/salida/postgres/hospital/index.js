@@ -88,6 +88,11 @@ export function crearAdaptadorHospitalPostgres(pool) {
     atenciones: crearRepositorioAtenciones(pool),
 
     catalogos: {
+      // → string[]: el catálogo de especialidades del hospital.
+      async listarEspecialidades() {
+        const { rows } = await pool.query('SELECT nombre FROM especialidad ORDER BY nombre');
+        return rows.map((f) => f.nombre);
+      },
       async listarMedicos() {
         const { rows } = await pool.query(
           `SELECT m.id_medico, m.nombres || ' ' || m.apellidos AS nombre, e.nombre AS especialidad

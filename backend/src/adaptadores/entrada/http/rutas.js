@@ -68,6 +68,9 @@ rutas.get('/pacientes/:id', async (req, res) => {
 rutas.patch('/pacientes/:id/contacto', async (req, res) => {
   res.json(await casos.actualizarContacto(req.contexto, req.params.id, req.body));
 });
+rutas.patch('/pacientes/:id/datos-personales', async (req, res) => {
+  res.json(await casos.actualizarDatosPersonales(req.contexto, req.params.id, req.body));
+});
 rutas.patch('/pacientes/:id/datos-clinicos', async (req, res) => {
   res.json(await casos.actualizarDatosClinicos(req.contexto, req.params.id, req.body));
 });
@@ -152,6 +155,9 @@ rutas.patch('/admin/catalogos/:clave/:id', async (req, res) => {
 });
 rutas.post('/admin/catalogos/:clave/:id/estado', async (req, res) => {
   res.json(await casos.cambiarEstadoRegistroCatalogo(req.contexto, req.params.clave, req.params.id, req.body));
+});
+rutas.get('/catalogos/especialidades', async (req, res) => {
+  res.json(await casos.listarEspecialidades(req.contexto));
 });
 rutas.get('/catalogos/medicamentos', async (req, res) => {
   res.json(await casos.listarMedicamentos(req.contexto));

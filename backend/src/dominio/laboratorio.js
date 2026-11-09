@@ -1,3 +1,4 @@
+import { validarTelefono } from './telefono.js';
 import { Validador } from './validacion.js';
 
 // Operaciones propias del laboratorio (Entrega I, operaciones 5 y 6):
@@ -81,7 +82,7 @@ export function validarMedicoReferente(datos = {}) {
     numeroColegiado: v.patron('numeroColegiado', datos.numeroColegiado == null ? null : String(datos.numeroColegiado),
       /^\d{3,10}$/, 'Solo números (3 a 10 dígitos)', { requerido: true }),
     especialidad: v.texto('especialidad', datos.especialidad, { max: 80 }),
-    telefono: v.patron('telefono', datos.telefono, /^[0-9+\-\s]{8,20}$/, 'Teléfono inválido'),
+    telefono: validarTelefono(v, 'telefono', datos.telefono),
     institucionProcedencia: v.texto('institucionProcedencia', datos.institucionProcedencia, { max: 150 }),
   };
   v.lanzarSiHayErrores();

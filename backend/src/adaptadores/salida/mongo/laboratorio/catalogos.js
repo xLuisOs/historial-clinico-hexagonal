@@ -104,8 +104,34 @@ const parametros = {
   })),
 };
 
+/**
+ * Especialidades en uso entre los médicos referentes. Cambiar el nombre lo
+ * corrige en todos con updateMany; la colación 'es' (nivel 1) ignora
+ * mayúsculas y tildes al buscar.
+ */
+function especialidades(db) {
+  const referentes = db.collection('medicos_referentes');
+  const cuenta = (n) => `${n} ${n === 1 ? 'médico referente' : 'médicos referentes'}`;
+  return {
+    async listar() {
+      const grupos = await referentes.aggregate([
+        { $match: { especialidad: { $type: 'string' } } },
+        { $group: { _id: '$especialidad', medicos: { $sum: 1 } } },
+        { $sort: { _id: 1 } },
+      ], { collation: { locale: 'es', strength: 1 } }).toArray();
+      return grupos.map((g) => ({ id: g._id, nombre: g._id, nota: cuenta(g.medicos) }));
+    },
+    async actualizar(id, { nombre }) {
+      const r = await referentes.updateMany({ especialidad: id }, { $set: { especialidad: nombre } }, { collation: { locale: 'es', strength: 1 } });
+      if (r.matchedCount === 0) throw new NoEncontrado('Especialidad no encontrada');
+      return { id: nombre, nombre, nota: cuenta(r.matchedCount) };
+    },
+  };
+}
+
 export function crearCatalogosAdmin(db) {
   return {
+    especialidades: especialidades(db),
     // Las órdenes guardan una copia de los parámetros: cambiarlos aquí no
     // altera resultados ya registrados.
     tiposExamen: catalogo(db, 'tipos_examen', {

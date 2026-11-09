@@ -267,6 +267,7 @@ export function Catalogos() {
               <h2>{catalogo.titulo}</h2>
               {registros && <small style={{ color: 'var(--tinta-suave)' }}>{registros.length} {registros.length === 1 ? 'registro' : 'registros'}</small>}
             </div>
+            {catalogo.ayuda && <small style={{ color: 'var(--tinta-suave)' }}>{catalogo.ayuda}</small>}
             <div className="buscador">
               <div className="entrada">
                 <IconoBuscar tam={18} />

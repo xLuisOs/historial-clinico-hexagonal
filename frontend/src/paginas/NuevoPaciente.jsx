@@ -89,7 +89,7 @@ export function NuevoPaciente() {
         <section className="seccion-form">
           <header><h2>Contacto</h2></header>
           <div className="rejilla">
-            <Campo etiqueta="Teléfono" type="tel" value={datos.telefono} onChange={cambiar('telefono')} error={errores['contacto.telefono']} />
+            <Campo etiqueta="Teléfono" type="tel" inputMode="numeric" maxLength={9} placeholder="5555-1234" value={datos.telefono} onChange={cambiar('telefono')} error={errores['contacto.telefono']} />
             <Campo etiqueta="Dirección" value={datos.direccion} onChange={cambiar('direccion')} error={errores['contacto.direccion']} />
             <Campo etiqueta="Correo" type="email" value={datos.correo} onChange={cambiar('correo')} error={errores['contacto.correo']} />
           </div>
@@ -135,7 +135,7 @@ export function NuevoPaciente() {
                   error={errores['responsable.parentesco']} opciones={parentescosPara(usuario.institucion).map((p) => ({ valor: p, texto: etiqueta(p) }))} />
                 <Campo etiqueta="DPI *" inputMode="numeric" maxLength={13} value={responsable.documento}
                   onChange={cambiarResp('documento')} error={errores['responsable.documento']} />
-                <Campo etiqueta="Teléfono *" type="tel" value={responsable.telefono} onChange={cambiarResp('telefono')} error={errores['responsable.telefono']} />
+                <Campo etiqueta="Teléfono *" type="tel" inputMode="numeric" maxLength={9} placeholder="5555-1234" value={responsable.telefono} onChange={cambiarResp('telefono')} error={errores['responsable.telefono']} />
                 <Campo etiqueta="Dirección" value={responsable.direccion} onChange={cambiarResp('direccion')} error={errores['responsable.direccion']} />
               </div>
             )}

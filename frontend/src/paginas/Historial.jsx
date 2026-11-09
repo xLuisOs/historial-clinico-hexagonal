@@ -8,7 +8,9 @@ import { vistaDe } from '../instituciones/index.js';
 import { puede, useSesion } from '../sesion.jsx';
 import { DialogoAntecedente, PanelAntecedentes } from './Antecedentes.jsx';
 import { DialogoAgendar, DialogoCancelarCita, DialogoReprogramar, PanelCitas } from './Citas.jsx';
-import { DialogoBaja, DialogoContacto, DialogoDatosClinicos, DialogoDiagnostico, DialogoReceta } from './Dialogos.jsx';
+import {
+  DialogoBaja, DialogoContacto, DialogoDatosClinicos, DialogoDatosPersonales, DialogoDiagnostico, DialogoReceta,
+} from './Dialogos.jsx';
 
 const Dato = ({ titulo, children }) => (
   <div className="dato"><small>{titulo}</small><span>{children || '—'}</span></div>
@@ -141,6 +143,9 @@ export function Historial() {
               {activo && puede(usuario, 'actualizarContacto') && (
                 <button type="button" className="boton boton-secundario" onClick={() => setDialogo({ tipo: 'contacto' })}>Actualizar contacto</button>
               )}
+              {activo && puede(usuario, 'corregirDatosPersonales') && (
+                <button type="button" className="boton boton-secundario" onClick={() => setDialogo({ tipo: 'datosPersonales' })}>Corregir datos</button>
+              )}
               {activo && puede(usuario, 'darDeBaja') && (
                 <button type="button" className="boton boton-secundario" onClick={() => setDialogo({ tipo: 'baja' })}>Archivar</button>
               )}
@@ -237,6 +242,9 @@ export function Historial() {
       </div>
 
       {dialogo?.tipo === 'antecedente' && <DialogoAntecedente pacienteId={id} onCerrar={() => setDialogo(null)} onListo={alListo} />}
+      {dialogo?.tipo === 'datosPersonales' && (
+        <DialogoDatosPersonales paciente={paciente} onCerrar={() => setDialogo(null)} onListo={alListo} />
+      )}
       {dialogo?.tipo === 'datosClinicos' && (
         <DialogoDatosClinicos paciente={paciente} institucion={usuario.institucion} onCerrar={() => setDialogo(null)} onListo={alListo} />
       )}

@@ -73,8 +73,31 @@ function catalogo(pool, { tabla, columnaId, columnas, unico, repetido, entidad, 
   };
 }
 
+/**
+ * Especialidades en uso entre los médicos (columna medico.especialidad).
+ * Cambiar el nombre lo corrige en todos los médicos con un solo UPDATE.
+ */
+function especialidades(pool) {
+  const cuenta = (n) => `${n} ${n === 1 ? 'médico' : 'médicos'}`;
+  return {
+    async listar() {
+      const [filas] = await pool.query(
+        'SELECT especialidad AS nombre, COUNT(*) AS medicos FROM medico GROUP BY especialidad ORDER BY especialidad',
+      );
+      return filas.map((f) => ({ id: f.nombre, nombre: f.nombre, nota: cuenta(Number(f.medicos)) }));
+    },
+    async actualizar(id, { nombre }) {
+      // La comparación de MySQL ya ignora mayúsculas y tildes (collation *_ai_ci).
+      const [r] = await pool.query('UPDATE medico SET especialidad = ? WHERE especialidad = ?', [nombre, id]);
+      if (r.affectedRows === 0) throw new NoEncontrado('Especialidad no encontrada');
+      return { id: nombre, nombre, nota: cuenta(r.affectedRows) };
+    },
+  };
+}
+
 export function crearCatalogosAdmin(pool) {
   return {
+    especialidades: especialidades(pool),
     servicios: catalogo(pool, {
       tabla: 'servicio', columnaId: 'id_servicio',
       columnas: { nombre: 'nombre', descripcion: 'descripcion', precio: 'precio' },

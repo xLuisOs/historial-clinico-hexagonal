@@ -1,4 +1,5 @@
 import { DatosInvalidos } from './errores.js';
+import { validarTelefono } from './telefono.js';
 import { Validador } from './validacion.js';
 
 // Modelo común de paciente: es la "forma" que todos los adaptadores
@@ -32,14 +33,11 @@ const RESPONSABLE_POR_INSTITUCION = {
 };
 
 const CUI = /^\d{13}$/;
-const TELEFONO = /^[0-9+\-\s]{8,20}$/;
 const CORREO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function validarContactoEn(v, prefijo, datos = {}, { telefonoRequerido = false } = {}) {
   return {
-    telefono: v.patron(`${prefijo}.telefono`, datos.telefono, TELEFONO, 'Teléfono inválido', {
-      requerido: telefonoRequerido,
-    }),
+    telefono: validarTelefono(v, `${prefijo}.telefono`, datos.telefono, { requerido: telefonoRequerido }),
     direccion: v.texto(`${prefijo}.direccion`, datos.direccion, { max: 200 }),
     correo: v.patron(`${prefijo}.correo`, datos.correo, CORREO, 'Correo inválido', { max: 120 }),
   };
@@ -81,6 +79,25 @@ export function validarNuevoPaciente(datos = {}, institucion = null) {
   return paciente;
 }
 
+/**
+ * Corregir datos personales mal capturados (nombre, fecha de nacimiento, sexo,
+ * documento). Solo lo que viene; un documento vacío lo quita.
+ */
+export function validarDatosPersonales(datos = {}) {
+  const v = new Validador();
+  const cambios = {};
+  if ('nombres' in datos) cambios.nombres = v.texto('nombres', datos.nombres, { requerido: true, max: 100 });
+  if ('apellidos' in datos) cambios.apellidos = v.texto('apellidos', datos.apellidos, { requerido: true, max: 100 });
+  if ('fechaNacimiento' in datos) {
+    cambios.fechaNacimiento = v.fecha('fechaNacimiento', datos.fechaNacimiento, { requerido: true, noFutura: true });
+  }
+  if ('sexo' in datos) cambios.sexo = v.opcion('sexo', datos.sexo, SEXOS, { requerido: true });
+  if ('documento' in datos) cambios.documento = v.patron('documento', datos.documento, CUI, 'Debe tener 13 dígitos');
+  v.lanzarSiHayErrores();
+  if (Object.keys(cambios).length === 0) throw new DatosInvalidos('No hay cambios');
+  return cambios;
+}
+
 // Datos clínicos que se pueden actualizar después del registro, por
 // institución. La clínica odontológica no registra tipo de sangre.
 const CAMPOS_CLINICOS = { odontologica: ['alergias'] };
@@ -106,7 +123,8 @@ export function validarDatosClinicos(datos = {}, institucion) {
 export function validarContacto(datos = {}) {
   const v = new Validador();
   const contacto = validarContactoEn(v, 'contacto', datos);
-  if (!contacto.telefono && !contacto.direccion && !contacto.correo) {
+  // Solo si no hubo otro error: un teléfono mal escrito ya dice qué corregir.
+  if (Object.keys(v.errores).length === 0 && !contacto.telefono && !contacto.direccion && !contacto.correo) {
     v.error('contacto', 'Indica al menos un dato a actualizar');
   }
   v.lanzarSiHayErrores();

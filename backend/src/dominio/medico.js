@@ -1,4 +1,5 @@
 import { DatosInvalidos } from './errores.js';
+import { validarTelefono } from './telefono.js';
 import { Validador } from './validacion.js';
 
 // Personal médico, administrado por el admin de cada institución.
@@ -20,7 +21,6 @@ import { Validador } from './validacion.js';
 //                              especialidad, telefono, correo, activo }
 
 const COLEGIADO = /^\d{3,10}$/;
-export const TELEFONO = /^[0-9+\-\s]{8,20}$/;
 
 /** Contraseña inicial o nueva: 8 a 72 caracteres, con letras y números. */
 export function validarPassword(v, password) {
@@ -49,7 +49,7 @@ export function validarNuevoMedico(datos = {}, { dominio }) {
     numeroColegiado: v.patron('numeroColegiado', datos.numeroColegiado == null ? null : String(datos.numeroColegiado),
       COLEGIADO, 'Solo números (3 a 10 dígitos)', { requerido: true }),
     especialidad: v.texto('especialidad', datos.especialidad, { requerido: true, max: 80 }),
-    telefono: v.patron('telefono', datos.telefono, TELEFONO, 'Teléfono inválido'),
+    telefono: validarTelefono(v, 'telefono', datos.telefono),
     correo: validarCorreoInstitucional(v, datos.correo, dominio),
   };
   // Contraseña inicial: el médico entra con ella. No se recorta ni se guarda tal cual.
@@ -69,7 +69,7 @@ export function validarCambiosMedico(datos = {}) {
       COLEGIADO, 'Solo números (3 a 10 dígitos)', { requerido: true });
   }
   if ('especialidad' in datos) cambios.especialidad = v.texto('especialidad', datos.especialidad, { requerido: true, max: 80 });
-  if ('telefono' in datos) cambios.telefono = v.patron('telefono', datos.telefono, TELEFONO, 'Teléfono inválido');
+  if ('telefono' in datos) cambios.telefono = validarTelefono(v, 'telefono', datos.telefono);
   if ('correo' in datos) v.error('correo', 'El correo es la cuenta del médico: no se puede cambiar');
   v.lanzarSiHayErrores();
   if (Object.keys(cambios).length === 0) throw new DatosInvalidos('No hay cambios');

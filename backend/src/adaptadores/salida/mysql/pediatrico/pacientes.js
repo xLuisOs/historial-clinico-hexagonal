@@ -131,6 +131,21 @@ export function crearRepositorioPacientes(pool) {
       });
     },
 
+    // Corregir datos personales (admin). El UNIQUE de cui es la última defensa.
+    actualizarDatosPersonales(pacienteId, cambios) {
+      return enTransaccion(pool, async (cx) => {
+        await exigirPacienteActivo(cx, pacienteId);
+        if (cambios.documento) {
+          const [filas] = await cx.query('SELECT 1 AS si FROM paciente WHERE cui = ? AND id_paciente <> ?', [cambios.documento, pacienteId]);
+          if (filas.length > 0) throw new Conflicto('Ya hay otro paciente con ese documento');
+        }
+        const columnas = { nombres: 'nombres', apellidos: 'apellidos', fechaNacimiento: 'fecha_nacimiento', sexo: 'sexo', documento: 'cui' };
+        const valores = Object.fromEntries(Object.keys(cambios).filter((c) => columnas[c]).map((c) => [columnas[c], cambios[c]]));
+        await cx.query('UPDATE paciente SET ? WHERE id_paciente = ?', [valores, pacienteId]);
+        return obtenerPorId(pacienteId, cx);
+      });
+    },
+
     // Tipo de sangre y alergias: solo lo que viene; null = sin registrar.
     actualizarDatosClinicos(pacienteId, datos) {
       return enTransaccion(pool, async (cx) => {

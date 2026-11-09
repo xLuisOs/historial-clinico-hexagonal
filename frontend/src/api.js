@@ -71,6 +71,7 @@ export const api = {
   registrarPaciente: (datos) => pedir('POST', '/pacientes', datos),
   historial: (id) => pedir('GET', `/pacientes/${q(id)}/historial`),
   actualizarContacto: (id, datos) => pedir('PATCH', `/pacientes/${q(id)}/contacto`, datos),
+  actualizarDatosPersonales: (id, datos) => pedir('PATCH', `/pacientes/${q(id)}/datos-personales`, datos),
   actualizarDatosClinicos: (id, datos) => pedir('PATCH', `/pacientes/${q(id)}/datos-clinicos`, datos),
   darDeBaja: (id, datos) => pedir('POST', `/pacientes/${q(id)}/baja`, datos),
 
@@ -99,6 +100,7 @@ export const api = {
   restablecerPasswordMedico: (id, datos) => pedir('POST', `/personal/medicos/${q(id)}/password`, datos),
   cambiarEstadoMedico: (id, datos) => pedir('POST', `/personal/medicos/${q(id)}/estado`, datos),
   medicamentos: () => pedir('GET', '/catalogos/medicamentos'),
+  especialidades: () => pedir('GET', '/catalogos/especialidades'),
   reporte: (desde, hasta) => pedir('GET', `/admin/reportes?desde=${q(desde)}&hasta=${q(hasta)}`),
   catalogosAdmin: () => pedir('GET', '/admin/catalogos'),
   registrosCatalogo: (clave) => pedir('GET', `/admin/catalogos/${q(clave)}`),

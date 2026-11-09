@@ -1,5 +1,6 @@
 import { DatosInvalidos } from './errores.js';
-import { TELEFONO, validarCorreoInstitucional, validarPassword } from './medico.js';
+import { validarCorreoInstitucional, validarPassword } from './medico.js';
+import { validarTelefono } from './telefono.js';
 import { Validador } from './validacion.js';
 
 // Recepcionistas, administradas por el admin de cada institución.
@@ -19,7 +20,7 @@ export function validarNuevaRecepcionista(datos = {}, { dominio }) {
   const recepcionista = {
     nombres: v.texto('nombres', datos.nombres, { requerido: true, max: 100 }),
     apellidos: v.texto('apellidos', datos.apellidos, { requerido: true, max: 100 }),
-    telefono: v.patron('telefono', datos.telefono, TELEFONO, 'Teléfono inválido'),
+    telefono: validarTelefono(v, 'telefono', datos.telefono),
     correo: validarCorreoInstitucional(v, datos.correo, dominio),
   };
   const password = validarPassword(v, datos.password);
@@ -33,7 +34,7 @@ export function validarCambiosRecepcionista(datos = {}) {
   const cambios = {};
   if ('nombres' in datos) cambios.nombres = v.texto('nombres', datos.nombres, { requerido: true, max: 100 });
   if ('apellidos' in datos) cambios.apellidos = v.texto('apellidos', datos.apellidos, { requerido: true, max: 100 });
-  if ('telefono' in datos) cambios.telefono = v.patron('telefono', datos.telefono, TELEFONO, 'Teléfono inválido');
+  if ('telefono' in datos) cambios.telefono = validarTelefono(v, 'telefono', datos.telefono);
   if ('correo' in datos) v.error('correo', 'El correo es la cuenta de la recepcionista: no se puede cambiar');
   v.lanzarSiHayErrores();
   if (Object.keys(cambios).length === 0) throw new DatosInvalidos('No hay cambios');

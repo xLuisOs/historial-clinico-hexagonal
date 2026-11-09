@@ -2,6 +2,7 @@
 // médico referente (puede no ser del laboratorio) y los exámenes del catálogo;
 // cada examen trae sus propios parámetros, que cambian según el tipo.
 
+import { CampoEspecialidad } from '../componentes/CampoEspecialidad.jsx';
 import { useEffect, useState } from 'react';
 import { api } from '../api.js';
 import { Alerta, Campo, Dialogo, erroresDe, Selector } from '../componentes/ui.jsx';
@@ -59,8 +60,8 @@ export function DialogoMedicoReferente({ onCerrar, onListo }) {
           <Campo etiqueta="Apellidos *" value={datos.apellidos} onChange={cambiar('apellidos')} error={errores.apellidos} />
           <Campo etiqueta="Colegiado *" inputMode="numeric" maxLength={10} value={datos.numeroColegiado}
             onChange={cambiar('numeroColegiado')} error={errores.numeroColegiado} />
-          <Campo etiqueta="Especialidad" value={datos.especialidad} onChange={cambiar('especialidad')} error={errores.especialidad} />
-          <Campo etiqueta="Teléfono" type="tel" value={datos.telefono} onChange={cambiar('telefono')} error={errores.telefono} />
+          <CampoEspecialidad value={datos.especialidad} onChange={(especialidad) => setDatos({ ...datos, especialidad })} error={errores.especialidad} />
+          <Campo etiqueta="Teléfono" type="tel" inputMode="numeric" maxLength={9} placeholder="5555-1234" value={datos.telefono} onChange={cambiar('telefono')} error={errores.telefono} />
           <Campo etiqueta="Institución de procedencia" value={datos.institucionProcedencia}
             onChange={cambiar('institucionProcedencia')} error={errores.institucionProcedencia} />
         </div>

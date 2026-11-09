@@ -2,6 +2,7 @@
 // de puertos/repositorios.js y el puerto propio `laboratorio`, sobre el
 // modelo documental de db/mongo/esquemas.js.
 
+import { listaDeEspecialidades } from '../../../../dominio/especialidades.js';
 import { aObjectId, dateATexto } from '../conexion.js';
 import { crearRepositorioAntecedentes } from './antecedentes.js';
 import { crearCatalogosAdmin } from './catalogos.js';
@@ -76,6 +77,10 @@ export function crearAdaptadorLaboratorioMongo(cliente, nombreDb, zonaHoraria) {
     reportes: crearRepositorioReportes(db, zonaHoraria),
 
     catalogos: {
+      // → string[]: las especialidades en uso entre los médicos referentes.
+      async listarEspecialidades() {
+        return listaDeEspecialidades(await db.collection('medicos_referentes').distinct('especialidad'));
+      },
       // En el laboratorio, "médicos" son los médicos referentes: quienes
       // ordenan los exámenes (pueden no pertenecer al laboratorio).
       async listarMedicos() {

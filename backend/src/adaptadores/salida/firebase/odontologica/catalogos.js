@@ -1,3 +1,4 @@
+import { listaDeEspecialidades, mismaEspecialidad } from '../../../../dominio/especialidades.js';
 import { Conflicto, NoEncontrado } from '../../../../dominio/errores.js';
 import { enTransaccion } from '../conexion.js';
 import { COLECCIONES } from './modelo.js';
@@ -69,8 +70,35 @@ function catalogo(db, coleccion, { campos, unico, repetido, entidad }) {
   };
 }
 
+/**
+ * Especialidades en uso entre los odontólogos (los que no tienen una son de
+ * odontología general). Cambiar el nombre lo corrige en todos, en un batch.
+ */
+function especialidades(db) {
+  const odontologos = db.collection(COLECCIONES.odontologos);
+  const de = (doc) => doc.get('especialidad') ?? 'Odontología';
+  const cuenta = (n) => `${n} ${n === 1 ? 'odontólogo' : 'odontólogos'}`;
+  return {
+    async listar() {
+      const docs = (await odontologos.get()).docs;
+      return listaDeEspecialidades(docs.map(de)).map((nombre) => ({
+        id: nombre, nombre, nota: cuenta(docs.filter((d) => mismaEspecialidad(de(d), nombre)).length),
+      }));
+    },
+    async actualizar(id, { nombre }) {
+      const docs = (await odontologos.get()).docs.filter((d) => mismaEspecialidad(de(d), id));
+      if (docs.length === 0) throw new NoEncontrado('Especialidad no encontrada');
+      const lote = db.batch();
+      for (const d of docs) lote.update(d.ref, { especialidad: nombre });
+      await lote.commit();
+      return { id: nombre, nombre, nota: cuenta(docs.length) };
+    },
+  };
+}
+
 export function crearCatalogosAdmin(db) {
   return {
+    especialidades: especialidades(db),
     procedimientos: catalogo(db, 'procedimientos', {
       campos: { nombre: 'nombre', descripcion: 'descripcion', costo: 'costo' },
       unico: ['nombre'], repetido: 'Ya existe un procedimiento con ese nombre', entidad: 'Procedimiento',

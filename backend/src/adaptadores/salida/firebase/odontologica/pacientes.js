@@ -140,6 +140,30 @@ export function crearRepositorioPacientes(db, zonaHoraria) {
       return obtenerPorId(pacienteId);
     },
 
+    // Corregir datos personales (admin). Si cambia el nombre, se recalculan los
+    // terminos_busqueda; Firestore no tiene UNIQUE, el documento repetido se
+    // revisa dentro de la transacción.
+    async actualizarDatosPersonales(pacienteId, cambios) {
+      await enTransaccion(db, async (t) => {
+        const snap = await exigirPacienteActivo(t, db, pacienteId);
+        if (cambios.documento) {
+          const repetido = await t.get(pacientes.where('documento', '==', cambios.documento).limit(2));
+          if (repetido.docs.some((d) => d.id !== pacienteId)) throw new Conflicto('Ya hay otro paciente con ese documento');
+        }
+        const nombres = cambios.nombres ?? snap.get('nombres');
+        const apellidos = cambios.apellidos ?? snap.get('apellidos');
+        t.update(snap.ref, {
+          ...(cambios.nombres !== undefined && { nombres }),
+          ...(cambios.apellidos !== undefined && { apellidos }),
+          ...((cambios.nombres !== undefined || cambios.apellidos !== undefined) && { terminos_busqueda: terminosBusqueda(nombres, apellidos) }),
+          ...(cambios.fechaNacimiento !== undefined && { fecha_nacimiento: fechaATimestamp(cambios.fechaNacimiento, zonaHoraria) }),
+          ...(cambios.sexo !== undefined && { sexo: cambios.sexo }),
+          ...(cambios.documento !== undefined && { documento: cambios.documento }),
+        });
+      });
+      return obtenerPorId(pacienteId);
+    },
+
     // La clínica solo registra alergias (no tipo de sangre); null = ninguna registrada.
     async actualizarDatosClinicos(pacienteId, datos) {
       await enTransaccion(db, async (t) => {

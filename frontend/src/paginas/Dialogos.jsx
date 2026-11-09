@@ -7,7 +7,7 @@ import {
   CamposDiagnostico, DIAGNOSTICO, EditorReceta, ITEM_RECETA, prepararDiagnostico, prepararItems,
 } from '../componentes/EditoresClinicos.jsx';
 import { Alerta, Campo, Dialogo, erroresDe, Selector } from '../componentes/ui.jsx';
-import { conTipoSangre, MOTIVOS_BAJA, TIPOS_SANGRE } from '../formato.js';
+import { conTipoSangre, MOTIVOS_BAJA, SEXO, TIPOS_SANGRE } from '../formato.js';
 
 function useEnvio(accion, onListo) {
   const [error, setError] = useState(null);
@@ -35,6 +35,44 @@ const Pie = ({ onCerrar, enviando, texto, peligro }) => (
     </button>
   </footer>
 );
+
+/** Corregir datos personales mal capturados (administración). Solo se manda lo que cambió. */
+export function DialogoDatosPersonales({ paciente, onCerrar, onListo }) {
+  const original = {
+    nombres: paciente.nombres ?? '',
+    apellidos: paciente.apellidos ?? '',
+    fechaNacimiento: paciente.fechaNacimiento ?? '',
+    sexo: paciente.sexo ?? '',
+    documento: paciente.documento ?? '',
+  };
+  const [datos, setDatos] = useState(original);
+  const cambios = Object.fromEntries(Object.entries(datos)
+    .filter(([k, v]) => v.trim() !== original[k])
+    .map(([k, v]) => [k, v.trim() || null]));
+  const { error, errores, enviando, enviar } = useEnvio(
+    () => (Object.keys(cambios).length ? api.actualizarDatosPersonales(paciente.id, cambios) : Promise.resolve()),
+    onListo,
+  );
+  const cambiar = (campo) => (e) => setDatos({ ...datos, [campo]: e.target.value });
+  return (
+    <Dialogo titulo="Corregir datos personales" onCerrar={onCerrar}>
+      <form className="formulario" onSubmit={enviar} noValidate>
+        <p style={{ color: 'var(--tinta-suave)', margin: 0 }}>Para corregir un dato mal capturado al registrar al paciente.</p>
+        <Alerta>{error?.message}</Alerta>
+        <div className="rejilla">
+          <Campo etiqueta="Nombres *" value={datos.nombres} onChange={cambiar('nombres')} error={errores.nombres} maxLength={100} />
+          <Campo etiqueta="Apellidos *" value={datos.apellidos} onChange={cambiar('apellidos')} error={errores.apellidos} maxLength={100} />
+          <Campo etiqueta="Fecha de nacimiento *" type="date" value={datos.fechaNacimiento} onChange={cambiar('fechaNacimiento')} error={errores.fechaNacimiento} />
+          <Selector etiqueta="Sexo *" value={datos.sexo} onChange={cambiar('sexo')} error={errores.sexo} vacio={null}
+            opciones={Object.entries(SEXO).map(([valor, texto]) => ({ valor, texto }))} />
+          <Campo etiqueta="Documento (DPI o CUI)" inputMode="numeric" maxLength={13} value={datos.documento} onChange={cambiar('documento')}
+            error={errores.documento} placeholder="13 dígitos" />
+        </div>
+        <Pie onCerrar={onCerrar} enviando={enviando} texto="Guardar" />
+      </form>
+    </Dialogo>
+  );
+}
 
 /** Tipo de sangre y alergias, que se descubren o se confirman después del registro (médico). */
 export function DialogoDatosClinicos({ paciente, institucion, onCerrar, onListo }) {
@@ -83,7 +121,7 @@ export function DialogoContacto({ paciente, onCerrar, onListo }) {
     <Dialogo titulo="Actualizar contacto" onCerrar={onCerrar}>
       <form className="formulario" onSubmit={enviar} noValidate>
         <Alerta>{error?.message}</Alerta>
-        <Campo etiqueta="Teléfono" type="tel" value={datos.telefono} onChange={cambiar('telefono')} error={errores['contacto.telefono']} />
+        <Campo etiqueta="Teléfono" type="tel" inputMode="numeric" maxLength={9} placeholder="5555-1234" value={datos.telefono} onChange={cambiar('telefono')} error={errores['contacto.telefono']} />
         <Campo etiqueta="Dirección" value={datos.direccion} onChange={cambiar('direccion')} error={errores['contacto.direccion']} />
         <Campo etiqueta="Correo" type="email" value={datos.correo} onChange={cambiar('correo')} error={errores['contacto.correo']} />
         <Pie onCerrar={onCerrar} enviando={enviando} texto="Guardar" />

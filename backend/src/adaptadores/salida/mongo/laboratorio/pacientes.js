@@ -127,6 +127,31 @@ export function crearRepositorioPacientes(cliente, db, zonaHoraria) {
       return obtenerPorId(pacienteId);
     },
 
+    // Corregir datos personales (admin). Si cambia el nombre, se recalcula
+    // nombre_busqueda; el índice único (parcial) de documento es la última defensa.
+    async actualizarDatosPersonales(pacienteId, cambios) {
+      const actual = await exigirPacienteActivo(db, pacienteId);
+      const nombres = cambios.nombres ?? actual.nombres;
+      const apellidos = cambios.apellidos ?? actual.apellidos;
+      const poner = {
+        ...(cambios.nombres !== undefined && { nombres }),
+        ...(cambios.apellidos !== undefined && { apellidos }),
+        ...((cambios.nombres !== undefined || cambios.apellidos !== undefined) && { nombre_busqueda: nombreBusqueda(nombres, apellidos) }),
+        ...(cambios.fechaNacimiento !== undefined && { fecha_nacimiento: fechaADate(cambios.fechaNacimiento) }),
+        ...(cambios.sexo !== undefined && { sexo: cambios.sexo }),
+        ...(cambios.documento && { documento: cambios.documento }),
+      };
+      try {
+        await pacientes.updateOne(
+          { _id: actual._id, 'estado.activo': true },
+          { $set: poner, ...(cambios.documento === null && { $unset: { documento: '' } }) },
+        );
+      } catch (error) {
+        throw traducirError(error, { duplicado: 'Ya hay otro paciente con ese documento' });
+      }
+      return obtenerPorId(pacienteId);
+    },
+
     // Tipo de sangre y alergias: solo lo que viene; null = sin registrar.
     async actualizarDatosClinicos(pacienteId, datos) {
       const campos = { tipoSangre: 'datos_clinicos.tipo_sangre', alergias: 'datos_clinicos.alergias' };

@@ -37,6 +37,9 @@ export const PUERTOS = {
     obtenerPorId: '(pacienteId)',
     // → Paciente
     actualizarContacto: '(pacienteId, contacto)',
+    // → Paciente. { nombres?, apellidos?, fechaNacimiento?, sexo?, documento? }
+    //   (corrección del admin). Documento de otro paciente → Conflicto.
+    actualizarDatosPersonales: '(pacienteId, datosPersonales)',
     // → Paciente. { tipoSangre?, alergias? }: solo lo que viene; null = sin registrar.
     actualizarDatosClinicos: '(pacienteId, datosClinicos)',
     // → Paciente. Archiva el historial (nunca lo borra).
@@ -58,6 +61,8 @@ export const PUERTOS = {
   catalogos: {
     // → [{ id, nombre, especialidad }]
     listarMedicos: '()',
+    // → string[]: especialidades que se ofrecen al registrar un médico
+    listarEspecialidades: '()',
     // → [{ id, nombre, presentacion }]
     listarMedicamentos: '()',
   },

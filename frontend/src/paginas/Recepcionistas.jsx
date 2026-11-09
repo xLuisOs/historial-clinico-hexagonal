@@ -56,7 +56,7 @@ function DialogoNueva({ institucion, onCerrar, onListo }) {
         <div className="rejilla">
           <Campo etiqueta="Nombres *" value={datos.nombres} onChange={cambiar('nombres')} error={errores.nombres} />
           <Campo etiqueta="Apellidos *" value={datos.apellidos} onChange={cambiar('apellidos')} error={errores.apellidos} />
-          <Campo etiqueta="Teléfono" type="tel" value={datos.telefono} onChange={cambiar('telefono')} error={errores.telefono} />
+          <Campo etiqueta="Teléfono" type="tel" inputMode="numeric" maxLength={9} placeholder="5555-1234" value={datos.telefono} onChange={cambiar('telefono')} error={errores.telefono} />
         </div>
         <h4 style={{ margin: '4px 0 0' }}>Acceso al sistema</h4>
         <div className="rejilla">
@@ -93,7 +93,7 @@ function DialogoEditar({ recepcionista, onCerrar, onListo }) {
         <div className="rejilla">
           <Campo etiqueta="Nombres *" value={datos.nombres} onChange={cambiar('nombres')} error={errores.nombres} />
           <Campo etiqueta="Apellidos *" value={datos.apellidos} onChange={cambiar('apellidos')} error={errores.apellidos} />
-          <Campo etiqueta="Teléfono" type="tel" value={datos.telefono} onChange={cambiar('telefono')} error={errores.telefono} />
+          <Campo etiqueta="Teléfono" type="tel" inputMode="numeric" maxLength={9} placeholder="5555-1234" value={datos.telefono} onChange={cambiar('telefono')} error={errores.telefono} />
         </div>
         {recepcionista.correo && (
           <small style={{ color: 'var(--tinta-suave)' }}>Inicia sesión con {recepcionista.correo}. El correo no se cambia: es su cuenta.</small>

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { BuscadorMedico } from '../componentes/BuscadorMedico.jsx';
 import { Link } from 'react-router-dom';
 import { api } from '../api.js';
 import { IconoAtras } from '../componentes/Iconos.jsx';
@@ -86,9 +87,7 @@ export function Agenda() {
         </div>
         <div className="acciones" style={{ alignItems: 'center' }}>
           {!esMedico && (
-            <select className="selector-dia" value={medicoId} onChange={(e) => setMedicoId(e.target.value)} aria-label="Médico">
-              {medicos.map((m) => <option key={m.id} value={m.id}>{m.nombre}</option>)}
-            </select>
+            <BuscadorMedico medicos={medicos} value={medicoId} onChange={setMedicoId} />
           )}
           <button type="button" className="boton boton-secundario boton-chico" onClick={() => setDia(moverDia(dia, -1))} aria-label="Día anterior">
             <IconoAtras tam={16} />

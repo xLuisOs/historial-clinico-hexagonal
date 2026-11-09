@@ -68,6 +68,15 @@ const CATALOGOS = {
       estado: ESTADO_COMUN,
     },
     medicamentos: { titulo: 'Medicamentos', singular: 'medicamento', campos: [nombre(), presentacion(true)], estado: ESTADO_COMUN },
+    // Las especialidades son un dato de cada médico: aquí se listan las que
+    // están en uso y se corrige su nombre en todos los médicos a la vez.
+    especialidades: {
+      titulo: 'Especialidades',
+      singular: 'especialidad',
+      sinAlta: true,
+      ayuda: 'Una especialidad nueva aparece aquí al registrar un médico con ella. Si le cambias el nombre, se corrige en todos los médicos que la tienen.',
+      campos: [nombre(80)],
+    },
   },
 
   pediatrico: {
@@ -82,6 +91,15 @@ const CATALOGOS = {
       singular: 'medicamento',
       campos: [nombre(100, { historico: true }), presentacion(true)],
       estado: ESTADO_COMUN,
+    },
+    // Las especialidades son un dato de cada médico: aquí se listan las que
+    // están en uso y se corrige su nombre en todos los médicos a la vez.
+    especialidades: {
+      titulo: 'Especialidades',
+      singular: 'especialidad',
+      sinAlta: true,
+      ayuda: 'Una especialidad nueva aparece aquí al registrar un médico con ella. Si le cambias el nombre, se corrige en todos los médicos que la tienen.',
+      campos: [nombre(80)],
     },
   },
 
@@ -107,6 +125,15 @@ const CATALOGOS = {
       estado: ESTADO_COMUN,
     },
     medicamentos: { titulo: 'Medicamentos', singular: 'medicamento', campos: [nombre(), presentacion(true)], estado: ESTADO_COMUN },
+    // Las especialidades son un dato de cada médico: aquí se listan las que
+    // están en uso y se corrige su nombre en todos los médicos a la vez.
+    especialidades: {
+      titulo: 'Especialidades',
+      singular: 'especialidad',
+      sinAlta: true,
+      ayuda: 'Una especialidad nueva aparece aquí al registrar un médico con ella. Si le cambias el nombre, se corrige en todos los médicos que la tienen.',
+      campos: [nombre(80)],
+    },
   },
 };
 
@@ -167,6 +194,7 @@ export function catalogosDe(institucion) {
     titulo: c.titulo,
     singular: c.singular,
     sinAlta: Boolean(c.sinAlta),
+    ayuda: c.ayuda ?? null,
     estado: c.estado ?? null,
     campos: c.campos,
   }));

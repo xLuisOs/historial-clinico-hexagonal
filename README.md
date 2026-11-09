@@ -173,6 +173,7 @@ ocultan los botones que no le corresponden (el backend igual lo verifica):
 | Registrar paciente                  | ✅     | ✅        | ✅    |
 | Actualizar contacto                 |        | ✅        | ✅    |
 | Actualizar tipo de sangre y alergias | ✅    |           |       |
+| Corregir datos personales del paciente (nombre, fecha de nacimiento, sexo, documento) | | | ✅ |
 | Ver mi perfil y cambiar mi contraseña | ✅   | ✅        | ✅    |
 | Consulta, diagnóstico y receta      | ✅     |           |       |
 | Agregar antecedentes médicos (las cuatro instituciones) | ✅ |  |       |
@@ -208,10 +209,10 @@ institución (`dominio/catalogos.js`) y la pantalla se arma con esa definición:
 
 | Institución | Catálogos |
 |---|---|
-| Hospital | Habitaciones (en mantenimiento no se asignan al internar; una ocupada no se toca), medicamentos, especialidades, departamentos |
-| Odontológica | Procedimientos (con su costo), medicamentos |
-| Pediátrico | Servicios (con su precio), medicamentos |
-| Laboratorio | Tipos de examen con sus parámetros (unidad y rango de referencia, u opciones), medicamentos |
+| Hospital | Habitaciones (en mantenimiento no se asignan al internar; una ocupada no se toca), medicamentos, especialidades (su propia tabla), departamentos |
+| Odontológica | Procedimientos (con su costo), medicamentos, especialidades |
+| Pediátrico | Servicios (con su precio), medicamentos, especialidades |
+| Laboratorio | Tipos de examen con sus parámetros (unidad y rango de referencia, u opciones), medicamentos, especialidades de los médicos referentes |
 
 Nada se borra: lo que tiene estado se desactiva y deja de ofrecerse. Cambiar un precio no
 altera lo ya cobrado (cada cobro guarda su precio). En PostgreSQL y MySQL, donde recetas y
@@ -219,6 +220,16 @@ cobros muestran el nombre leyéndolo del catálogo, un medicamento ya recetado o
 ya cobrado no cambia de nombre; en Firestore y MongoDB cada receta u orden guarda su
 propia copia. Los medicamentos, especialidades y departamentos del hospital no se
 desactivan porque su tabla no tiene estado.
+
+**Especialidades.** Al registrar o editar un médico, la especialidad se elige de una lista
+(con "Otra…" para escribir una nueva). Lo escrito se compara con la lista sin importar tildes
+ni mayúsculas, así "Cardiologia" queda como "Cardiología" (`dominio/especialidades.js`). El
+hospital tiene su tabla `especialidad`; en las demás la especialidad es un dato de cada
+médico, así que el catálogo muestra las que están en uso y, al corregir un nombre, lo cambia
+en todos los médicos que la tienen (y si coincide con otra, las une).
+
+**Teléfonos.** Todos son de Guatemala: exactamente 8 dígitos. Se aceptan con guion o espacio
+y se guardan como `5555-1234` (`dominio/telefono.js`).
 
 **Reportes.** El admin ve los totales de un periodo (este mes, el anterior, los últimos 30
 días, el año o las fechas que elija), nunca datos clínicos de un paciente. Cada institución
@@ -350,6 +361,7 @@ Todas las rutas (salvo login) requieren `Authorization: Bearer <token>`.
 | GET    | `/api/pacientes/:id`               | Datos del paciente                                   |
 | PATCH  | `/api/pacientes/:id/contacto`      | Actualizar teléfono, dirección o correo              |
 | PATCH  | `/api/pacientes/:id/datos-clinicos` | Actualizar `{ tipoSangre?, alergias? }` (médico). La odontológica solo registra alergias |
+| PATCH  | `/api/pacientes/:id/datos-personales` | Corregir `{ nombres?, apellidos?, fechaNacimiento?, sexo?, documento? }` (admin). Documento de otro paciente → 409 |
 | POST   | `/api/pacientes/:id/baja`          | Archivar historial `{ motivo, detalle }`             |
 | GET    | `/api/pacientes/:id/historial`     | Historial completo (consultas, diagnósticos, recetas, extras) |
 | POST   | `/api/pacientes/:id/antecedentes`  | Antecedente médico `{ tipo, descripcion, anioInicio? }` (las cuatro instituciones). Tipos: patologico, quirurgico, familiar, habito, medicamento; en el pediátrico también perinatal |
@@ -357,6 +369,7 @@ Todas las rutas (salvo login) requieren `Authorization: Bearer <token>`.
 | POST   | `/api/consultas/:id/diagnosticos`  | Agregar diagnóstico                                  |
 | POST   | `/api/consultas/:id/recetas`       | Recetar medicamento(s)                               |
 | GET    | `/api/catalogos/medicos`           | Catálogo de médicos                                  |
+| GET    | `/api/catalogos/especialidades`   | Especialidades que se ofrecen al registrar o editar un médico |
 | GET    | `/api/personal/medicos`            | Médicos activos e inactivos, con colegiado y correo (admin) |
 | POST   | `/api/personal/medicos`            | Alta de un médico con su usuario `{ nombres, apellidos, numeroColegiado, especialidad, telefono?, correo, password }` (admin; hospital, odontológica y pediátrico). El correo debe ser del dominio de la institución; médico y usuario se crean en una sola transacción |
 | PATCH  | `/api/personal/medicos/:id`        | Editar `{ nombres?, apellidos?, numeroColegiado?, especialidad?, telefono? }` (admin). El correo no se edita: es la cuenta |
