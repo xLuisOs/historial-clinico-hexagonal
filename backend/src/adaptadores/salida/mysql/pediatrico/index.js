@@ -10,6 +10,7 @@ import { crearRepositorioEncargados } from './encargados.js';
 import { crearRepositorioPacientes } from './pacientes.js';
 import { crearRepositorioPersonal } from './personal.js';
 import { crearRepositorioRecepcionistas } from './recepcionistas.js';
+import { crearRepositorioReportes } from './reportes.js';
 import { crearRepositorioVacunas } from './vacunas.js';
 
 export function crearAdaptadorPediatricoMysql(pool) {
@@ -76,6 +77,8 @@ export function crearAdaptadorPediatricoMysql(pool) {
     personal: { ...crearRepositorioPersonal(pool), ...crearRepositorioRecepcionistas(pool) },
     // Puerto opcional: catálogos que mantiene el admin.
     catalogosAdmin: crearCatalogosAdmin(pool),
+    // Puerto opcional: reportes del admin (totales del periodo).
+    reportes: crearRepositorioReportes(pool),
 
     // Puerto propio del pediátrico: vacunación, cobros y encargados.
     pediatrico: {

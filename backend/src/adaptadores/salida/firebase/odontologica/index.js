@@ -12,6 +12,7 @@ import { registrarPago } from './pagos.js';
 import { crearRepositorioPacientes } from './pacientes.js';
 import { crearRepositorioPersonal } from './personal.js';
 import { crearRepositorioRecepcionistas } from './recepcionistas.js';
+import { crearRepositorioReportes } from './reportes.js';
 
 const ordenarPorApellido = (a, b) => (a.get('apellidos') ?? '').localeCompare(b.get('apellidos') ?? '', 'es');
 
@@ -73,6 +74,8 @@ export function crearAdaptadorOdontologicaFirebase(db, zonaHoraria) {
     personal: { ...crearRepositorioPersonal(db, zonaHoraria), ...crearRepositorioRecepcionistas(db) },
     // Puerto opcional: catálogos que mantiene el admin.
     catalogosAdmin: crearCatalogosAdmin(db),
+    // Puerto opcional: reportes del admin (totales del periodo).
+    reportes: crearRepositorioReportes(db, zonaHoraria),
 
     pacientes: crearRepositorioPacientes(db, zonaHoraria),
     atenciones: crearRepositorioAtenciones(db, zonaHoraria),

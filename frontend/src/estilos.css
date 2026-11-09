@@ -107,6 +107,20 @@ a { color: var(--primario-oscuro); }
 }
 .barra nav a:hover { color: var(--tinta); background: rgba(255, 255, 255, 0.6); }
 .barra nav a.active { color: var(--primario-oscuro); background: rgba(255, 255, 255, 0.85); box-shadow: var(--sombra-suave); }
+.barra nav a, .marca strong { white-space: nowrap; }
+/* Menú "Administración" del admin. */
+.menu-admin { position: relative; }
+.menu-admin > button {
+  padding: 8px 14px; border: 0; border-radius: 999px; background: transparent; cursor: pointer;
+  font: inherit; font-size: 0.9rem; font-weight: 500; color: var(--tinta-suave); white-space: nowrap;
+}
+.menu-admin > button:hover { color: var(--tinta); background: rgba(255, 255, 255, 0.6); }
+.menu-admin > button.active { color: var(--primario-oscuro); background: rgba(255, 255, 255, 0.85); box-shadow: var(--sombra-suave); }
+.menu-admin-lista {
+  display: none; position: absolute; top: calc(100% + 10px); left: 0; z-index: 30; min-width: 200px;
+  flex-direction: column; gap: 2px; padding: 8px; border-radius: 18px; background: var(--vidrio-fuerte); box-shadow: var(--sombra-suave);
+}
+.menu-admin.abierto .menu-admin-lista { display: flex; }
 .barra-usuario { margin-left: auto; display: flex; align-items: center; gap: 10px; }
 .chip-usuario {
   text-align: right; line-height: 1.2; text-decoration: none; color: inherit;
@@ -248,6 +262,22 @@ a { color: var(--primario-oscuro); }
 .fila-medico.inactivo > :not(.acciones) { opacity: 0.55; }
 /* Catálogos: sin avatar, texto a la izquierda y acciones a la derecha. */
 .fila-catalogo { grid-template-columns: minmax(0, 1fr) auto; cursor: default; }
+/* Reportes del admin: periodo, cifras y tablas. */
+.filtros-reporte { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; padding: 14px 18px; }
+.campo-en-linea { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--tinta-suave); }
+.indicadores { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 160px), 1fr)); }
+.indicador { display: grid; gap: 4px; padding: 18px 20px; align-content: start; }
+.indicador small { font-size: 0.78rem; color: var(--tinta-suave); }
+.indicador strong { font-size: 1.6rem; font-variant-numeric: tabular-nums; }
+.indicador span { font-size: 0.8rem; color: var(--tinta-suave); }
+.tablas-reporte { display: grid; gap: 22px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); align-items: start; }
+.tabla .num { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* Parámetros de un tipo de examen, dentro del diálogo del catálogo. */
+.editor-parametros { display: grid; gap: 12px; }
+.parametro { display: grid; gap: 10px; justify-items: start; margin: 0; padding: 14px; border: 1px solid rgba(15, 45, 54, 0.1); border-radius: var(--radio-sm); background: rgba(255, 255, 255, 0.45); }
+.parametro > .rejilla { width: 100%; }
+.parametro legend { padding: 0 6px; font-size: 0.78rem; font-weight: 600; color: var(--tinta-suave); }
 .fila-catalogo:hover { transform: none; }
 .fila-catalogo .acciones { flex-wrap: wrap; justify-content: flex-end; }
 .fila-catalogo.inactivo > :not(.acciones) { opacity: 0.55; }
@@ -346,7 +376,12 @@ button.dosis:focus-visible { outline: 2px solid var(--primario); outline-offset:
 /* ---------------------------------------------------------- responsivo */
 @media (max-width: 900px) {
   .login-caja, .columnas { grid-template-columns: minmax(0, 1fr); }
-  .barra nav { display: none; }
+  /* La barra baja los enlaces a una segunda fila que se desliza de lado. */
+  .barra { flex-wrap: wrap; border-radius: 24px; row-gap: 8px; }
+  .barra nav { order: 3; width: 100%; margin-left: 0; overflow-x: auto; scrollbar-width: none; }
+  .barra nav a { flex: 0 0 auto; }
+  .menu-admin, .menu-admin.abierto .menu-admin-lista, .menu-admin-lista { display: contents; }
+  .menu-admin > button { display: none; }
   /* El menú del historial pasa a ser una fila de pestañas que se desliza. */
   .historial-cuerpo { grid-template-columns: minmax(0, 1fr); }
   .menu-secciones { position: static; display: flex; overflow-x: auto; }

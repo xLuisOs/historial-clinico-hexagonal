@@ -9,16 +9,24 @@ import { aObjectId, traducirError } from '../conexion.js';
 // índices únicos y el validador $jsonSchema de la colección son la última
 // defensa.
 
-/** `campos`: clave del dominio → campo del documento. */
-function catalogo(db, coleccion, { campos, unico, repetido, entidad, orden }) {
+/**
+ * `campos`: clave del dominio → campo del documento.
+ * `convertir`: para los campos que no se guardan tal cual, { aDocumento, aDominio }.
+ */
+function catalogo(db, coleccion, { campos, unico, repetido, entidad, orden, convertir = {} }) {
   const col = db.collection(coleccion);
   const aRegistro = (doc) => ({
     id: doc._id.toHexString(),
-    ...Object.fromEntries(Object.entries(campos).map(([clave, campo]) => [clave, doc[campo] ?? null])),
+    ...Object.fromEntries(Object.entries(campos).map(([clave, campo]) => {
+      const valor = doc[campo] ?? null;
+      return [clave, convertir[clave] && valor !== null ? convertir[clave].aDominio(valor) : valor];
+    })),
     activo: doc.activo === true,
   });
   const aDocumento = (datos) => Object.fromEntries(
-    Object.entries(campos).filter(([clave]) => datos[clave] !== undefined).map(([clave, campo]) => [campo, datos[clave]]),
+    Object.entries(campos).filter(([clave]) => datos[clave] !== undefined).map(([clave, campo]) => [
+      campo, convertir[clave] && datos[clave] !== null ? convertir[clave].aDocumento(datos[clave]) : datos[clave],
+    ]),
   );
   // Revisión previa sin importar mayúsculas (el índice único sí distingue).
   async function sinRepetir(datos, id = null) {
@@ -71,17 +79,44 @@ function catalogo(db, coleccion, { campos, unico, repetido, entidad, orden }) {
   };
 }
 
-export function crearCatalogosAdmin(db) {
-  const tiposExamen = catalogo(db, 'tipos_examen', {
-    campos: { codigo: 'codigo', nombre: 'nombre', categoria: 'categoria', muestra: 'muestra', descripcion: 'descripcion', precio: 'precio' },
-    unico: ['codigo'], repetido: 'Ya existe un tipo de examen con ese código', entidad: 'Tipo de examen',
-    orden: { categoria: 1, nombre: 1 },
-  });
-  // Los tipos de examen nuevos necesitan sus parámetros: se cargan con la semilla.
-  delete tiposExamen.crear;
+// Parámetro de un examen: dominio (camelCase) ↔ documento (snake_case). En el
+// documento no se guardan los campos vacíos (el validador no acepta opciones: null).
+const parametros = {
+  aDocumento: (lista) => lista.map((p) => Object.fromEntries(Object.entries({
+    codigo: p.codigo,
+    nombre: p.nombre,
+    tipo_valor: p.tipoValor,
+    unidad: p.unidad,
+    ref_min: p.refMin,
+    ref_max: p.refMax,
+    opciones: p.opciones,
+    valor_normal: p.valorNormal,
+  }).filter(([, v]) => v !== null && v !== undefined))),
+  aDominio: (lista) => lista.map((p) => ({
+    codigo: p.codigo,
+    nombre: p.nombre,
+    tipoValor: p.tipo_valor,
+    unidad: p.unidad ?? null,
+    refMin: p.ref_min ?? null,
+    refMax: p.ref_max ?? null,
+    opciones: p.opciones ?? null,
+    valorNormal: p.valor_normal ?? null,
+  })),
+};
 
+export function crearCatalogosAdmin(db) {
   return {
-    tiposExamen,
+    // Las órdenes guardan una copia de los parámetros: cambiarlos aquí no
+    // altera resultados ya registrados.
+    tiposExamen: catalogo(db, 'tipos_examen', {
+      campos: {
+        codigo: 'codigo', nombre: 'nombre', categoria: 'categoria', muestra: 'muestra',
+        descripcion: 'descripcion', precio: 'precio', parametros: 'parametros',
+      },
+      convertir: { parametros },
+      unico: ['codigo'], repetido: 'Ya existe un tipo de examen con ese código', entidad: 'Tipo de examen',
+      orden: { categoria: 1, nombre: 1 },
+    }),
     medicamentos: catalogo(db, 'medicamentos', {
       campos: { nombre: 'nombre', presentacion: 'presentacion' },
       unico: ['nombre', 'presentacion'], repetido: 'Ya existe ese medicamento con esa presentación', entidad: 'Medicamento',

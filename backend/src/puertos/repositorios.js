@@ -102,6 +102,8 @@ export const PUERTOS = {
 //                                `historico` de un registro ya usado
 //     cambiarEstado(id, activo)→ Registro (solo catálogos con estado)
 //     Registro = { id, ...campos del catálogo, activo?, nota? }
+//   reportes: { generar({ desde, hasta }) → Reporte } totales del periodo para
+//                 el admin (ver dominio/reportes.js), sin datos clínicos.
 //   usuarios.estaActivo(usuarioId) → boolean (opcional): con él, una sesión
 //     abierta deja de servir en cuanto el usuario se desactiva.
 

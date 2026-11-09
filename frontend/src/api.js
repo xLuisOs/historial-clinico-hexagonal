@@ -99,6 +99,7 @@ export const api = {
   restablecerPasswordMedico: (id, datos) => pedir('POST', `/personal/medicos/${q(id)}/password`, datos),
   cambiarEstadoMedico: (id, datos) => pedir('POST', `/personal/medicos/${q(id)}/estado`, datos),
   medicamentos: () => pedir('GET', '/catalogos/medicamentos'),
+  reporte: (desde, hasta) => pedir('GET', `/admin/reportes?desde=${q(desde)}&hasta=${q(hasta)}`),
   catalogosAdmin: () => pedir('GET', '/admin/catalogos'),
   registrosCatalogo: (clave) => pedir('GET', `/admin/catalogos/${q(clave)}`),
   crearRegistroCatalogo: (clave, datos) => pedir('POST', `/admin/catalogos/${q(clave)}`, datos),

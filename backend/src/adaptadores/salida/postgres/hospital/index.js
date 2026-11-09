@@ -11,6 +11,7 @@ import { crearRepositorioInternamientos } from './internamientos.js';
 import { crearRepositorioPacientes } from './pacientes.js';
 import { crearRepositorioPersonal } from './personal.js';
 import { crearRepositorioRecepcionistas } from './recepcionistas.js';
+import { crearRepositorioReportes } from './reportes.js';
 
 export function crearAdaptadorHospitalPostgres(pool) {
   return {
@@ -77,6 +78,8 @@ export function crearAdaptadorHospitalPostgres(pool) {
     personal: { ...crearRepositorioPersonal(pool), ...crearRepositorioRecepcionistas(pool) },
     // Puerto opcional: catálogos que mantiene el admin.
     catalogosAdmin: crearCatalogosAdmin(pool),
+    // Puerto opcional: reportes del admin (totales del periodo).
+    reportes: crearRepositorioReportes(pool),
     // Puertos propios del hospital (fuera del contrato común).
     internamientos: crearRepositorioInternamientos(pool),
     facturacion: crearRepositorioFacturacion(pool),

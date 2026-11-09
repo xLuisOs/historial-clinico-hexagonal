@@ -15,14 +15,72 @@ const sinTildes = (t) => String(t ?? '').normalize('NFD').replace(/[̀-ͯ]/g, ''
 /** Texto de un valor para la lista. `referencias`: catálogo → Map(id → nombre). */
 function mostrar(campo, valor, referencias) {
   if (valor == null || valor === '') return null;
+  if (campo.tipo === 'parametros') return `${valor.length} ${valor.length === 1 ? 'parámetro' : 'parámetros'}`;
   if (campo.tipo === 'dinero') return dinero(valor);
   if (campo.tipo === 'opcion') return etiqueta(valor);
   if (campo.tipo === 'referencia') return referencias[campo.catalogo]?.get(valor) ?? null;
   return String(valor);
 }
 
+// ------------------------------------------------- parámetros de un examen
+
+const TIPOS_VALOR = { numerico: 'Numérico', texto: 'Texto', opcion: 'Opción' };
+const PARAMETRO_VACIO = { codigo: '', nombre: '', tipoValor: 'numerico', unidad: '', refMin: '', refMax: '', opciones: '', valorNormal: '' };
+
+/** Parámetros guardados → formulario (las opciones se escriben separadas por coma). */
+const parametrosAFormulario = (lista) => (lista ?? []).map((p) => ({
+  ...PARAMETRO_VACIO,
+  ...Object.fromEntries(Object.entries(p).map(([k, v]) => [k, v ?? ''])),
+  opciones: (p.opciones ?? []).join(', '),
+}));
+
+/** Qué se mide en un examen: código, nombre y, según el tipo, unidad y rango u opciones. */
+function EditorParametros({ lista, onChange, errores, error }) {
+  const cambiar = (i, campo) => (e) => onChange(lista.map((p, j) => (j === i ? { ...p, [campo]: e.target.value } : p)));
+  const err = (i, campo) => errores[`parametros[${i}].${campo}`];
+  return (
+    <div className="editor-parametros">
+      <div className="titulo-panel">
+        <h4 style={{ margin: 0 }}>Parámetros *</h4>
+        <button type="button" className="boton boton-fantasma boton-chico" onClick={() => onChange([...lista, { ...PARAMETRO_VACIO }])}>
+          + Parámetro
+        </button>
+      </div>
+      {error && <small className="error-campo">{error}</small>}
+      {lista.map((p, i) => (
+        <fieldset key={i} className="parametro">
+          <legend>Parámetro {i + 1}</legend>
+          <div className="rejilla">
+            <Campo etiqueta="Código *" value={p.codigo} onChange={cambiar(i, 'codigo')} error={err(i, 'codigo')} maxLength={20} placeholder="p. ej. HB" />
+            <Campo etiqueta="Nombre *" value={p.nombre} onChange={cambiar(i, 'nombre')} error={err(i, 'nombre')} maxLength={100} placeholder="p. ej. Hemoglobina" />
+            <Selector etiqueta="Tipo de resultado *" value={p.tipoValor} onChange={cambiar(i, 'tipoValor')} vacio={null} error={err(i, 'tipoValor')}
+              opciones={Object.entries(TIPOS_VALOR).map(([valor, texto]) => ({ valor, texto }))} />
+            {p.tipoValor === 'numerico' && (
+              <>
+                <Campo etiqueta="Unidad" value={p.unidad} onChange={cambiar(i, 'unidad')} error={err(i, 'unidad')} maxLength={30} placeholder="p. ej. g/dL" />
+                <Campo etiqueta="Valor mínimo normal" type="number" step="any" value={p.refMin} onChange={cambiar(i, 'refMin')} error={err(i, 'refMin')} />
+                <Campo etiqueta="Valor máximo normal" type="number" step="any" value={p.refMax} onChange={cambiar(i, 'refMax')} error={err(i, 'refMax')} />
+              </>
+            )}
+            {p.tipoValor === 'opcion' && (
+              <Campo etiqueta="Opciones *" value={p.opciones} onChange={cambiar(i, 'opciones')} error={err(i, 'opciones')} placeholder="Positivo, Negativo" />
+            )}
+            {p.tipoValor !== 'numerico' && (
+              <Campo etiqueta="Valor normal" value={p.valorNormal} onChange={cambiar(i, 'valorNormal')} error={err(i, 'valorNormal')} maxLength={100} />
+            )}
+          </div>
+          {lista.length > 1 && (
+            <button type="button" className="boton boton-fantasma boton-chico" onClick={() => onChange(lista.filter((_, j) => j !== i))}>Quitar</button>
+          )}
+        </fieldset>
+      ))}
+    </div>
+  );
+}
+
 /** Valor del formulario → valor para la API (vacío = null). */
 function aApi(campo, texto) {
+  if (campo.tipo === 'parametros') return texto;
   const limpio = String(texto ?? '').trim();
   if (limpio === '') return null;
   return campo.tipo === 'dinero' ? Number(limpio) : limpio;
@@ -31,7 +89,10 @@ function aApi(campo, texto) {
 /** Alta o edición de un registro, con los campos del catálogo. */
 function DialogoRegistro({ catalogo, registro, referencias, onCerrar, onListo }) {
   const nuevo = !registro;
-  const [datos, setDatos] = useState(() => Object.fromEntries(catalogo.campos.map((c) => [c.clave, registro?.[c.clave] ?? ''])));
+  const [datos, setDatos] = useState(() => Object.fromEntries(catalogo.campos.map((c) => [
+    c.clave,
+    c.tipo === 'parametros' ? (nuevo ? [{ ...PARAMETRO_VACIO }] : parametrosAFormulario(registro[c.clave])) : registro?.[c.clave] ?? '',
+  ])));
   const [error, setError] = useState(null);
   const [enviando, setEnviando] = useState(false);
   const errores = erroresDe(error);
@@ -43,7 +104,9 @@ function DialogoRegistro({ catalogo, registro, referencias, onCerrar, onListo })
     const valores = Object.fromEntries(catalogo.campos
       .filter((c) => !bloqueado(c))
       .map((c) => [c.clave, aApi(c, datos[c.clave])])
-      .filter(([clave, v]) => nuevo || v !== (registro[clave] ?? null)));
+      .filter(([clave, v]) => nuevo || (Array.isArray(v)
+        ? JSON.stringify(v) !== JSON.stringify(parametrosAFormulario(registro[clave]))
+        : v !== (registro[clave] ?? null))));
     if (!nuevo && Object.keys(valores).length === 0) return onCerrar();
     setEnviando(true);
     setError(null);
@@ -76,9 +139,14 @@ function DialogoRegistro({ catalogo, registro, referencias, onCerrar, onListo })
               return <Selector key={c.clave} {...comun} vacio="Sin asignar"
                 opciones={[...(referencias[c.catalogo] ?? new Map())].map(([valor, texto]) => ({ valor, texto }))} />;
             }
+            if (c.tipo === 'parametros') return null; // va debajo, a lo ancho
             return <Campo key={c.clave} {...comun} maxLength={c.max} {...(c.tipo === 'dinero' && { type: 'number', min: '0', step: '0.01' })} />;
           })}
         </div>
+        {catalogo.campos.filter((c) => c.tipo === 'parametros').map((c) => (
+          <EditorParametros key={c.clave} lista={datos[c.clave]} onChange={(lista) => setDatos({ ...datos, [c.clave]: lista })}
+            errores={errores} error={errores[c.clave]} />
+        ))}
         {!nuevo && catalogo.campos.some(bloqueado) && (
           <small style={{ color: 'var(--tinta-suave)' }}>
             {catalogo.campos.filter(bloqueado).map((c, i) => (i === 0 ? c.etiqueta : c.etiqueta.toLowerCase())).join(' y ')} no se {catalogo.campos.filter(bloqueado).length === 1 ? 'cambia' : 'cambian'}

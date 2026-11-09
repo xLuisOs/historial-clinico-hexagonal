@@ -10,6 +10,7 @@ import { nombreCompleto, ROLES } from './modelo.js';
 import { crearRepositorioOrdenes } from './ordenes.js';
 import { crearRepositorioPacientes } from './pacientes.js';
 import { crearRepositorioRecepcionistas } from './recepcionistas.js';
+import { crearRepositorioReportes } from './reportes.js';
 
 export function crearAdaptadorLaboratorioMongo(cliente, nombreDb, zonaHoraria) {
   const db = cliente.db(nombreDb);
@@ -71,6 +72,8 @@ export function crearAdaptadorLaboratorioMongo(cliente, nombreDb, zonaHoraria) {
     personal: { ...crearRepositorioPersonalReferentes(db), ...crearRepositorioRecepcionistas(db) },
     // Puerto opcional: catálogos que mantiene el admin.
     catalogosAdmin: crearCatalogosAdmin(db),
+    // Puerto opcional: reportes del admin (totales del periodo).
+    reportes: crearRepositorioReportes(db, zonaHoraria),
 
     catalogos: {
       // En el laboratorio, "médicos" son los médicos referentes: quienes

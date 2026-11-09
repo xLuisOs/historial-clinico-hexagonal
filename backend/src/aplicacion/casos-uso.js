@@ -23,6 +23,7 @@ import {
 } from '../dominio/medico.js';
 import { validarCambiosRecepcionista, validarNuevaRecepcionista } from '../dominio/recepcionista.js';
 import { historialParaRol, pacienteParaRol } from '../dominio/privacidad.js';
+import { validarPeriodo } from '../dominio/reportes.js';
 import { validarCambioEstado, validarNuevaCita, validarReprogramacion } from '../dominio/cita.js';
 
 export function exigirRol(usuario, ...roles) {
@@ -250,6 +251,15 @@ export function cambiarEstadoRegistroCatalogo(contexto, clave, id, datos) {
   // Primero la regla del catálogo: si no tiene estado, el mensaje lo dice.
   const activo = validarEstadoRegistro(contexto.usuario.institucion, clave, datos);
   return repoCatalogo(contexto, clave, 'cambiarEstado').cambiarEstado(id, activo);
+}
+
+// ---------------------------------------------------------------- reportes
+
+/** Totales del periodo para el admin (ver dominio/reportes.js). Sin datos clínicos de pacientes. */
+export function generarReporte({ usuario, repos }, datos) {
+  exigirRol(usuario, 'admin');
+  if (typeof repos.reportes?.generar !== 'function') throw new NoDisponible('Esta institución todavía no tiene reportes');
+  return repos.reportes.generar(validarPeriodo(datos));
 }
 
 export function listarMedicamentos({ repos }) {

@@ -132,6 +132,11 @@ rutas.post('/personal/recepcionistas/:id/password', async (req, res) => {
 rutas.post('/personal/recepcionistas/:id/estado', async (req, res) => {
   res.json(await casos.cambiarEstadoRecepcionista(req.contexto, req.params.id, req.body));
 });
+// Reportes del admin: ?desde=AAAA-MM-DD&hasta=AAAA-MM-DD (por defecto, el mes en curso).
+rutas.get('/admin/reportes', async (req, res) => {
+  res.json(await casos.generarReporte(req.contexto, { desde: req.query.desde, hasta: req.query.hasta }));
+});
+
 // Catálogos que mantiene el admin (habitaciones, procedimientos, servicios...).
 rutas.get('/admin/catalogos', async (req, res) => {
   res.json(await casos.listarCatalogosAdmin(req.contexto));

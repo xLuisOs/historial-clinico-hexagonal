@@ -190,6 +190,7 @@ ocultan los botones que no le corresponden (el backend igual lo verifica):
 | Crear la cuenta de un médico que no la tiene (no aplica al laboratorio: sus médicos referentes no inician sesión) | | | ✅ |
 | Registrar, editar, desactivar y reactivar recepcionistas, cada una con su cuenta | | | ✅ |
 | Mantener los catálogos (ver abajo) | | | ✅ |
+| Ver reportes del periodo (ver abajo) | | | ✅ |
 
 \* En las cuatro instituciones, la recepción recibe una **vista administrativa**
 del historial (mínimo privilegio): ficha, contacto, alergias, citas y lo que se cobra
@@ -210,7 +211,7 @@ institución (`dominio/catalogos.js`) y la pantalla se arma con esa definición:
 | Hospital | Habitaciones (en mantenimiento no se asignan al internar; una ocupada no se toca), medicamentos, especialidades, departamentos |
 | Odontológica | Procedimientos (con su costo), medicamentos |
 | Pediátrico | Servicios (con su precio), medicamentos |
-| Laboratorio | Tipos de examen (datos generales y precio; los nuevos, con sus parámetros, se cargan con la semilla), medicamentos |
+| Laboratorio | Tipos de examen con sus parámetros (unidad y rango de referencia, u opciones), medicamentos |
 
 Nada se borra: lo que tiene estado se desactiva y deja de ofrecerse. Cambiar un precio no
 altera lo ya cobrado (cada cobro guarda su precio). En PostgreSQL y MySQL, donde recetas y
@@ -218,6 +219,20 @@ cobros muestran el nombre leyéndolo del catálogo, un medicamento ya recetado o
 ya cobrado no cambia de nombre; en Firestore y MongoDB cada receta u orden guarda su
 propia copia. Los medicamentos, especialidades y departamentos del hospital no se
 desactivan porque su tabla no tiene estado.
+
+**Reportes.** El admin ve los totales de un periodo (este mes, el anterior, los últimos 30
+días, el año o las fechas que elija), nunca datos clínicos de un paciente. Cada institución
+mide lo suyo y cada adaptador lo calcula con su motor (`dominio/reportes.js`):
+
+| Institución | Indicadores y tablas | Cómo se calcula |
+|---|---|---|
+| Hospital | Consultas, citas, inasistencia, ingresos, saldo por cobrar, ocupación de habitaciones, internamientos; citas por médico e ingresos por método | `GROUP BY` y `FILTER` de PostgreSQL |
+| Odontológica | Consultas, citas, inasistencia, ingresos, saldo por cobrar; citas por odontólogo, procedimientos realizados e ingresos por método | Consultas por rango en Firestore y sumas en el backend (Firestore no agrupa) |
+| Pediátrico | Consultas, citas, inasistencia, ingresos, saldo por cobrar, vacunas aplicadas; citas por médico, servicios cobrados, ingresos por método y vacunas | `GROUP BY` de MySQL y la vista `v_cobro_resumen` |
+| Laboratorio | Órdenes, exámenes, % validados, resultados fuera de rango, horas promedio hasta validar; órdenes por estado, exámenes y médicos referentes | Un pipeline de agregación con `$facet` en MongoDB |
+
+La inasistencia es la parte de las citas que ya debían ocurrir (atendidas o "no asistió")
+en las que el paciente no llegó.
 
 Un médico nunca se borra: se desactiva (él y su usuario) y solo si no tiene citas
 pendientes ni pacientes internados a su cargo. Una sesión abierta deja de servir en
@@ -347,6 +362,7 @@ Todas las rutas (salvo login) requieren `Authorization: Bearer <token>`.
 | PATCH  | `/api/personal/medicos/:id`        | Editar `{ nombres?, apellidos?, numeroColegiado?, especialidad?, telefono? }` (admin). El correo no se edita: es la cuenta |
 | POST   | `/api/personal/medicos/:id/cuenta` | Crear la cuenta `{ correo, password }` de un médico activo que está en el catálogo sin usuario (admin; hospital, odontológica y pediátrico) |
 | POST   | `/api/personal/medicos/:id/password` | Nueva contraseña `{ password }` para un médico que olvidó la suya (admin) |
+| GET    | `/api/admin/reportes?desde=&hasta=` | Reporte del periodo (admin). Por defecto, el mes en curso; hasta un año |
 | GET    | `/api/admin/catalogos`             | Catálogos que mantiene el admin de la institución, con sus campos (admin) |
 | GET    | `/api/admin/catalogos/:clave`      | Registros de un catálogo, activos e inactivos (admin) |
 | POST   | `/api/admin/catalogos/:clave`      | Registro nuevo con los campos del catálogo (admin) |
