@@ -30,6 +30,17 @@ const descripcion = { clave: 'descripcion', etiqueta: 'Descripción', tipo: 'tex
 
 const ESTADO_COMUN = { activo: 'Activo', inactivo: 'Inactivo', desactivar: 'Desactivar', activar: 'Reactivar' };
 
+// Las cuatro instituciones tienen su catálogo de especialidades: el admin las
+// agrega y las renombra. Renombrar corrige la especialidad en todos los
+// médicos que la tienen; el nombre se compara sin tildes ni mayúsculas para no
+// duplicar (ver dominio/especialidades.js).
+const ESPECIALIDADES = {
+  titulo: 'Especialidades',
+  singular: 'especialidad',
+  ayuda: 'Las especialidades de esta lista se ofrecen al registrar o editar un médico. Si le cambias el nombre a una, se corrige en todos los médicos que la tienen.',
+  campos: [nombre(80)],
+};
+
 const CATALOGOS = {
   hospital: {
     habitaciones: {
@@ -52,7 +63,7 @@ const CATALOGOS = {
         { clave: 'principioActivo', etiqueta: 'Principio activo', tipo: 'texto', max: 100 },
       ],
     },
-    especialidades: { titulo: 'Especialidades', singular: 'especialidad', campos: [nombre(80)] },
+    especialidades: ESPECIALIDADES,
     departamentos: {
       titulo: 'Departamentos',
       singular: 'departamento',
@@ -68,15 +79,7 @@ const CATALOGOS = {
       estado: ESTADO_COMUN,
     },
     medicamentos: { titulo: 'Medicamentos', singular: 'medicamento', campos: [nombre(), presentacion(true)], estado: ESTADO_COMUN },
-    // Las especialidades son un dato de cada médico: aquí se listan las que
-    // están en uso y se corrige su nombre en todos los médicos a la vez.
-    especialidades: {
-      titulo: 'Especialidades',
-      singular: 'especialidad',
-      sinAlta: true,
-      ayuda: 'Una especialidad nueva aparece aquí al registrar un médico con ella. Si le cambias el nombre, se corrige en todos los médicos que la tienen.',
-      campos: [nombre(80)],
-    },
+    especialidades: ESPECIALIDADES,
   },
 
   pediatrico: {
@@ -92,15 +95,7 @@ const CATALOGOS = {
       campos: [nombre(100, { historico: true }), presentacion(true)],
       estado: ESTADO_COMUN,
     },
-    // Las especialidades son un dato de cada médico: aquí se listan las que
-    // están en uso y se corrige su nombre en todos los médicos a la vez.
-    especialidades: {
-      titulo: 'Especialidades',
-      singular: 'especialidad',
-      sinAlta: true,
-      ayuda: 'Una especialidad nueva aparece aquí al registrar un médico con ella. Si le cambias el nombre, se corrige en todos los médicos que la tienen.',
-      campos: [nombre(80)],
-    },
+    especialidades: ESPECIALIDADES,
   },
 
   laboratorio: {
@@ -125,15 +120,7 @@ const CATALOGOS = {
       estado: ESTADO_COMUN,
     },
     medicamentos: { titulo: 'Medicamentos', singular: 'medicamento', campos: [nombre(), presentacion(true)], estado: ESTADO_COMUN },
-    // Las especialidades son un dato de cada médico: aquí se listan las que
-    // están en uso y se corrige su nombre en todos los médicos a la vez.
-    especialidades: {
-      titulo: 'Especialidades',
-      singular: 'especialidad',
-      sinAlta: true,
-      ayuda: 'Una especialidad nueva aparece aquí al registrar un médico con ella. Si le cambias el nombre, se corrige en todos los médicos que la tienen.',
-      campos: [nombre(80)],
-    },
+    especialidades: ESPECIALIDADES,
   },
 };
 

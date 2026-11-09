@@ -7,6 +7,7 @@ export const COLECCIONES = {
   consultas: 'consultas',
   usuarios: 'usuarios',
   odontologos: 'odontologos',
+  especialidades: 'especialidades',
   recepcionistas: 'recepcionistas',
   procedimientos: 'procedimientos',
   medicamentos: 'medicamentos',

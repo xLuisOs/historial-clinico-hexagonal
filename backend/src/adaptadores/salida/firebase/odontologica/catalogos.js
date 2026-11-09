@@ -1,4 +1,4 @@
-import { listaDeEspecialidades, mismaEspecialidad } from '../../../../dominio/especialidades.js';
+import { mismaEspecialidad } from '../../../../dominio/especialidades.js';
 import { Conflicto, NoEncontrado } from '../../../../dominio/errores.js';
 import { enTransaccion } from '../conexion.js';
 import { COLECCIONES } from './modelo.js';
@@ -70,28 +70,64 @@ function catalogo(db, coleccion, { campos, unico, repetido, entidad }) {
   };
 }
 
+/** Nombre de la especialidad de un odontólogo (los que no tienen una son de odontología general). */
+export const especialidadDe = (doc) => doc.get('especialidad') ?? 'Odontología';
+
 /**
- * Especialidades en uso entre los odontólogos (los que no tienen una son de
- * odontología general). Cambiar el nombre lo corrige en todos, en un batch.
+ * Dentro de una transacción: si la especialidad no está en el catálogo, la
+ * agrega. Devuelve una función que hace la escritura, porque Firestore exige
+ * hacer todas las lecturas antes de la primera escritura.
+ */
+export async function prepararEspecialidad(t, db, nombre) {
+  if (!nombre) return () => {};
+  const catalogo = db.collection(COLECCIONES.especialidades);
+  const todas = await t.get(catalogo);
+  if (todas.docs.some((d) => mismaEspecialidad(d.get('nombre'), nombre))) return () => {};
+  return () => t.set(catalogo.doc(), { nombre });
+}
+
+/**
+ * Catálogo de especialidades (colección especialidades). Los odontólogos
+ * guardan una copia del nombre: renombrar cambia el catálogo y a todos sus
+ * odontólogos en UNA transacción. Firestore no tiene UNIQUE: el nombre
+ * repetido (sin importar tildes ni mayúsculas) se revisa dentro de la
+ * transacción.
  */
 function especialidades(db) {
+  const catalogo = db.collection(COLECCIONES.especialidades);
   const odontologos = db.collection(COLECCIONES.odontologos);
-  const de = (doc) => doc.get('especialidad') ?? 'Odontología';
   const cuenta = (n) => `${n} ${n === 1 ? 'odontólogo' : 'odontólogos'}`;
+  const aRegistro = (doc, docsOdontologos) => ({
+    id: doc.id,
+    nombre: doc.get('nombre'),
+    nota: cuenta(docsOdontologos.filter((o) => mismaEspecialidad(especialidadDe(o), doc.get('nombre'))).length),
+  });
+
   return {
     async listar() {
-      const docs = (await odontologos.get()).docs;
-      return listaDeEspecialidades(docs.map(de)).map((nombre) => ({
-        id: nombre, nombre, nota: cuenta(docs.filter((d) => mismaEspecialidad(de(d), nombre)).length),
-      }));
+      const [docs, odon] = await Promise.all([catalogo.get(), odontologos.get()]);
+      return docs.docs.map((d) => aRegistro(d, odon.docs))
+        .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+    },
+    async crear({ nombre }) {
+      const ref = catalogo.doc();
+      await enTransaccion(db, async (t) => {
+        const todas = await t.get(catalogo);
+        if (todas.docs.some((d) => mismaEspecialidad(d.get('nombre'), nombre))) throw new Conflicto('Ya existe esa especialidad');
+        t.set(ref, { nombre });
+      });
+      return { id: ref.id, nombre, nota: cuenta(0) };
     },
     async actualizar(id, { nombre }) {
-      const docs = (await odontologos.get()).docs.filter((d) => mismaEspecialidad(de(d), id));
-      if (docs.length === 0) throw new NoEncontrado('Especialidad no encontrada');
-      const lote = db.batch();
-      for (const d of docs) lote.update(d.ref, { especialidad: nombre });
-      await lote.commit();
-      return { id: nombre, nombre, nota: cuenta(docs.length) };
+      return enTransaccion(db, async (t) => {
+        const [actual, todas, odon] = await Promise.all([t.get(catalogo.doc(id)), t.get(catalogo), t.get(odontologos)]);
+        if (!actual.exists) throw new NoEncontrado('Especialidad no encontrada');
+        if (todas.docs.some((d) => d.id !== id && mismaEspecialidad(d.get('nombre'), nombre))) throw new Conflicto('Ya existe esa especialidad');
+        const suyos = odon.docs.filter((o) => mismaEspecialidad(especialidadDe(o), actual.get('nombre')));
+        t.update(actual.ref, { nombre });
+        for (const o of suyos) t.update(o.ref, { especialidad: nombre });
+        return { id, nombre, nota: cuenta(suyos.length) };
+      });
     },
   };
 }

@@ -1,6 +1,7 @@
 import { ESTADOS_PENDIENTES } from '../../../../dominio/cita.js';
 import { Conflicto, NoEncontrado } from '../../../../dominio/errores.js';
 import { enTransaccion } from '../conexion.js';
+import { asegurarEspecialidad } from './catalogos.js';
 
 // Personal médico del pediátrico, administrado por el admin (ver dominio/medico.js).
 // Cada operación que toca médico y usuario va en UNA transacción. Los UNIQUE de
@@ -53,6 +54,7 @@ export function crearRepositorioPersonal(pool) {
         if (repetido.colegiado) throw new Conflicto('Ya hay un médico con ese número de colegiado');
         if (repetido.correo) throw new Conflicto('Ya hay un usuario con ese correo');
 
+        await asegurarEspecialidad(cx, m.especialidad);
         const [medico] = await cx.query(
           'INSERT INTO medico (nombres, apellidos, especialidad, numero_colegiado) VALUES (?, ?, ?, ?)',
           [m.nombres, m.apellidos, m.especialidad, m.numeroColegiado],
@@ -74,6 +76,7 @@ export function crearRepositorioPersonal(pool) {
           );
           if (otro) throw new Conflicto('Ya hay un médico con ese número de colegiado');
         }
+        await asegurarEspecialidad(cx, cambios.especialidad);
         const columnas = { nombres: 'nombres', apellidos: 'apellidos', especialidad: 'especialidad', numeroColegiado: 'numero_colegiado' };
         const campos = Object.keys(cambios).filter((c) => columnas[c]);
         if (campos.length > 0) {

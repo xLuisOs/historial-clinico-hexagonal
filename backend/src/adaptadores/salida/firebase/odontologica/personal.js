@@ -1,6 +1,7 @@
 import { ahoraEnGuatemala, ESTADOS_PENDIENTES } from '../../../../dominio/cita.js';
 import { Conflicto, NoEncontrado } from '../../../../dominio/errores.js';
 import { enTransaccion, timestampATexto } from '../conexion.js';
+import { prepararEspecialidad } from './catalogos.js';
 import { COLECCIONES, nombreCompleto } from './modelo.js';
 
 // Odontólogos de la clínica, administrados por el admin (ver dominio/medico.js).
@@ -57,8 +58,11 @@ export function crearRepositorioPersonal(db, zonaHoraria) {
         ]);
         if (!colegiado.empty) throw new Conflicto('Ya hay un odontólogo con ese número de colegiado');
         if (!correo.empty) throw new Conflicto('Ya hay un usuario con ese correo');
+        // Una especialidad nueva ("Otra…") queda también en el catálogo.
+        const guardarEspecialidad = await prepararEspecialidad(t, db, m.especialidad);
 
         const odontologo = col('odontologos').doc();
+        guardarEspecialidad();
         const datos = {
           nombres: m.nombres,
           apellidos: m.apellidos,
@@ -94,6 +98,7 @@ export function crearRepositorioPersonal(db, zonaHoraria) {
           usuarioDe(id, t),
         ]);
         if (colegiado?.docs.some((d) => d.id !== id)) throw new Conflicto('Ya hay un odontólogo con ese número de colegiado');
+        (await prepararEspecialidad(t, db, cambios.especialidad))();
 
         const campos = { nombres: 'nombres', apellidos: 'apellidos', numeroColegiado: 'numero_colegiado', especialidad: 'especialidad', telefono: 'telefono' };
         const datos = Object.fromEntries(Object.entries(cambios).filter(([c]) => campos[c]).map(([c, v]) => [campos[c], v]));

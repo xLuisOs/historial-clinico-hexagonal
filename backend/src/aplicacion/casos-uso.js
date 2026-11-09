@@ -9,7 +9,7 @@
 
 import bcrypt from 'bcryptjs';
 import { INSTITUCIONES } from '../config/instituciones.js';
-import { DatosInvalidos, NoDisponible, SinPermiso } from '../dominio/errores.js';
+import { Conflicto, DatosInvalidos, NoDisponible, SinPermiso } from '../dominio/errores.js';
 import { Validador } from '../dominio/validacion.js';
 import {
   validarBaja, validarContacto, validarDatosClinicos, validarDatosPersonales, validarNuevoPaciente,
@@ -17,7 +17,7 @@ import {
 import { exigirPasswordCorrecta, validarCambioPassword } from '../dominio/cuenta.js';
 import { validarNuevaConsulta, validarDiagnostico, validarReceta } from '../dominio/atencion.js';
 import { validarAntecedente } from '../dominio/antecedente.js';
-import { normalizarEspecialidad } from '../dominio/especialidades.js';
+import { mismaEspecialidad, normalizarEspecialidad } from '../dominio/especialidades.js';
 import {
   catalogosDe, definicionCatalogo, validarCambiosRegistro, validarEstadoRegistro, validarNuevoRegistro,
 } from '../dominio/catalogos.js';
@@ -265,14 +265,28 @@ export function listarRegistrosCatalogo(contexto, clave) {
   return repoCatalogo(contexto, clave, 'listar').listar();
 }
 
-export function crearRegistroCatalogo(contexto, clave, datos) {
+// Una especialidad se guarda con el nombre ordenado ("cardiología  pediátrica"
+// → "Cardiología pediátrica"); los repetidos sin importar tildes los frena cada base.
+const ordenarNombre = (clave, registro) =>
+  (clave === 'especialidades' && registro.nombre ? { ...registro, nombre: normalizarEspecialidad(registro.nombre) } : registro);
+
+// "Cardiologia" y "Cardiología" son la misma especialidad aunque la base no
+// ignore tildes (PostgreSQL, Firestore): se revisa contra la lista existente.
+async function exigirEspecialidadNueva(repos, nombre) {
+  const existente = (await repos.catalogos.listarEspecialidades()).find((e) => mismaEspecialidad(e, nombre));
+  if (existente) throw new Conflicto(`Ya existe la especialidad ${existente}`);
+}
+
+export async function crearRegistroCatalogo(contexto, clave, datos) {
   const repo = repoCatalogo(contexto, clave, 'crear');
-  return repo.crear(validarNuevoRegistro(contexto.usuario.institucion, clave, datos));
+  const registro = ordenarNombre(clave, validarNuevoRegistro(contexto.usuario.institucion, clave, datos));
+  if (clave === 'especialidades') await exigirEspecialidadNueva(contexto.repos, registro.nombre);
+  return repo.crear(registro);
 }
 
 export function actualizarRegistroCatalogo(contexto, clave, id, datos) {
   const repo = repoCatalogo(contexto, clave, 'actualizar');
-  return repo.actualizar(id, validarCambiosRegistro(contexto.usuario.institucion, clave, datos));
+  return repo.actualizar(id, ordenarNombre(clave, validarCambiosRegistro(contexto.usuario.institucion, clave, datos)));
 }
 
 export function cambiarEstadoRegistroCatalogo(contexto, clave, id, datos) {

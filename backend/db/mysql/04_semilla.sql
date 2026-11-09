@@ -51,6 +51,9 @@ INSERT INTO metodo_pago (id_metodo_pago, nombre) VALUES
   (1, 'efectivo'), (2, 'tarjeta'), (3, 'transferencia');
 
 -- ------------------------------------------------------------- personal
+INSERT INTO especialidad (nombre) VALUES
+  ('Pediatría general'), ('Neumología pediátrica'), ('Neonatología'), ('Cardiología pediátrica');
+
 INSERT INTO medico (id_medico, nombres, apellidos, especialidad, numero_colegiado) VALUES
   (1, 'Ana Lucía',  'Morales Pérez',   'Pediatría general', '12345'),
   (2, 'Carlos',     'Castillo Ruiz',   'Neumología pediátrica', '15872'),

@@ -93,6 +93,8 @@ que también revise la referencia según el método, y `--solo 07_recepcionistas
 la tabla `recepcionista`, liga cada cuenta de recepción que ya exista a su recepcionista
 ("Recepción" queda como "Recepción General", para corregir el nombre desde el sistema) y
 agrega la regla de que toda cuenta de recepción sea de una recepcionista.
+`--solo 08_especialidades.sql` crea el catálogo `especialidad` con las que ya usan los
+médicos y liga `medico.especialidad` a él por nombre (`ON UPDATE CASCADE`).
 
 > Para ahorrar crédito, el servidor se puede **Detener** desde el portal cuando no se usa.
 
@@ -224,9 +226,16 @@ desactivan porque su tabla no tiene estado.
 **Especialidades.** Al registrar o editar un médico, la especialidad se elige de una lista
 (con "Otra…" para escribir una nueva). Lo escrito se compara con la lista sin importar tildes
 ni mayúsculas, así "Cardiologia" queda como "Cardiología" (`dominio/especialidades.js`). El
-hospital tiene su tabla `especialidad`; en las demás la especialidad es un dato de cada
-médico, así que el catálogo muestra las que están en uso y, al corregir un nombre, lo cambia
-en todos los médicos que la tienen (y si coincide con otra, las une).
+Las cuatro instituciones tienen su catálogo de especialidades: el admin las agrega y las
+renombra desde Catálogos, y renombrar una la corrige en todos los médicos que la tienen.
+Una especialidad nueva escrita con "Otra…" al registrar un médico también entra al catálogo.
+
+| Institución | Dónde vive el catálogo |
+|---|---|
+| Hospital | Tabla `especialidad`; el médico la referencia por id |
+| Pediátrico | Tabla `especialidad`; `medico.especialidad` la referencia por nombre con `ON UPDATE CASCADE` |
+| Laboratorio | Colección `especialidades` (índice único que ignora tildes); los referentes guardan una copia del nombre, que se corrige en la misma transacción al renombrar |
+| Odontológica | Colección `especialidades`; renombrar cambia el catálogo y a sus odontólogos en una transacción |
 
 **Teléfonos.** Todos son de Guatemala: exactamente 8 dígitos. Se aceptan con guion o espacio
 y se guardan como `5555-1234` (`dominio/telefono.js`).

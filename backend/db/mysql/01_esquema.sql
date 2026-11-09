@@ -16,6 +16,8 @@
 --   * detalle_cobro.subtotal es columna generada: no puede quedar inconsistente.
 --   * USUARIO para autenticación y enrutamiento por institución.
 --   * RECEPCIONISTA: cada persona de recepción con su propia cuenta.
+--   * ESPECIALIDAD: catálogo de especialidades; medico.especialidad la
+--     referencia por nombre (ON UPDATE CASCADE).
 --   * ANTECEDENTE: antecedentes médicos del paciente (patológicos, quirúrgicos,
 --     familiares, hábitos, medicamentos y perinatales).
 --   * Todas las FK con ON DELETE RESTRICT: un historial nunca se borra, se archiva.
@@ -74,6 +76,16 @@ CREATE TABLE paciente (
   INDEX idx_paciente_nombre (apellidos, nombres)
 ) ENGINE=InnoDB;
 
+-- Catálogo de especialidades. El médico la referencia por su nombre: renombrar
+-- una especialidad la corrige sola en todos sus médicos (ON UPDATE CASCADE), y
+-- no puede haber un médico con una especialidad fuera del catálogo. La
+-- collation ignora mayúsculas y tildes: "Cardiologia" y "Cardiología" chocan.
+CREATE TABLE especialidad (
+  id_especialidad  INT AUTO_INCREMENT PRIMARY KEY,
+  nombre           VARCHAR(80) NOT NULL,
+  CONSTRAINT uq_especialidad_nombre UNIQUE (nombre)
+) ENGINE=InnoDB;
+
 CREATE TABLE medico (
   id_medico         INT AUTO_INCREMENT PRIMARY KEY,
   nombres           VARCHAR(100) NOT NULL,
@@ -81,7 +93,9 @@ CREATE TABLE medico (
   especialidad      VARCHAR(80)  NOT NULL,
   numero_colegiado  VARCHAR(10)  NOT NULL,
   activo            BOOLEAN      NOT NULL DEFAULT TRUE,
-  CONSTRAINT uq_medico_colegiado UNIQUE (numero_colegiado)
+  CONSTRAINT uq_medico_colegiado UNIQUE (numero_colegiado),
+  CONSTRAINT fk_medico_especialidad FOREIGN KEY (especialidad)
+    REFERENCES especialidad (nombre) ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB;
 
 -- Personal de recepción. Cada recepcionista tiene su propia cuenta (usuario):

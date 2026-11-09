@@ -180,6 +180,21 @@ export const COLECCIONES = {
     indices: [{ llave: { numero_colegiado: 1 }, opciones: { unique: true } }],
   },
 
+  // Catálogo de especialidades. Los médicos referentes guardan una copia del
+  // nombre (como en la Entrega I); renombrar aquí la corrige en todos ellos.
+  // El índice único usa collation es con fuerza 1: ignora mayúsculas y
+  // tildes, así que "Cardiologia" y "Cardiología" chocan.
+  especialidades: {
+    validador: {
+      $jsonSchema: {
+        bsonType: 'object',
+        required: ['nombre'],
+        properties: { nombre: texto(80) },
+      },
+    },
+    indices: [{ llave: { nombre: 1 }, opciones: { unique: true, collation: { locale: 'es', strength: 1 } } }],
+  },
+
   tipos_examen: {
     validador: {
       $jsonSchema: {

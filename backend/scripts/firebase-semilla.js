@@ -117,6 +117,14 @@ const estrada = await asegurar('odontologos', { numero_colegiado: '34567' }, {
 });
 informar('odontologos', [ramirez, estrada]);
 
+// Catálogo de especialidades: las de la clínica y las que ya usa algún odontólogo.
+const enUso = (await col('odontologos').get()).docs.map((d) => d.get('especialidad') ?? 'Odontología');
+const especialidades = [];
+for (const nombre of [...new Set(['Odontología', 'Ortodoncia', 'Endodoncia', 'Odontopediatría', ...enUso])]) {
+  especialidades.push(await asegurar('especialidades', { nombre }, {}));
+}
+informar('especialidades', especialidades);
+
 const juarez = await asegurar('recepcionistas', { nombres: 'Andrea Sofía', apellidos: 'Juárez Castillo' }, { activo: true });
 informar('recepcionistas', [juarez]);
 

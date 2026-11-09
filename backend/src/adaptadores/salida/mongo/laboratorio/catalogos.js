@@ -1,5 +1,5 @@
 import { Conflicto, NoEncontrado } from '../../../../dominio/errores.js';
-import { aObjectId, traducirError } from '../conexion.js';
+import { aObjectId, enTransaccionMongo, traducirError } from '../conexion.js';
 
 // Catálogos del laboratorio que mantiene el admin (ver dominio/catalogos.js):
 // tipos de examen (datos generales y precio) y medicamentos, con las
@@ -104,34 +104,61 @@ const parametros = {
   })),
 };
 
+// Sin tildes ni mayúsculas: "cardiologia" encuentra "Cardiología".
+const SIN_TILDES = { locale: 'es', strength: 1 };
+
+/** Agrega la especialidad al catálogo si todavía no está (al registrar o editar un médico referente). */
+export async function asegurarEspecialidad(db, nombre) {
+  if (!nombre) return;
+  await db.collection('especialidades').updateOne({ nombre }, { $setOnInsert: { nombre } }, { upsert: true, collation: SIN_TILDES });
+}
+
 /**
- * Especialidades en uso entre los médicos referentes. Cambiar el nombre lo
- * corrige en todos con updateMany; la colación 'es' (nivel 1) ignora
- * mayúsculas y tildes al buscar.
+ * Catálogo de especialidades (colección especialidades). Los médicos
+ * referentes guardan una copia del nombre: renombrar cambia el catálogo y a
+ * todos sus médicos en UNA transacción. El índice único (collation es, fuerza
+ * 1) impide dos especialidades que solo difieran en tildes o mayúsculas.
  */
-function especialidades(db) {
+function especialidades(cliente, db) {
+  const catalogo = db.collection('especialidades');
   const referentes = db.collection('medicos_referentes');
   const cuenta = (n) => `${n} ${n === 1 ? 'médico referente' : 'médicos referentes'}`;
+  const repetida = { duplicado: 'Ya existe esa especialidad' };
+  const contar = (nombre, session) => referentes.countDocuments({ especialidad: nombre }, { collation: SIN_TILDES, session });
+  const aRegistro = async (doc, session) => ({ id: doc._id.toHexString(), nombre: doc.nombre, nota: cuenta(await contar(doc.nombre, session)) });
+
   return {
     async listar() {
-      const grupos = await referentes.aggregate([
-        { $match: { especialidad: { $type: 'string' } } },
-        { $group: { _id: '$especialidad', medicos: { $sum: 1 } } },
-        { $sort: { _id: 1 } },
-      ], { collation: { locale: 'es', strength: 1 } }).toArray();
-      return grupos.map((g) => ({ id: g._id, nombre: g._id, nota: cuenta(g.medicos) }));
+      const docs = await catalogo.find().sort({ nombre: 1 }).collation({ locale: 'es' }).toArray();
+      return Promise.all(docs.map((d) => aRegistro(d)));
     },
-    async actualizar(id, { nombre }) {
-      const r = await referentes.updateMany({ especialidad: id }, { $set: { especialidad: nombre } }, { collation: { locale: 'es', strength: 1 } });
-      if (r.matchedCount === 0) throw new NoEncontrado('Especialidad no encontrada');
-      return { id: nombre, nombre, nota: cuenta(r.matchedCount) };
+    async crear({ nombre }) {
+      try {
+        const { insertedId } = await catalogo.insertOne({ nombre });
+        return { id: insertedId.toHexString(), nombre, nota: cuenta(0) };
+      } catch (error) {
+        throw traducirError(error, repetida);
+      }
+    },
+    actualizar(id, { nombre }) {
+      return enTransaccionMongo(cliente, async (session) => {
+        const actual = await catalogo.findOne({ _id: aObjectId(id, 'Especialidad') }, { session });
+        if (!actual) throw new NoEncontrado('Especialidad no encontrada');
+        try {
+          await catalogo.updateOne({ _id: actual._id }, { $set: { nombre } }, { session });
+        } catch (error) {
+          throw traducirError(error, repetida);
+        }
+        await referentes.updateMany({ especialidad: actual.nombre }, { $set: { especialidad: nombre } }, { collation: SIN_TILDES, session });
+        return aRegistro({ ...actual, nombre }, session);
+      });
     },
   };
 }
 
-export function crearCatalogosAdmin(db) {
+export function crearCatalogosAdmin(cliente, db) {
   return {
-    especialidades: especialidades(db),
+    especialidades: especialidades(cliente, db),
     // Las órdenes guardan una copia de los parámetros: cambiarlos aquí no
     // altera resultados ya registrados.
     tiposExamen: catalogo(db, 'tipos_examen', {

@@ -74,25 +74,54 @@ function catalogo(pool, { tabla, columnaId, columnas, unico, repetido, entidad, 
 }
 
 /**
- * Especialidades en uso entre los médicos (columna medico.especialidad).
- * Cambiar el nombre lo corrige en todos los médicos con un solo UPDATE.
+ * Catálogo de especialidades (tabla especialidad). medico.especialidad la
+ * referencia por nombre con ON UPDATE CASCADE: renombrar aquí la corrige sola
+ * en todos sus médicos. La collation ignora mayúsculas y tildes, así que el
+ * UNIQUE también impide "Cardiologia" junto a "Cardiología".
  */
 function especialidades(pool) {
   const cuenta = (n) => `${n} ${n === 1 ? 'médico' : 'médicos'}`;
+  const SELECCION = `SELECT e.id_especialidad, e.nombre,
+                            (SELECT COUNT(*) FROM medico m WHERE m.especialidad = e.nombre) AS medicos
+                     FROM especialidad e`;
+  const aRegistro = (f) => ({ id: String(f.id_especialidad), nombre: f.nombre, nota: cuenta(Number(f.medicos)) });
+  async function leer(cx, id) {
+    const [[f]] = await cx.query(`${SELECCION} WHERE e.id_especialidad = ?`, [id]);
+    if (!f) throw new NoEncontrado('Especialidad no encontrada');
+    return aRegistro(f);
+  }
+  async function sinRepetir(cx, nombre, id = 0) {
+    const [[otra]] = await cx.query('SELECT 1 AS si FROM especialidad WHERE nombre = ? AND id_especialidad <> ?', [nombre, id]);
+    if (otra) throw new Conflicto('Ya existe esa especialidad');
+  }
   return {
     async listar() {
-      const [filas] = await pool.query(
-        'SELECT especialidad AS nombre, COUNT(*) AS medicos FROM medico GROUP BY especialidad ORDER BY especialidad',
-      );
-      return filas.map((f) => ({ id: f.nombre, nombre: f.nombre, nota: cuenta(Number(f.medicos)) }));
+      const [filas] = await pool.query(`${SELECCION} ORDER BY e.nombre`);
+      return filas.map(aRegistro);
     },
-    async actualizar(id, { nombre }) {
-      // La comparación de MySQL ya ignora mayúsculas y tildes (collation *_ai_ci).
-      const [r] = await pool.query('UPDATE medico SET especialidad = ? WHERE especialidad = ?', [nombre, id]);
-      if (r.affectedRows === 0) throw new NoEncontrado('Especialidad no encontrada');
-      return { id: nombre, nombre, nota: cuenta(r.affectedRows) };
+    crear({ nombre }) {
+      return enTransaccion(pool, async (cx) => {
+        await sinRepetir(cx, nombre);
+        const [r] = await cx.query('INSERT INTO especialidad (nombre) VALUES (?)', [nombre]);
+        return leer(cx, r.insertId);
+      });
+    },
+    actualizar(id, { nombre }) {
+      return enTransaccion(pool, async (cx) => {
+        const [[actual]] = await cx.query('SELECT id_especialidad FROM especialidad WHERE id_especialidad = ? FOR UPDATE', [id]);
+        if (!actual) throw new NoEncontrado('Especialidad no encontrada');
+        await sinRepetir(cx, nombre, id);
+        // El ON UPDATE CASCADE de fk_medico_especialidad corrige a los médicos.
+        await cx.query('UPDATE especialidad SET nombre = ? WHERE id_especialidad = ?', [nombre, id]);
+        return leer(cx, id);
+      });
     },
   };
+}
+
+/** Agrega la especialidad al catálogo si todavía no está (al registrar o editar un médico con "Otra…"). */
+export async function asegurarEspecialidad(cx, nombre) {
+  if (nombre) await cx.query('INSERT IGNORE INTO especialidad (nombre) VALUES (?)', [nombre]);
 }
 
 export function crearCatalogosAdmin(pool) {

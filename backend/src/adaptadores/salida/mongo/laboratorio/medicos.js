@@ -1,5 +1,6 @@
 import { NoEncontrado } from '../../../../dominio/errores.js';
 import { aObjectId, traducirError } from '../conexion.js';
+import { asegurarEspecialidad } from './catalogos.js';
 import { nombreCompleto } from './modelo.js';
 
 // Médicos referentes: colección propia (se referencian desde las órdenes con
@@ -29,6 +30,8 @@ export function crearRepositorioMedicos(db) {
       };
       try {
         const { insertedId } = await db.collection('medicos_referentes').insertOne(doc);
+        // Una especialidad nueva ("Otra…") queda también en el catálogo.
+        await asegurarEspecialidad(db, m.especialidad);
         return documentoAMedico({ ...doc, _id: insertedId });
       } catch (error) {
         throw traducirError(error, { duplicado: `Ya existe un médico referente con el colegiado ${m.numeroColegiado}` });
@@ -76,7 +79,8 @@ export function crearRepositorioPersonalReferentes(db) {
     actualizarMedico(id, cambios) {
       const campos = { nombres: 'nombres', apellidos: 'apellidos', numeroColegiado: 'numero_colegiado', especialidad: 'especialidad', telefono: 'telefono' };
       const cambio = Object.fromEntries(Object.entries(cambios).filter(([c]) => campos[c]).map(([c, v]) => [campos[c], v]));
-      return actualizar(id, cambio, { duplicado: 'Ya hay un médico referente con ese número de colegiado' });
+      return actualizar(id, cambio, { duplicado: 'Ya hay un médico referente con ese número de colegiado' })
+        .then(async (medico) => { await asegurarEspecialidad(db, cambios.especialidad); return medico; });
     },
     cambiarEstadoMedico(id, activo) {
       return actualizar(id, { activo });

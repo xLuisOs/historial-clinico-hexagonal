@@ -88,6 +88,18 @@ try {
     console.log(`· ${nombre.padEnd(20)} validador + ${indices.length} índice(s)`);
   }
 
+  // Las especialidades que ya usan los médicos referentes quedan en el
+  // catálogo (para bases creadas antes de que existiera). No borra nada.
+  const enUso = (await db.collection('medicos_referentes').distinct('especialidad')).filter(Boolean);
+  let agregadas = 0;
+  for (const nombre of enUso) {
+    const r = await db.collection('especialidades').updateOne(
+      { nombre }, { $setOnInsert: { nombre } }, { upsert: true, collation: { locale: 'es', strength: 1 } },
+    );
+    agregadas += r.upsertedCount;
+  }
+  if (agregadas > 0) console.log(`· especialidades en uso agregadas al catálogo: ${agregadas}`);
+
   if (conSemilla) {
     if ((await db.collection('pacientes').countDocuments()) > 0) {
       console.log('\nYa hay pacientes: no se cargan datos de prueba. Usa --reiniciar para empezar de cero.');

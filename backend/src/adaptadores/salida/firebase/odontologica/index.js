@@ -7,7 +7,7 @@ import { timestampATexto } from '../conexion.js';
 import { crearRepositorioAgenda } from './agenda.js';
 import { crearRepositorioAntecedentes } from './antecedentes.js';
 import { crearRepositorioAtenciones } from './atenciones.js';
-import { crearCatalogosAdmin } from './catalogos.js';
+import { crearCatalogosAdmin, especialidadDe } from './catalogos.js';
 import { COLECCIONES, nombreCompleto, ROLES } from './modelo.js';
 import { registrarPago } from './pagos.js';
 import { crearRepositorioPacientes } from './pacientes.js';
@@ -95,8 +95,10 @@ export function crearAdaptadorOdontologicaFirebase(db, zonaHoraria) {
     catalogos: {
       // → string[]: las especialidades en uso (los odontólogos sin una son de odontología general).
       async listarEspecialidades() {
-        const snap = await col('odontologos').get();
-        return listaDeEspecialidades(snap.docs.map((d) => d.get('especialidad') ?? 'Odontología'));
+        // El catálogo, más las que ya usa algún odontólogo (por si alguna base
+        // es anterior al catálogo).
+        const [catalogo, odon] = await Promise.all([col('especialidades').get(), col('odontologos').get()]);
+        return listaDeEspecialidades([...catalogo.docs.map((d) => d.get('nombre')), ...odon.docs.map(especialidadDe)]);
       },
       async listarMedicos() {
         const snap = await col('odontologos').where('activo', '==', true).get();

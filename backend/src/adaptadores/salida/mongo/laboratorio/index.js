@@ -72,14 +72,14 @@ export function crearAdaptadorLaboratorioMongo(cliente, nombreDb, zonaHoraria) {
     // administra a las recepcionistas (con su cuenta).
     personal: { ...crearRepositorioPersonalReferentes(db), ...crearRepositorioRecepcionistas(db) },
     // Puerto opcional: catálogos que mantiene el admin.
-    catalogosAdmin: crearCatalogosAdmin(db),
+    catalogosAdmin: crearCatalogosAdmin(cliente, db),
     // Puerto opcional: reportes del admin (totales del periodo).
     reportes: crearRepositorioReportes(db, zonaHoraria),
 
     catalogos: {
       // → string[]: las especialidades en uso entre los médicos referentes.
       async listarEspecialidades() {
-        return listaDeEspecialidades(await db.collection('medicos_referentes').distinct('especialidad'));
+        return listaDeEspecialidades(await db.collection('especialidades').distinct('nombre'));
       },
       // En el laboratorio, "médicos" son los médicos referentes: quienes
       // ordenan los exámenes (pueden no pertenecer al laboratorio).

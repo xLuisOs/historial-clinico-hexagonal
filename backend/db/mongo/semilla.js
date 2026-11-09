@@ -355,6 +355,8 @@ export const SEMILLA = {
   tipos_examen: TIPOS,
   medicamentos: MEDICAMENTOS,
   medicos_referentes: REFERENTES,
+  especialidades: [...new Set([...REFERENTES.map((r) => r.especialidad), 'Ginecología', 'Cardiología'])]
+    .map((nombre) => ({ _id: new ObjectId(), nombre })),
   usuarios: USUARIOS,
   pacientes: [roberto, ana, pedro, lucia],
   ordenes: [...ordenes2025, ...ordenes2026, ordenLucia],

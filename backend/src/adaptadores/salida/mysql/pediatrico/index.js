@@ -94,8 +94,8 @@ export function crearAdaptadorPediatricoMysql(pool) {
     catalogos: {
       // → string[]: las especialidades en uso.
       async listarEspecialidades() {
-        const [filas] = await pool.query('SELECT DISTINCT especialidad FROM medico');
-        return listaDeEspecialidades(filas.map((f) => f.especialidad));
+        const [filas] = await pool.query('SELECT nombre FROM especialidad');
+        return listaDeEspecialidades(filas.map((f) => f.nombre));
       },
       async listarMedicos() {
         const [filas] = await pool.query(
