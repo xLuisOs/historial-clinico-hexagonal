@@ -145,14 +145,16 @@ function CamposConsulta({ valor, onChange, errores }) {
 }
 
 function Examen({ examen, editable, onResultados, onValidar }) {
-  const conValor = examen.parametros.filter((p) => p.valor != null).length;
+  // En la vista administrativa (recepción) los resultados no llegan: parametros es null.
+  const conResultados = Array.isArray(examen.parametros);
+  const conValor = conResultados ? examen.parametros.filter((p) => p.valor != null).length : 0;
   return (
     <div style={{ borderTop: '1px solid rgba(15, 45, 54, 0.08)', paddingTop: 10, marginTop: 10 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
         <span style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
           <strong>{examen.nombre}</strong>
           <Estado mapa={ESTADO_EXAMEN} valor={examen.estado} />
-          <small style={{ color: 'var(--tinta-suave)' }}>{conValor} de {examen.parametros.length}</small>
+          {conResultados && <small style={{ color: 'var(--tinta-suave)' }}>{conValor} de {examen.parametros.length}</small>}
         </span>
         {editable && examen.estado !== 'validado' && (
           <span className="acciones">
@@ -168,7 +170,7 @@ function Examen({ examen, editable, onResultados, onValidar }) {
       {examen.validadoPor && (
         <small style={{ color: 'var(--tinta-suave)' }}>Validado por {examen.validadoPor.nombre} el {fecha(examen.fechaValidacion)}</small>
       )}
-      <TablaResultados examen={examen} />
+      {conResultados && <TablaResultados examen={examen} />}
     </div>
   );
 }
@@ -406,6 +408,7 @@ export const laboratorio = {
     conReceta: 'Registrar medicación',
     botonReceta: 'Medicación',
     sinMotivo: 'Orden de examen',
+    notaAdministrativa: 'Vista administrativa: resultados, diagnóstico presuntivo, medicación y antecedentes solo los ve el químico biólogo.',
   },
   CamposConsulta,
   DetalleConsulta,

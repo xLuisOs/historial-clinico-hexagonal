@@ -158,7 +158,7 @@ export function Historial() {
 
           {administrativa && (
             <p className="nota-privacidad">
-              Vista administrativa: diagnósticos, recetas, tratamientos y antecedentes solo los ve el personal médico.
+              {vista.textos.notaAdministrativa}
             </p>
           )}
 

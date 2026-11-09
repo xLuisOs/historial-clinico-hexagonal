@@ -174,10 +174,13 @@ ocultan los botones que no le corresponden (el backend igual lo verifica):
 | Anular facturas sin pagos (hospital) |       |           | ✅    |
 | Archivar historial                  |        |           | ✅    |
 
-\* En el hospital y la odontológica, la recepción recibe una **vista administrativa**
+\* En las cuatro instituciones, la recepción recibe una **vista administrativa**
 del historial (mínimo privilegio): ficha, contacto, alergias, citas y lo que se cobra
 (facturas, internamientos con su habitación, procedimientos con su precio y pagos), sin
 tipo de sangre, motivos, diagnósticos, recetas, notas, tratamientos ni antecedentes.
+En el pediátrico ve los cobros, pero no las medidas de crecimiento ni las vacunas; en el
+laboratorio ve qué exámenes tiene cada orden y en qué estado van, pero no los resultados
+ni su evolución.
 El recorte se hace en el backend (`dominio/privacidad.js`), no solo en la pantalla,
 así que tampoco llega por la API. Médicos y admin ven el historial completo.
 

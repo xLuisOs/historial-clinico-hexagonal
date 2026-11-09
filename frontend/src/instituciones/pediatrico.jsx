@@ -53,6 +53,9 @@ export const pediatrico = {
   datosIniciales: { pesoKg: '', tallaCm: '', perimetroCefalicoCm: '' },
   preparar: (d) => Object.fromEntries(Object.entries(d).map(([k, v]) => [k, v === '' ? null : Number(v)])),
   conObservaciones: true,
+  textos: {
+    notaAdministrativa: 'Vista administrativa: medidas de crecimiento, vacunas, diagnósticos, recetas y antecedentes solo los ve el personal médico.',
+  },
   CamposConsulta,
   DetalleConsulta,
   Extras,

@@ -45,6 +45,36 @@ const RECORTE_POR_INSTITUCION = {
     // Sin el historial dental por pieza: es clínico.
     extras: ({ cuenta = null, proximasCitas = [] } = {}) => ({ cuenta, proximasCitas }),
   },
+
+  pediatrico: {
+    // Peso, talla y perímetro cefálico son datos clínicos.
+    consulta: () => ({}),
+    // Lo que se cobra. Sin curva de crecimiento ni esquema de vacunación: son clínicos.
+    extras: ({ cobros = [] } = {}) => ({ cobros }),
+  },
+
+  laboratorio: {
+    // La recepción recibe la orden y entrega el informe: ve qué exámenes tiene
+    // y en qué estado van, pero no los resultados (parametros: null).
+    consulta: ({ numero, estado, registradaPor, medicoReferente, examenes = [] } = {}) => ({
+      numero,
+      estado,
+      registradaPor,
+      medicoReferente,
+      examenes: examenes.map((e) => ({
+        tipoExamenId: e.tipoExamenId,
+        codigo: e.codigo,
+        nombre: e.nombre,
+        estado: e.estado,
+        fechaTomaMuestra: e.fechaTomaMuestra,
+        validadoPor: e.validadoPor,
+        fechaValidacion: e.fechaValidacion,
+        parametros: null,
+      })),
+    }),
+    // Sin la evolución de parámetros: son resultados.
+    extras: ({ ordenesEnCurso = 0 } = {}) => ({ ordenesEnCurso }),
+  },
 };
 
 const conVistaAdministrativa = ({ rol, institucion }) => rol === 'recepcion' && Boolean(RECORTE_POR_INSTITUCION[institucion]);

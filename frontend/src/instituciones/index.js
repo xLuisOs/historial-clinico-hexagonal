@@ -22,6 +22,7 @@ const TEXTOS = {
   conReceta: 'Emitir receta',
   botonReceta: 'Receta',
   sinMotivo: 'Consulta',
+  notaAdministrativa: 'Vista administrativa: diagnósticos, recetas, tratamientos y antecedentes solo los ve el personal médico.',
 };
 
 const generica = {
