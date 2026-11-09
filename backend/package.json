@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "node --watch src/servidor.js",
     "start": "node src/servidor.js",
+    "test": "node --test \"test/**/*.test.js\"",
     "db:probar": "node scripts/probar-conexiones.js",
     "db:mysql": "node scripts/mysql-aplicar.js",
     "db:mysql:semilla": "node scripts/mysql-aplicar.js --semilla",

@@ -259,6 +259,23 @@ pendientes ni pacientes internados a su cargo. Una sesión abierta deja de servi
 cuanto su usuario se desactiva: en cada petición se revisa que siga activo (la
 respuesta se recuerda 30 segundos).
 
+### Pruebas automáticas
+
+```bash
+cd backend
+npm test
+```
+
+Usan `node:test` (viene con Node, no hay que instalar nada) y **no tocan ninguna base**:
+prueban las reglas del dominio y los casos de uso con repositorios falsos en memoria,
+que es lo que permite la arquitectura hexagonal. Cubren el registro y la baja de
+pacientes, las tres reglas comunes (consulta con un solo diagnóstico principal,
+diagnóstico CIE-10 y receta), la agenda (choques de horario y transiciones), la
+referencia de pagos según el método, cobros y vacunas del pediátrico, resultados del
+laboratorio (fuera de rango, opciones), médicos y especialidades, antecedentes
+(perinatal solo en el pediátrico), lo que recibe recepción en cada institución y los
+permisos por rol. Están en `backend/test/`.
+
 ### Recrear las bases desde cero
 
 ```bash
