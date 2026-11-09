@@ -172,6 +172,8 @@ ocultan los botones que no le corresponden (el backend igual lo verifica):
 | Buscar pacientes y ver historial    | ✅     | ✅ *      | ✅    |
 | Registrar paciente                  | ✅     | ✅        | ✅    |
 | Actualizar contacto                 |        | ✅        | ✅    |
+| Actualizar tipo de sangre y alergias | ✅    |           |       |
+| Ver mi perfil y cambiar mi contraseña | ✅   | ✅        | ✅    |
 | Consulta, diagnóstico y receta      | ✅     |           |       |
 | Agregar antecedentes médicos (las cuatro instituciones) | ✅ |  |       |
 | Mis citas de hoy (agenda propia)    | ✅     |           |       |
@@ -326,10 +328,13 @@ Todas las rutas (salvo login) requieren `Authorization: Bearer <token>`.
 | Método | Ruta                               | Descripción                                          |
 |--------|------------------------------------|------------------------------------------------------|
 | POST   | `/api/auth/login`                  | `{ correo, password }` → `{ token, usuario }`        |
+| GET    | `/api/auth/perfil`                 | Mi perfil: nombre, correo, rol y, según el rol, especialidad, colegiado y teléfono |
+| POST   | `/api/auth/password`               | Cambiar mi contraseña `{ actual, nueva }` (cualquier rol) |
 | GET    | `/api/pacientes?q=texto`           | Buscar por nombre o documento (`&archivados=true`)   |
 | POST   | `/api/pacientes`                   | Registrar paciente nuevo                             |
 | GET    | `/api/pacientes/:id`               | Datos del paciente                                   |
 | PATCH  | `/api/pacientes/:id/contacto`      | Actualizar teléfono, dirección o correo              |
+| PATCH  | `/api/pacientes/:id/datos-clinicos` | Actualizar `{ tipoSangre?, alergias? }` (médico). La odontológica solo registra alergias |
 | POST   | `/api/pacientes/:id/baja`          | Archivar historial `{ motivo, detalle }`             |
 | GET    | `/api/pacientes/:id/historial`     | Historial completo (consultas, diagnósticos, recetas, extras) |
 | POST   | `/api/pacientes/:id/antecedentes`  | Antecedente médico `{ tipo, descripcion, anioInicio? }` (las cuatro instituciones). Tipos: patologico, quirurgico, familiar, habito, medicamento; en el pediátrico también perinatal |

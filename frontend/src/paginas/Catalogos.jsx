@@ -8,6 +8,7 @@ import { api } from '../api.js';
 import { IconoBuscar, IconoMas } from '../componentes/Iconos.jsx';
 import { Alerta, Campo, Cargando, Dialogo, erroresDe, Selector } from '../componentes/ui.jsx';
 import { dinero, etiqueta } from '../formato.js';
+import { useSesion } from '../sesion.jsx';
 
 const sinTildes = (t) => String(t ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
@@ -129,6 +130,7 @@ function DialogoEstado({ catalogo, registro, titulo, onCerrar, onListo }) {
 }
 
 export function Catalogos() {
+  const { usuario } = useSesion();
   const [catalogos, setCatalogos] = useState(null);
   const [actual, setActual] = useState(null);
   const [registros, setRegistros] = useState(null);
@@ -171,7 +173,7 @@ export function Catalogos() {
       <div className="encabezado">
         <div>
           <h1>Catálogos</h1>
-          <p>Las listas de las que escoge el sistema. Nada se borra: lo que ya se usó se conserva.</p>
+          <p>Las listas que se usan al atender, recetar y cobrar en {usuario.institucionNombre}.</p>
         </div>
         {catalogo && !catalogo.sinAlta && (
           <button type="button" className="boton boton-primario" onClick={() => setDialogo({ tipo: 'registro' })}>
@@ -197,7 +199,6 @@ export function Catalogos() {
               <h2>{catalogo.titulo}</h2>
               {registros && <small style={{ color: 'var(--tinta-suave)' }}>{registros.length} {registros.length === 1 ? 'registro' : 'registros'}</small>}
             </div>
-            {catalogo.sinAlta && <small style={{ color: 'var(--tinta-suave)' }}>Aquí se editan sus datos generales y su precio. Los nuevos se cargan con la semilla, con sus parámetros.</small>}
             <div className="buscador">
               <div className="entrada">
                 <IconoBuscar tam={18} />

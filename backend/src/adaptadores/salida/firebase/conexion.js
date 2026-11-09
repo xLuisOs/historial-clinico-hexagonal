@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { cert, initializeApp } from 'firebase-admin/app';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
-import { NoDisponible } from '../../../dominio/errores.js';
+import { FallaTecnica } from '../../../dominio/errores.js';
 
 /**
  * Cliente de Firestore con la clave de la cuenta de servicio. El Admin SDK no
@@ -15,13 +15,13 @@ import { NoDisponible } from '../../../dominio/errores.js';
 export function crearFirestore({ projectId, credenciales }) {
   const emulador = Boolean(process.env.FIRESTORE_EMULATOR_HOST);
   if (!credenciales && !emulador) {
-    throw new NoDisponible('Firebase no está configurado (falta FIREBASE_CREDENTIALS)');
+    throw new FallaTecnica('Firebase no está configurado (falta FIREBASE_CREDENTIALS)');
   }
 
   let cuenta = null;
   if (credenciales) {
     const ruta = path.resolve(credenciales);
-    if (!fs.existsSync(ruta)) throw new NoDisponible(`No se encontró la clave de Firebase en ${ruta}`);
+    if (!fs.existsSync(ruta)) throw new FallaTecnica(`No se encontró la clave de Firebase en ${ruta}`);
     cuenta = JSON.parse(fs.readFileSync(ruta, 'utf8'));
   }
 
@@ -54,9 +54,9 @@ export function traducirError(error) {
   switch (error?.code) {
     case 7: // PERMISSION_DENIED
     case 16: // UNAUTHENTICATED
-      return new NoDisponible('Firebase rechazó las credenciales (revisa FIREBASE_CREDENTIALS)');
+      return new FallaTecnica('Firebase rechazó las credenciales (revisa FIREBASE_CREDENTIALS)');
     case 14: // UNAVAILABLE
-      return new NoDisponible('No se pudo conectar con Firebase');
+      return new FallaTecnica('No se pudo conectar con Firebase', 'No se pudo conectar. Intenta de nuevo en un momento.');
     default:
       return error;
   }

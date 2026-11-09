@@ -146,7 +146,7 @@ function validarCampo(v, campo, valor) {
 /** Registro nuevo: todos los campos del catálogo. */
 export function validarNuevoRegistro(institucion, clave, datos = {}) {
   const def = definicionCatalogo(institucion, clave);
-  if (def.sinAlta) throw new DatosInvalidos(`Los ${def.titulo.toLowerCase()} nuevos se cargan con la semilla`);
+  if (def.sinAlta) throw new DatosInvalidos('Este catálogo no admite registros nuevos');
   const v = new Validador();
   const registro = Object.fromEntries(def.campos.map((c) => [c.clave, validarCampo(v, c, datos[c.clave])]));
   v.lanzarSiHayErrores();
@@ -171,7 +171,7 @@ export function validarCambiosRegistro(institucion, clave, datos = {}) {
 /** { activo: true | false }, solo en catálogos con estado. */
 export function validarEstadoRegistro(institucion, clave, datos = {}) {
   const def = definicionCatalogo(institucion, clave);
-  if (!def.estado) throw new DatosInvalidos(`Los ${def.titulo.toLowerCase()} no se desactivan: no tienen estado en la base`);
+  if (!def.estado) throw new DatosInvalidos(`Los ${def.titulo.toLowerCase()} no se pueden desactivar`);
   if (typeof datos.activo !== 'boolean') throw new DatosInvalidos('Datos inválidos', { activo: 'Indica true o false' });
   return datos.activo;
 }

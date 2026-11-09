@@ -26,6 +26,13 @@ rutas.post('/auth/login', async (req, res) => {
 rutas.use(requiereSesion);
 
 rutas.get('/auth/yo', (req, res) => res.json(req.contexto.usuario));
+rutas.get('/auth/perfil', async (req, res) => {
+  res.json(await casos.obtenerPerfil(req.contexto));
+});
+rutas.post('/auth/password', async (req, res) => {
+  await casos.cambiarMiPassword(req.contexto, req.body);
+  res.status(204).end();
+});
 
 rutas.get('/agenda', async (req, res) => {
   res.json(await casos.citasDelDia(req.contexto, req.query.fecha, req.query.medicoId));
@@ -60,6 +67,9 @@ rutas.get('/pacientes/:id', async (req, res) => {
 });
 rutas.patch('/pacientes/:id/contacto', async (req, res) => {
   res.json(await casos.actualizarContacto(req.contexto, req.params.id, req.body));
+});
+rutas.patch('/pacientes/:id/datos-clinicos', async (req, res) => {
+  res.json(await casos.actualizarDatosClinicos(req.contexto, req.params.id, req.body));
 });
 rutas.post('/pacientes/:id/baja', async (req, res) => {
   res.json(await casos.darDeBaja(req.contexto, req.params.id, req.body));

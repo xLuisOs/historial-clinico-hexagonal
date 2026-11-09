@@ -140,6 +140,15 @@ export function crearRepositorioPacientes(db, zonaHoraria) {
       return obtenerPorId(pacienteId);
     },
 
+    // La clínica solo registra alergias (no tipo de sangre); null = ninguna registrada.
+    async actualizarDatosClinicos(pacienteId, datos) {
+      await enTransaccion(db, async (t) => {
+        const snap = await exigirPacienteActivo(t, db, pacienteId);
+        t.update(snap.ref, { alergias: datos.alergias ?? null });
+      });
+      return obtenerPorId(pacienteId);
+    },
+
     // Archivar = marcar inactivo + cancelar sus citas futuras, todo o nada.
     async darDeBaja(pacienteId, { motivo, detalle }) {
       await enTransaccion(db, async (t) => {

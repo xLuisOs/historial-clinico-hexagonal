@@ -7,7 +7,7 @@ import {
   CamposDiagnostico, DIAGNOSTICO, EditorReceta, ITEM_RECETA, prepararDiagnostico, prepararItems,
 } from '../componentes/EditoresClinicos.jsx';
 import { Alerta, Campo, Dialogo, erroresDe, Selector } from '../componentes/ui.jsx';
-import { MOTIVOS_BAJA } from '../formato.js';
+import { conTipoSangre, MOTIVOS_BAJA, TIPOS_SANGRE } from '../formato.js';
 
 function useEnvio(accion, onListo) {
   const [error, setError] = useState(null);
@@ -35,6 +35,36 @@ const Pie = ({ onCerrar, enviando, texto, peligro }) => (
     </button>
   </footer>
 );
+
+/** Tipo de sangre y alergias, que se descubren o se confirman después del registro (médico). */
+export function DialogoDatosClinicos({ paciente, institucion, onCerrar, onListo }) {
+  const conSangre = conTipoSangre(institucion);
+  const [datos, setDatos] = useState({
+    tipoSangre: paciente.datosClinicos?.tipoSangre ?? '',
+    alergias: paciente.datosClinicos?.alergias ?? '',
+  });
+  const { error, errores, enviando, enviar } = useEnvio(() => api.actualizarDatosClinicos(paciente.id, {
+    ...(conSangre && { tipoSangre: datos.tipoSangre || null }),
+    alergias: datos.alergias.trim() || null,
+  }), onListo);
+  const cambiar = (campo) => (e) => setDatos({ ...datos, [campo]: e.target.value });
+  return (
+    <Dialogo titulo="Datos clínicos" onCerrar={onCerrar}>
+      <form className="formulario" onSubmit={enviar} noValidate>
+        <Alerta>{error?.message}</Alerta>
+        {conSangre && (
+          <Selector etiqueta="Tipo de sangre" value={datos.tipoSangre} onChange={cambiar('tipoSangre')} error={errores.tipoSangre}
+            vacio="Sin registrar" opciones={TIPOS_SANGRE.map((t) => ({ valor: t, texto: t }))} />
+        )}
+        <Campo etiqueta="Alergias" error={errores.alergias}>
+          <textarea value={datos.alergias} onChange={cambiar('alergias')} maxLength={500}
+            placeholder="p. ej. Penicilina, látex. Déjalo vacío si no tiene alergias conocidas." />
+        </Campo>
+        <Pie onCerrar={onCerrar} enviando={enviando} texto="Guardar" />
+      </form>
+    </Dialogo>
+  );
+}
 
 export function DialogoContacto({ paciente, onCerrar, onListo }) {
   const [datos, setDatos] = useState({

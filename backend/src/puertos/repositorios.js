@@ -22,6 +22,10 @@ export const PUERTOS = {
     buscarPorCorreo: '(correo)',
     // Guarda la fecha del último inicio de sesión.
     registrarAcceso: '(usuarioId)',
+    // → Perfil (ver dominio/cuenta.js) | null
+    obtenerPerfil: '(usuarioId)',
+    // Guarda el hash de la nueva contraseña del propio usuario.
+    cambiarPassword: '(usuarioId, passwordHash)',
   },
 
   pacientes: {
@@ -33,6 +37,8 @@ export const PUERTOS = {
     obtenerPorId: '(pacienteId)',
     // → Paciente
     actualizarContacto: '(pacienteId, contacto)',
+    // → Paciente. { tipoSangre?, alergias? }: solo lo que viene; null = sin registrar.
+    actualizarDatosClinicos: '(pacienteId, datosClinicos)',
     // → Paciente. Archiva el historial (nunca lo borra).
     darDeBaja: '(pacienteId, { motivo, detalle })',
   },

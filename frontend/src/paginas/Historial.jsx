@@ -3,12 +3,12 @@ import { Link, useParams } from 'react-router-dom';
 import { api } from '../api.js';
 import { IconoAlerta, IconoAtras, IconoMas } from '../componentes/Iconos.jsx';
 import { Alerta, Cargando, iniciales } from '../componentes/ui.jsx';
-import { edad, etiqueta, fecha, fechaHora, MOTIVOS_BAJA, nombreCompleto, SEXO } from '../formato.js';
+import { conTipoSangre, edad, etiqueta, fecha, fechaHora, MOTIVOS_BAJA, nombreCompleto, SEXO } from '../formato.js';
 import { vistaDe } from '../instituciones/index.js';
 import { puede, useSesion } from '../sesion.jsx';
 import { DialogoAntecedente, PanelAntecedentes } from './Antecedentes.jsx';
 import { DialogoAgendar, DialogoCancelarCita, DialogoReprogramar, PanelCitas } from './Citas.jsx';
-import { DialogoBaja, DialogoContacto, DialogoDiagnostico, DialogoReceta } from './Dialogos.jsx';
+import { DialogoBaja, DialogoContacto, DialogoDatosClinicos, DialogoDiagnostico, DialogoReceta } from './Dialogos.jsx';
 
 const Dato = ({ titulo, children }) => (
   <div className="dato"><small>{titulo}</small><span>{children || '—'}</span></div>
@@ -135,6 +135,9 @@ export function Historial() {
               {puedeAgendar && (
                 <button type="button" className="boton boton-primario" onClick={() => setDialogo({ tipo: 'agendar' })}><IconoMas tam={18} /> Agendar cita</button>
               )}
+              {puedeAtender && (
+                <button type="button" className="boton boton-secundario" onClick={() => setDialogo({ tipo: 'datosClinicos' })}>Datos clínicos</button>
+              )}
               {activo && puede(usuario, 'actualizarContacto') && (
                 <button type="button" className="boton boton-secundario" onClick={() => setDialogo({ tipo: 'contacto' })}>Actualizar contacto</button>
               )}
@@ -157,7 +160,7 @@ export function Historial() {
             <Dato titulo="Edad">{edad(paciente.fechaNacimiento)} ({fecha(paciente.fechaNacimiento)})</Dato>
             <Dato titulo="Sexo">{SEXO[paciente.sexo]}</Dato>
             <Dato titulo="Documento">{paciente.documento}</Dato>
-            {!administrativa && <Dato titulo="Tipo de sangre">{paciente.datosClinicos?.tipoSangre}</Dato>}
+            {!administrativa && conTipoSangre(usuario.institucion) && <Dato titulo="Tipo de sangre">{paciente.datosClinicos?.tipoSangre}</Dato>}
             <Dato titulo="Teléfono">{paciente.contacto?.telefono}</Dato>
             <Dato titulo="Dirección">{paciente.contacto?.direccion}</Dato>
             {paciente.contacto?.correo && <Dato titulo="Correo">{paciente.contacto.correo}</Dato>}
@@ -234,6 +237,9 @@ export function Historial() {
       </div>
 
       {dialogo?.tipo === 'antecedente' && <DialogoAntecedente pacienteId={id} onCerrar={() => setDialogo(null)} onListo={alListo} />}
+      {dialogo?.tipo === 'datosClinicos' && (
+        <DialogoDatosClinicos paciente={paciente} institucion={usuario.institucion} onCerrar={() => setDialogo(null)} onListo={alListo} />
+      )}
       {dialogo?.tipo === 'contacto' && <DialogoContacto paciente={paciente} onCerrar={() => setDialogo(null)} onListo={alListo} />}
       {dialogo?.tipo === 'baja' && <DialogoBaja paciente={paciente} onCerrar={() => setDialogo(null)} onListo={alListo} />}
       {dialogo?.tipo === 'diagnostico' && <DialogoDiagnostico consulta={dialogo.consulta} onCerrar={() => setDialogo(null)} onListo={alListo} />}

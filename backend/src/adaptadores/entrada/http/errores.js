@@ -1,5 +1,5 @@
 import {
-  Conflicto, DatosInvalidos, NoAutenticado, NoDisponible, NoEncontrado, SinPermiso,
+  Conflicto, DatosInvalidos, FallaTecnica, NoAutenticado, NoDisponible, NoEncontrado, SinPermiso,
 } from '../../../dominio/errores.js';
 
 const ESTADOS = new Map([
@@ -16,6 +16,7 @@ const ESTADOS = new Map([
 // para no filtrar detalles internos de la base de datos.
 // Express reconoce un manejador de errores porque recibe 4 parámetros.
 export function manejarErrores(error, req, res, _next) {
+  if (error instanceof FallaTecnica) console.warn(`[${req.method} ${req.originalUrl}] ${error.detalleTecnico}`);
   for (const [Tipo, estado] of ESTADOS) {
     if (error instanceof Tipo) {
       return res.status(estado).json({ error: error.message, detalles: error.detalles });

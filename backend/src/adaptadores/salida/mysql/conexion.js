@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import mysql from 'mysql2/promise';
-import { Conflicto, DatosInvalidos, NoDisponible } from '../../../dominio/errores.js';
+import { Conflicto, DatosInvalidos, FallaTecnica } from '../../../dominio/errores.js';
 
 const HOSTS_LOCALES = ['localhost', '127.0.0.1', '::1'];
 
@@ -23,7 +23,7 @@ export function configDesdeUrl(url, ca) {
 }
 
 export function crearPoolMysql({ url, ca, zonaHoraria }) {
-  if (!url) throw new NoDisponible('MySQL no está configurado (falta MYSQL_URL)');
+  if (!url) throw new FallaTecnica('MySQL no está configurado (falta MYSQL_URL)');
   const pool = mysql.createPool({
     ...configDesdeUrl(url, ca),
     connectionLimit: 5,
@@ -61,7 +61,7 @@ export function traducirError(error, mensajes = {}) {
     case 'ER_SIGNAL_EXCEPTION': // SIGNAL de un trigger
       return new Conflicto(error.sqlMessage);
     case 'ER_CHECK_CONSTRAINT_VIOLATED':
-      return new DatosInvalidos('Un dato no cumple las reglas de la base', { restriccion: error.sqlMessage });
+      return new DatosInvalidos('Revisa los datos e intenta de nuevo', { restriccion: error.sqlMessage });
     case 'ER_NO_REFERENCED_ROW_2':
       return new DatosInvalidos(mensajes.referencia ?? 'Se hace referencia a un registro que no existe');
     default:

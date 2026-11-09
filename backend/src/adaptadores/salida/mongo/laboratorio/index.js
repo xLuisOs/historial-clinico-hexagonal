@@ -2,7 +2,7 @@
 // de puertos/repositorios.js y el puerto propio `laboratorio`, sobre el
 // modelo documental de db/mongo/esquemas.js.
 
-import { aObjectId } from '../conexion.js';
+import { aObjectId, dateATexto } from '../conexion.js';
 import { crearRepositorioAntecedentes } from './antecedentes.js';
 import { crearCatalogosAdmin } from './catalogos.js';
 import { crearRepositorioMedicos, crearRepositorioPersonalReferentes } from './medicos.js';
@@ -41,6 +41,23 @@ export function crearAdaptadorLaboratorioMongo(cliente, nombreDb, zonaHoraria) {
       async estaActivo(usuarioId) {
         const u = await db.collection('usuarios').findOne({ _id: aObjectId(usuarioId, 'Usuario') }, { projection: { activo: 1 } });
         return u?.activo === true;
+      },
+      // Perfil de quien inició sesión: en el laboratorio la persona y su cuenta son el mismo documento.
+      async obtenerPerfil(usuarioId) {
+        const u = await db.collection('usuarios').findOne({ _id: aObjectId(usuarioId, 'Usuario') });
+        return u && {
+          id: u._id.toHexString(),
+          nombre: nombreCompleto(u),
+          correo: u.correo,
+          rol: ROLES[u.rol],
+          ultimoAcceso: dateATexto(u.ultimo_acceso, zonaHoraria),
+          especialidad: u.rol === 'quimico_biologo' ? 'Química biológica' : null,
+          numeroColegiado: u.numero_colegiado ?? null,
+          telefono: u.telefono ?? null,
+        };
+      },
+      async cambiarPassword(usuarioId, passwordHash) {
+        await db.collection('usuarios').updateOne({ _id: aObjectId(usuarioId, 'Usuario') }, { $set: { password_hash: passwordHash } });
       },
     },
 

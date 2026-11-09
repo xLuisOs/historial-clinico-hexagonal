@@ -1,4 +1,4 @@
-import { NoDisponible } from '../../dominio/errores.js';
+import { FallaTecnica } from '../../dominio/errores.js';
 import { PUERTOS } from '../../puertos/repositorios.js';
 
 /**
@@ -14,7 +14,7 @@ export function adaptadorPendiente(descripcion) {
         Object.keys(metodos).map((metodo) => [
           metodo,
           async () => {
-            throw new NoDisponible(`${descripcion}: ${repo}.${metodo} aún no está implementado`);
+            throw new FallaTecnica(`${descripcion}: ${repo}.${metodo} aún no está implementado`);
           },
         ]),
       ),

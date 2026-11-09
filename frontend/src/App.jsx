@@ -8,6 +8,7 @@ import { Medicos } from './paginas/Medicos.jsx';
 import { NuevaConsulta } from './paginas/NuevaConsulta.jsx';
 import { NuevoPaciente } from './paginas/NuevoPaciente.jsx';
 import { Pacientes } from './paginas/Pacientes.jsx';
+import { Perfil } from './paginas/Perfil.jsx';
 import { Recepcionistas } from './paginas/Recepcionistas.jsx';
 import { ProveedorSesion, useSesion } from './sesion.jsx';
 
@@ -47,6 +48,7 @@ export function App() {
             <Route path="medicos" element={<Medicos />} />
             <Route path="recepcionistas" element={<Recepcionistas />} />
             <Route path="catalogos" element={<Catalogos />} />
+            <Route path="perfil" element={<Perfil />} />
             <Route path="pacientes/nuevo" element={<NuevoPaciente />} />
             <Route path="pacientes/:id" element={<Historial />} />
             <Route path="pacientes/:id/consulta" element={<NuevaConsulta />} />

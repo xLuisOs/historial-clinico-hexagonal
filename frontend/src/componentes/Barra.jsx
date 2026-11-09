@@ -1,5 +1,5 @@
 import { Link, NavLink } from 'react-router-dom';
-import { NOMBRE_ROL, puede, useSesion } from '../sesion.jsx';
+import { nombreRol, puede, useSesion } from '../sesion.jsx';
 import { IconoCruz, IconoSalir } from './Iconos.jsx';
 
 /** Barra flotante de vidrio, igual para las cuatro instituciones. */
@@ -25,10 +25,13 @@ export function Barra() {
         {usuario.rol === 'admin' && <NavLink to="/catalogos">Catálogos</NavLink>}
       </nav>
       <div className="barra-usuario">
-        <div className="chip-usuario">
+        <NavLink to="/perfil" className="chip-usuario" title="Mi perfil" aria-label={`Mi perfil: ${usuario.nombre}`}>
           <strong>{usuario.nombre}</strong>
-          <small>{NOMBRE_ROL[usuario.rol] ?? usuario.rol}</small>
-        </div>
+          <small>{nombreRol(usuario)}</small>
+          <span className="chip-inicial" aria-hidden="true">
+            {usuario.nombre.split(' ').filter((p) => p && !p.endsWith('.')).slice(0, 2).map((p) => p[0]).join('').toUpperCase()}
+          </span>
+        </NavLink>
         <button type="button" className="boton boton-secundario boton-chico" onClick={cerrar}>
           <IconoSalir tam={16} /> Salir
         </button>

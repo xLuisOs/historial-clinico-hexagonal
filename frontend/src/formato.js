@@ -68,3 +68,6 @@ export const textoReferencia = (metodo, referencia) =>
 // Dominio del correo de cada institución: es el que enruta el inicio de sesión
 // hacia su base de datos (el backend rechaza cualquier otro).
 export const DOMINIO_INSTITUCION = { hospital: 'hospital.gt', odontologica: 'odonto.gt', laboratorio: 'lab.gt', pediatrico: 'pediatrico.gt' };
+
+// La clínica odontológica no registra tipo de sangre (solo alergias).
+export const conTipoSangre = (institucion) => institucion !== 'odontologica';

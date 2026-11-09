@@ -11,7 +11,8 @@ import bcrypt from 'bcryptjs';
 import { INSTITUCIONES } from '../config/instituciones.js';
 import { DatosInvalidos, NoDisponible, SinPermiso } from '../dominio/errores.js';
 import { Validador } from '../dominio/validacion.js';
-import { validarNuevoPaciente, validarContacto, validarBaja } from '../dominio/paciente.js';
+import { validarNuevoPaciente, validarContacto, validarBaja, validarDatosClinicos } from '../dominio/paciente.js';
+import { exigirPasswordCorrecta, validarCambioPassword } from '../dominio/cuenta.js';
 import { validarNuevaConsulta, validarDiagnostico, validarReceta } from '../dominio/atencion.js';
 import { validarAntecedente } from '../dominio/antecedente.js';
 import {
@@ -28,6 +29,25 @@ export function exigirRol(usuario, ...roles) {
   if (!roles.includes(usuario.rol)) {
     throw new SinPermiso(`Esta acción requiere rol: ${roles.join(' o ')}`);
   }
+}
+
+// ---------------------------------------------------------------- mi cuenta
+
+/** Perfil de quien inició sesión (cualquier rol). */
+export async function obtenerPerfil({ usuario, repos }) {
+  const perfil = await repos.usuarios.obtenerPerfil?.(usuario.id);
+  if (!perfil) throw new NoDisponible('No se pudo cargar tu perfil');
+  return { ...perfil, institucion: usuario.institucion };
+}
+
+/** Cambiar mi contraseña: pide la actual para confirmar que soy yo. */
+export async function cambiarMiPassword({ usuario, repos }, datos) {
+  const { actual, nueva } = validarCambioPassword(datos);
+  const perfil = await repos.usuarios.obtenerPerfil?.(usuario.id);
+  const cuenta = perfil && await repos.usuarios.buscarPorCorreo(perfil.correo);
+  if (!cuenta || typeof repos.usuarios.cambiarPassword !== 'function') throw new NoDisponible('No se pudo cambiar la contraseña');
+  exigirPasswordCorrecta(await bcrypt.compare(actual, cuenta.passwordHash));
+  await repos.usuarios.cambiarPassword(usuario.id, await bcrypt.hash(nueva, 10));
 }
 
 // ---------------------------------------------------------------- pacientes
@@ -52,6 +72,16 @@ export async function obtenerPaciente({ usuario, repos }, pacienteId) {
 export async function actualizarContacto({ usuario, repos }, pacienteId, datos) {
   exigirRol(usuario, 'recepcion', 'admin');
   return pacienteParaRol(await repos.pacientes.actualizarContacto(pacienteId, validarContacto(datos)), usuario);
+}
+
+// Tipo de sangre y alergias después del registro: los actualiza el médico.
+export async function actualizarDatosClinicos({ usuario, repos }, pacienteId, datos) {
+  exigirRol(usuario, 'medico');
+  if (typeof repos.pacientes.actualizarDatosClinicos !== 'function') {
+    throw new NoDisponible('Esta institución no permite actualizar datos clínicos');
+  }
+  const cambios = validarDatosClinicos(datos, usuario.institucion);
+  return pacienteParaRol(await repos.pacientes.actualizarDatosClinicos(pacienteId, cambios), usuario);
 }
 
 export function darDeBaja({ usuario, repos }, pacienteId, datos) {

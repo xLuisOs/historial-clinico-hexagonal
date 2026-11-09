@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import pg from 'pg';
-import { Conflicto, DatosInvalidos, NoDisponible } from '../../../dominio/errores.js';
+import { Conflicto, DatosInvalidos, FallaTecnica } from '../../../dominio/errores.js';
 
 const HOSTS_LOCALES = ['localhost', '127.0.0.1', '::1'];
 
@@ -36,7 +36,7 @@ export function configDesdeUrl(url, ca) {
 // hospital_app tiene la zona horaria configurada (ALTER ROLE ... SET timezone
 // en db/postgres/01_esquema.sql).
 export function crearPoolPostgres({ url, ca }) {
-  if (!url) throw new NoDisponible('PostgreSQL no está configurado (falta POSTGRES_URL)');
+  if (!url) throw new FallaTecnica('PostgreSQL no está configurado (falta POSTGRES_URL)');
   // Abrir una conexión a Supabase cuesta varios viajes de ida y vuelta (TLS +
   // autenticación): se mantienen abiertas 5 minutos en vez de los 10 s por defecto.
   // Si no hay conexión en 10 s, la petición falla en vez de quedarse esperando.
@@ -82,15 +82,15 @@ export function traducirError(error, mensajes = {}) {
     case 'P0001': // RAISE EXCEPTION de un trigger
       return new Conflicto(error.message);
     case '23514': // check_violation
-      return new DatosInvalidos('Un dato no cumple las reglas de la base', { restriccion: error.constraint });
+      return new DatosInvalidos('Revisa los datos e intenta de nuevo', { restriccion: error.constraint });
     case '23503': // foreign_key_violation
       return new DatosInvalidos(mensajes.referencia ?? 'Se hace referencia a un registro que no existe');
     case '28P01': // invalid_password
     case '42501': // insufficient_privilege
-      return new NoDisponible('PostgreSQL rechazó el acceso (revisa POSTGRES_URL)');
+      return new FallaTecnica('PostgreSQL rechazó el acceso (revisa POSTGRES_URL)');
     default:
       if (SIN_CONEXION.includes(error?.code) || /Connection terminated|timeout exceeded when trying to connect/i.test(error?.message ?? '')) {
-        return new NoDisponible('No se pudo conectar con la base de datos del hospital. Intenta de nuevo.');
+        return new FallaTecnica(`Sin conexión con PostgreSQL: ${error.code ?? error.message}`, 'No se pudo conectar. Intenta de nuevo en un momento.');
       }
       return error;
   }

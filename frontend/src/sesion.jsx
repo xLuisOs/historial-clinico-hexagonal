@@ -50,3 +50,7 @@ export const PERMISOS = {
 export const puede = (usuario, accion) => PERMISOS[accion]?.includes(usuario?.rol) ?? false;
 
 export const NOMBRE_ROL = { medico: 'Médico', recepcion: 'Recepción', admin: 'Administración' };
+// El profesional que atiende se llama distinto en cada institución.
+const PROFESIONAL = { odontologica: 'Odontólogo', laboratorio: 'Químico biólogo' };
+export const nombreRol = (usuario) =>
+  (usuario?.rol === 'medico' ? PROFESIONAL[usuario.institucion] : null) ?? NOMBRE_ROL[usuario?.rol] ?? usuario?.rol;

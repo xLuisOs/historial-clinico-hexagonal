@@ -1,3 +1,4 @@
+import { DatosInvalidos } from './errores.js';
 import { Validador } from './validacion.js';
 
 // Modelo común de paciente: es la "forma" que todos los adaptadores
@@ -78,6 +79,28 @@ export function validarNuevoPaciente(datos = {}, institucion = null) {
 
   v.lanzarSiHayErrores();
   return paciente;
+}
+
+// Datos clínicos que se pueden actualizar después del registro, por
+// institución. La clínica odontológica no registra tipo de sangre.
+const CAMPOS_CLINICOS = { odontologica: ['alergias'] };
+export const camposClinicos = (institucion) => CAMPOS_CLINICOS[institucion] ?? ['tipoSangre', 'alergias'];
+
+/** Actualizar tipo de sangre y alergias: solo lo que viene; vacío = sin registrar. */
+export function validarDatosClinicos(datos = {}, institucion) {
+  const v = new Validador();
+  const permitidos = camposClinicos(institucion);
+  const cambios = {};
+  for (const campo of Object.keys(datos)) {
+    if (!permitidos.includes(campo)) v.error(campo, 'Esta institución no registra este dato');
+  }
+  if ('tipoSangre' in datos && permitidos.includes('tipoSangre')) {
+    cambios.tipoSangre = v.opcion('tipoSangre', datos.tipoSangre === '' ? null : datos.tipoSangre, TIPOS_SANGRE);
+  }
+  if ('alergias' in datos) cambios.alergias = v.texto('alergias', datos.alergias, { max: 500 });
+  v.lanzarSiHayErrores();
+  if (Object.keys(cambios).length === 0) throw new DatosInvalidos('No hay cambios');
+  return cambios;
 }
 
 export function validarContacto(datos = {}) {

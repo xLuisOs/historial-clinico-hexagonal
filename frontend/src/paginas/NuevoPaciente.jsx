@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 import { IconoAtras } from '../componentes/Iconos.jsx';
 import { Alerta, Campo, erroresDe, Selector } from '../componentes/ui.jsx';
-import { etiqueta, parentescosPara, SEXO, TIPOS_SANGRE } from '../formato.js';
+import { conTipoSangre, etiqueta, parentescosPara, SEXO, TIPOS_SANGRE } from '../formato.js';
 import { BuscadorEncargado } from '../instituciones/encargado.jsx';
 import { useSesion } from '../sesion.jsx';
 
@@ -98,9 +98,11 @@ export function NuevoPaciente() {
         <section className="seccion-form">
           <header><h2>Datos clínicos</h2></header>
           <div className="rejilla">
-            <Selector etiqueta="Tipo de sangre" value={datos.tipoSangre} onChange={cambiar('tipoSangre')}
-              error={errores['datosClinicos.tipoSangre']} vacio="Sin registrar"
-              opciones={TIPOS_SANGRE.map((t) => ({ valor: t, texto: t }))} />
+            {conTipoSangre(usuario.institucion) && (
+              <Selector etiqueta="Tipo de sangre" value={datos.tipoSangre} onChange={cambiar('tipoSangre')}
+                error={errores['datosClinicos.tipoSangre']} vacio="Sin registrar"
+                opciones={TIPOS_SANGRE.map((t) => ({ valor: t, texto: t }))} />
+            )}
             <Campo etiqueta="Alergias" value={datos.alergias} onChange={cambiar('alergias')}
               error={errores['datosClinicos.alergias']} placeholder="Ej. Penicilina" />
           </div>

@@ -150,6 +150,21 @@ export function crearRepositorioPacientes(pool) {
       });
     },
 
+    // Tipo de sangre y alergias: solo lo que viene; null = sin registrar.
+    actualizarDatosClinicos(pacienteId, datos) {
+      return enTransaccion(pool, async (cx) => {
+        const id = idNumerico(pacienteId, 'Paciente');
+        await exigirPacienteActivo(cx, id);
+        const columnas = { tipoSangre: 'tipo_sangre', alergias: 'alergias' };
+        const campos = Object.keys(datos).filter((c) => columnas[c]);
+        await cx.query(
+          `UPDATE paciente SET ${campos.map((c, i) => `${columnas[c]} = $${i + 1}`).join(', ')} WHERE id_paciente = $${campos.length + 1}`,
+          [...campos.map((c) => datos[c]), id],
+        );
+        return obtenerPorId(id, cx);
+      });
+    },
+
     // Archivar = marcar archivado + cancelar sus citas futuras, todo o nada.
     darDeBaja(pacienteId, { motivo, detalle }) {
       return enTransaccion(pool, async (cx) => {

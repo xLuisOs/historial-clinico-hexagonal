@@ -127,6 +127,15 @@ export function crearRepositorioPacientes(cliente, db, zonaHoraria) {
       return obtenerPorId(pacienteId);
     },
 
+    // Tipo de sangre y alergias: solo lo que viene; null = sin registrar.
+    async actualizarDatosClinicos(pacienteId, datos) {
+      const campos = { tipoSangre: 'datos_clinicos.tipo_sangre', alergias: 'datos_clinicos.alergias' };
+      const cambios = Object.fromEntries(Object.keys(datos).filter((c) => campos[c]).map((c) => [campos[c], datos[c]]));
+      const res = await pacientes.updateOne({ _id: aObjectId(pacienteId, 'Paciente'), 'estado.activo': true }, { $set: cambios });
+      if (res.matchedCount === 0) await exigirPacienteActivo(db, pacienteId); // lanza el error que corresponda
+      return obtenerPorId(pacienteId);
+    },
+
     // Archivar = marcar inactivo + anular sus órdenes que no se procesaron,
     // todo o nada (transacción de varios documentos).
     darDeBaja(pacienteId, { motivo, detalle }) {

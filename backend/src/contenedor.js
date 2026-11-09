@@ -9,7 +9,7 @@
 
 import { entorno } from './config/entorno.js';
 import { INSTITUCIONES } from './config/instituciones.js';
-import { NoDisponible } from './dominio/errores.js';
+import { FallaTecnica } from './dominio/errores.js';
 import { verificarAdaptador } from './puertos/repositorios.js';
 
 import { crearPoolMysql } from './adaptadores/salida/mysql/conexion.js';
@@ -41,12 +41,12 @@ const adaptadores = new Map();
 
 export function repositoriosDe(claveInstitucion) {
   const institucion = INSTITUCIONES[claveInstitucion];
-  if (!institucion) throw new NoDisponible(`Institución desconocida: ${claveInstitucion}`);
+  if (!institucion) throw new FallaTecnica(`Institución desconocida: ${claveInstitucion}`);
 
   const clave = `${institucion.clave}:${institucion.motor}`;
   if (!adaptadores.has(clave)) {
     const fabrica = FABRICAS[clave];
-    if (!fabrica) throw new NoDisponible(`No hay adaptador para ${institucion.nombre} con ${institucion.motor}`);
+    if (!fabrica) throw new FallaTecnica(`No hay adaptador para ${institucion.nombre} con ${institucion.motor}`);
     adaptadores.set(clave, verificarAdaptador(clave, fabrica()));
   }
   return adaptadores.get(clave);

@@ -63,12 +63,15 @@ const q = (texto) => encodeURIComponent(texto);
 export const api = {
   instituciones: () => pedir('GET', '/instituciones'),
   login: (correo, password) => pedir('POST', '/auth/login', { correo, password }),
+  perfil: () => pedir('GET', '/auth/perfil'),
+  cambiarMiPassword: (datos) => pedir('POST', '/auth/password', datos),
 
   buscarPacientes: (texto, archivados) =>
     pedir('GET', `/pacientes?q=${q(texto)}${archivados ? '&archivados=true' : ''}`),
   registrarPaciente: (datos) => pedir('POST', '/pacientes', datos),
   historial: (id) => pedir('GET', `/pacientes/${q(id)}/historial`),
   actualizarContacto: (id, datos) => pedir('PATCH', `/pacientes/${q(id)}/contacto`, datos),
+  actualizarDatosClinicos: (id, datos) => pedir('PATCH', `/pacientes/${q(id)}/datos-clinicos`, datos),
   darDeBaja: (id, datos) => pedir('POST', `/pacientes/${q(id)}/baja`, datos),
 
   agregarAntecedente: (pacienteId, datos) => pedir('POST', `/pacientes/${q(pacienteId)}/antecedentes`, datos),

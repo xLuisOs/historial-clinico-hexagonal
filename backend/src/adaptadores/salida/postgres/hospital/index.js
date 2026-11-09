@@ -39,6 +39,34 @@ export function crearAdaptadorHospitalPostgres(pool) {
         const { rows: [u] } = await pool.query('SELECT activo FROM usuario WHERE id_usuario = $1', [Number(usuarioId)]);
         return Boolean(u?.activo);
       },
+      // Perfil de quien inició sesión: su cuenta y, según el rol, sus datos de médico o de recepción.
+      async obtenerPerfil(usuarioId) {
+        const { rows: [u] } = await pool.query(
+          `SELECT u.id_usuario, u.correo, u.nombre_mostrar, u.rol, u.ultimo_acceso,
+                  m.nombres || ' ' || m.apellidos AS medico, m.numero_colegiado, m.telefono AS telefono_medico,
+                  e.nombre AS especialidad,
+                  r.nombres || ' ' || r.apellidos AS recepcionista, r.telefono AS telefono_recepcion
+           FROM usuario u
+           LEFT JOIN medico m        ON m.id_medico = u.medico_fk
+           LEFT JOIN especialidad e  ON e.id_especialidad = m.especialidad_fk
+           LEFT JOIN recepcionista r ON r.id_recepcionista = u.recepcionista_fk
+           WHERE u.id_usuario = $1`,
+          [Number(usuarioId)],
+        );
+        return u && {
+          id: String(u.id_usuario),
+          nombre: u.medico ?? u.recepcionista ?? u.nombre_mostrar,
+          correo: u.correo,
+          rol: u.rol,
+          ultimoAcceso: u.ultimo_acceso,
+          especialidad: u.especialidad ?? null,
+          numeroColegiado: u.numero_colegiado ?? null,
+          telefono: u.telefono_medico ?? u.telefono_recepcion ?? null,
+        };
+      },
+      async cambiarPassword(usuarioId, passwordHash) {
+        await pool.query('UPDATE usuario SET password_hash = $1 WHERE id_usuario = $2', [passwordHash, Number(usuarioId)]);
+      },
     },
 
     // Puerto opcional (fuera del contrato común): citas.

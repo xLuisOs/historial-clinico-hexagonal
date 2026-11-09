@@ -39,6 +39,32 @@ export function crearAdaptadorPediatricoMysql(pool) {
         const [[u]] = await pool.query('SELECT activo FROM usuario WHERE id_usuario = ?', [usuarioId]);
         return Boolean(u?.activo);
       },
+      // Perfil de quien inició sesión: su cuenta y, según el rol, sus datos de médico o de recepción.
+      async obtenerPerfil(usuarioId) {
+        const [[u]] = await pool.query(
+          `SELECT u.id_usuario, u.correo, u.nombre_mostrar, u.rol, u.ultimo_acceso,
+                  CONCAT(m.nombres, ' ', m.apellidos) AS medico, m.especialidad, m.numero_colegiado,
+                  CONCAT(r.nombres, ' ', r.apellidos) AS recepcionista, r.telefono
+           FROM usuario u
+           LEFT JOIN medico m        ON m.id_medico = u.medico_fk
+           LEFT JOIN recepcionista r ON r.id_recepcionista = u.recepcionista_fk
+           WHERE u.id_usuario = ?`,
+          [usuarioId],
+        );
+        return u && {
+          id: String(u.id_usuario),
+          nombre: u.medico ?? u.recepcionista ?? u.nombre_mostrar,
+          correo: u.correo,
+          rol: u.rol,
+          ultimoAcceso: u.ultimo_acceso,
+          especialidad: u.especialidad ?? null,
+          numeroColegiado: u.numero_colegiado ?? null,
+          telefono: u.telefono ?? null,
+        };
+      },
+      async cambiarPassword(usuarioId, passwordHash) {
+        await pool.query('UPDATE usuario SET password_hash = ? WHERE id_usuario = ?', [passwordHash, usuarioId]);
+      },
     },
 
     // Puerto opcional (fuera del contrato común): citas.

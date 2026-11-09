@@ -2,6 +2,7 @@
 // puertos de puertos/repositorios.js sobre el modelo documental de modelo.js.
 
 import { FieldValue } from 'firebase-admin/firestore';
+import { timestampATexto } from '../conexion.js';
 import { crearRepositorioAgenda } from './agenda.js';
 import { crearRepositorioAntecedentes } from './antecedentes.js';
 import { crearRepositorioAtenciones } from './atenciones.js';
@@ -39,6 +40,28 @@ export function crearAdaptadorOdontologicaFirebase(db, zonaHoraria) {
       async estaActivo(usuarioId) {
         const u = await col('usuarios').doc(usuarioId).get();
         return u.exists && u.get('activo') !== false;
+      },
+      // Perfil de quien inició sesión: su cuenta y, según el rol, sus datos de odontólogo o de recepción.
+      async obtenerPerfil(usuarioId) {
+        const u = await col('usuarios').doc(usuarioId).get();
+        if (!u.exists) return null;
+        const persona = u.get('odontologo_id')
+          ? await col('odontologos').doc(u.get('odontologo_id')).get()
+          : u.get('recepcionista_id') ? await col('recepcionistas').doc(u.get('recepcionista_id')).get() : null;
+        const datos = persona?.exists ? persona.data() : {};
+        return {
+          id: u.id,
+          nombre: nombreCompleto(u.data()),
+          correo: u.get('correo'),
+          rol: ROLES[u.get('rol')] ?? u.get('rol'),
+          ultimoAcceso: timestampATexto(u.get('ultimo_acceso'), zonaHoraria),
+          especialidad: u.get('odontologo_id') ? datos.especialidad ?? 'Odontología' : null,
+          numeroColegiado: datos.numero_colegiado ?? null,
+          telefono: datos.telefono ?? null,
+        };
+      },
+      async cambiarPassword(usuarioId, passwordHash) {
+        await col('usuarios').doc(usuarioId).update({ password_hash: passwordHash });
       },
     },
 

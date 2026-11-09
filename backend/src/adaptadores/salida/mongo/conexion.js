@@ -1,6 +1,6 @@
 import dns from 'node:dns';
 import { MongoClient, ObjectId } from 'mongodb';
-import { Conflicto, DatosInvalidos, NoDisponible, NoEncontrado } from '../../../dominio/errores.js';
+import { Conflicto, DatosInvalidos, FallaTecnica, NoEncontrado } from '../../../dominio/errores.js';
 
 const DNS_PUBLICOS = ['1.1.1.1', '8.8.8.8'];
 
@@ -29,7 +29,7 @@ export function prepararDns(url) {
  * transacciones de varios documentos, que se usan para las operaciones atómicas.
  */
 export function crearClienteMongo({ url }) {
-  if (!url) throw new NoDisponible('MongoDB no está configurado (falta MONGO_URL)');
+  if (!url) throw new FallaTecnica('MongoDB no está configurado (falta MONGO_URL)');
   prepararDns(url);
   return new MongoClient(url, { maxPoolSize: 5, serverSelectionTimeoutMS: 8000 });
 }
@@ -55,7 +55,7 @@ export function traducirError(error, mensajes = {}) {
     case 11000: // índice único
       return new Conflicto(mensajes.duplicado ?? 'El registro ya existe');
     case 121: // el documento no cumple el validador $jsonSchema de la colección
-      return new DatosInvalidos('Un dato no cumple las reglas de la base', {
+      return new DatosInvalidos('Revisa los datos e intenta de nuevo', {
         validacion: error.errInfo?.details?.schemaRulesNotSatisfied ? 'esquema' : error.message,
       });
     default:

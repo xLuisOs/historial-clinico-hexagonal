@@ -108,7 +108,12 @@ a { color: var(--primario-oscuro); }
 .barra nav a:hover { color: var(--tinta); background: rgba(255, 255, 255, 0.6); }
 .barra nav a.active { color: var(--primario-oscuro); background: rgba(255, 255, 255, 0.85); box-shadow: var(--sombra-suave); }
 .barra-usuario { margin-left: auto; display: flex; align-items: center; gap: 10px; }
-.chip-usuario { text-align: right; line-height: 1.2; }
+.chip-usuario {
+  text-align: right; line-height: 1.2; text-decoration: none; color: inherit;
+  padding: 6px 12px; border-radius: 14px; transition: background 0.12s;
+}
+.chip-usuario:hover, .chip-usuario.active { background: rgba(255, 255, 255, 0.7); }
+.chip-inicial { display: none; }
 .chip-usuario strong { display: block; font-size: 0.85rem; }
 .chip-usuario small { color: var(--tinta-suave); font-size: 0.72rem; }
 
@@ -352,7 +357,13 @@ button.dosis:focus-visible { outline: 2px solid var(--primario); outline-offset:
   .login-form { order: -1; }
 }
 @media (max-width: 560px) {
-  .chip-usuario { display: none; }
+  /* En el celular, el perfil es un círculo con las iniciales. */
+  .chip-usuario { padding: 0; }
+  .chip-usuario strong, .chip-usuario small { display: none; }
+  .chip-inicial {
+    display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%;
+    background: var(--primario-suave); color: var(--primario-oscuro); font-size: 0.8rem; font-weight: 700;
+  }
   .fila-factura { grid-template-columns: minmax(0, 1fr); }
   .login-intro > p { display: none; }
   .institucion { padding: 12px; }
