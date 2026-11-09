@@ -22,6 +22,7 @@ export function Barra() {
         {puede(usuario, 'registrarPaciente') && <NavLink to="/pacientes/nuevo">Nuevo paciente</NavLink>}
         <NavLink to="/medicos">{usuario.institucion === 'odontologica' ? 'Odontólogos' : 'Médicos'}</NavLink>
         {usuario.rol === 'admin' && <NavLink to="/recepcionistas">Recepcionistas</NavLink>}
+        {usuario.rol === 'admin' && <NavLink to="/catalogos">Catálogos</NavLink>}
       </nav>
       <div className="barra-usuario">
         <div className="chip-usuario">

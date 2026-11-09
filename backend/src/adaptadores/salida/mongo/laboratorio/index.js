@@ -4,6 +4,7 @@
 
 import { aObjectId } from '../conexion.js';
 import { crearRepositorioAntecedentes } from './antecedentes.js';
+import { crearCatalogosAdmin } from './catalogos.js';
 import { crearRepositorioMedicos, crearRepositorioPersonalReferentes } from './medicos.js';
 import { nombreCompleto, ROLES } from './modelo.js';
 import { crearRepositorioOrdenes } from './ordenes.js';
@@ -51,6 +52,8 @@ export function crearAdaptadorLaboratorioMongo(cliente, nombreDb, zonaHoraria) {
     // Puerto opcional: el admin edita y desactiva médicos referentes y
     // administra a las recepcionistas (con su cuenta).
     personal: { ...crearRepositorioPersonalReferentes(db), ...crearRepositorioRecepcionistas(db) },
+    // Puerto opcional: catálogos que mantiene el admin.
+    catalogosAdmin: crearCatalogosAdmin(db),
 
     catalogos: {
       // En el laboratorio, "médicos" son los médicos referentes: quienes

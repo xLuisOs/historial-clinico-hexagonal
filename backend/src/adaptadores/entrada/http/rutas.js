@@ -122,6 +122,22 @@ rutas.post('/personal/recepcionistas/:id/password', async (req, res) => {
 rutas.post('/personal/recepcionistas/:id/estado', async (req, res) => {
   res.json(await casos.cambiarEstadoRecepcionista(req.contexto, req.params.id, req.body));
 });
+// Catálogos que mantiene el admin (habitaciones, procedimientos, servicios...).
+rutas.get('/admin/catalogos', async (req, res) => {
+  res.json(await casos.listarCatalogosAdmin(req.contexto));
+});
+rutas.get('/admin/catalogos/:clave', async (req, res) => {
+  res.json(await casos.listarRegistrosCatalogo(req.contexto, req.params.clave));
+});
+rutas.post('/admin/catalogos/:clave', async (req, res) => {
+  res.status(201).json(await casos.crearRegistroCatalogo(req.contexto, req.params.clave, req.body));
+});
+rutas.patch('/admin/catalogos/:clave/:id', async (req, res) => {
+  res.json(await casos.actualizarRegistroCatalogo(req.contexto, req.params.clave, req.params.id, req.body));
+});
+rutas.post('/admin/catalogos/:clave/:id/estado', async (req, res) => {
+  res.json(await casos.cambiarEstadoRegistroCatalogo(req.contexto, req.params.clave, req.params.id, req.body));
+});
 rutas.get('/catalogos/medicamentos', async (req, res) => {
   res.json(await casos.listarMedicamentos(req.contexto));
 });

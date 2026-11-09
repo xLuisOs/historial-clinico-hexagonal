@@ -1,6 +1,7 @@
 import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom';
 import { Barra } from './componentes/Barra.jsx';
 import { Agenda } from './paginas/Agenda.jsx';
+import { Catalogos } from './paginas/Catalogos.jsx';
 import { Historial } from './paginas/Historial.jsx';
 import { Login } from './paginas/Login.jsx';
 import { Medicos } from './paginas/Medicos.jsx';
@@ -45,6 +46,7 @@ export function App() {
             <Route path="agenda" element={<Agenda />} />
             <Route path="medicos" element={<Medicos />} />
             <Route path="recepcionistas" element={<Recepcionistas />} />
+            <Route path="catalogos" element={<Catalogos />} />
             <Route path="pacientes/nuevo" element={<NuevoPaciente />} />
             <Route path="pacientes/:id" element={<Historial />} />
             <Route path="pacientes/:id/consulta" element={<NuevaConsulta />} />

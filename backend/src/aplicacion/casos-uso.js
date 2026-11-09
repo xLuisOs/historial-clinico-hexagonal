@@ -15,6 +15,9 @@ import { validarNuevoPaciente, validarContacto, validarBaja } from '../dominio/p
 import { validarNuevaConsulta, validarDiagnostico, validarReceta } from '../dominio/atencion.js';
 import { validarAntecedente } from '../dominio/antecedente.js';
 import {
+  catalogosDe, definicionCatalogo, validarCambiosRegistro, validarEstadoRegistro, validarNuevoRegistro,
+} from '../dominio/catalogos.js';
+import {
   validarCambiosMedico, validarCuentaNueva, validarEstadoMedico, validarNuevaPassword, validarNuevoMedico,
 } from '../dominio/medico.js';
 import { validarCambiosRecepcionista, validarNuevaRecepcionista } from '../dominio/recepcionista.js';
@@ -177,6 +180,46 @@ export async function restablecerPasswordRecepcionista({ usuario, repos }, recep
 export function cambiarEstadoRecepcionista({ usuario, repos }, recepcionistaId, datos) {
   exigirRol(usuario, 'admin');
   return repoPersonal(repos, 'cambiarEstadoRecepcionista').cambiarEstadoRecepcionista(recepcionistaId, validarEstadoMedico(datos));
+}
+
+// ---------------------------------------------------------------- catálogos
+//
+// El admin mantiene los catálogos de su institución (ver dominio/catalogos.js).
+// Cada adaptador implementa los que tiene en su base, en `catalogosAdmin`.
+
+function repoCatalogo({ usuario, repos }, clave, metodo) {
+  exigirRol(usuario, 'admin');
+  definicionCatalogo(usuario.institucion, clave);
+  const repo = repos.catalogosAdmin?.[clave];
+  if (typeof repo?.[metodo] !== 'function') throw new NoDisponible('Esta institución no administra ese catálogo');
+  return repo;
+}
+
+/** Catálogos que el admin puede mantener, con sus campos (la pantalla se arma con esto). */
+export function listarCatalogosAdmin({ usuario, repos }) {
+  exigirRol(usuario, 'admin');
+  return catalogosDe(usuario.institucion).filter((c) => repos.catalogosAdmin?.[c.clave]);
+}
+
+export function listarRegistrosCatalogo(contexto, clave) {
+  return repoCatalogo(contexto, clave, 'listar').listar();
+}
+
+export function crearRegistroCatalogo(contexto, clave, datos) {
+  const repo = repoCatalogo(contexto, clave, 'crear');
+  return repo.crear(validarNuevoRegistro(contexto.usuario.institucion, clave, datos));
+}
+
+export function actualizarRegistroCatalogo(contexto, clave, id, datos) {
+  const repo = repoCatalogo(contexto, clave, 'actualizar');
+  return repo.actualizar(id, validarCambiosRegistro(contexto.usuario.institucion, clave, datos));
+}
+
+export function cambiarEstadoRegistroCatalogo(contexto, clave, id, datos) {
+  exigirRol(contexto.usuario, 'admin');
+  // Primero la regla del catálogo: si no tiene estado, el mensaje lo dice.
+  const activo = validarEstadoRegistro(contexto.usuario.institucion, clave, datos);
+  return repoCatalogo(contexto, clave, 'cambiarEstado').cambiarEstado(id, activo);
 }
 
 export function listarMedicamentos({ repos }) {

@@ -5,6 +5,7 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { crearRepositorioAgenda } from './agenda.js';
 import { crearRepositorioAntecedentes } from './antecedentes.js';
 import { crearRepositorioAtenciones } from './atenciones.js';
+import { crearCatalogosAdmin } from './catalogos.js';
 import { COLECCIONES, nombreCompleto, ROLES } from './modelo.js';
 import { registrarPago } from './pagos.js';
 import { crearRepositorioPacientes } from './pacientes.js';
@@ -47,6 +48,8 @@ export function crearAdaptadorOdontologicaFirebase(db, zonaHoraria) {
     antecedentes: crearRepositorioAntecedentes(db, zonaHoraria),
     // Puerto opcional: odontólogos y recepcionistas (con su usuario), por el administrador.
     personal: { ...crearRepositorioPersonal(db, zonaHoraria), ...crearRepositorioRecepcionistas(db) },
+    // Puerto opcional: catálogos que mantiene el admin.
+    catalogosAdmin: crearCatalogosAdmin(db),
 
     pacientes: crearRepositorioPacientes(db, zonaHoraria),
     atenciones: crearRepositorioAtenciones(db, zonaHoraria),

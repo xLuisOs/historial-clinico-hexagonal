@@ -152,6 +152,7 @@ a { color: var(--primario-oscuro); }
   transition: border-color 0.12s, box-shadow 0.12s;
 }
 .campo textarea { resize: vertical; min-height: 84px; }
+.campo input:disabled, .campo select:disabled { opacity: 0.6; cursor: not-allowed; background: rgba(15, 45, 54, 0.04); }
 /* Correo con el dominio de la institución fijo a la derecha (CampoCorreo). */
 .correo-institucional {
   display: flex; align-items: center; border-radius: var(--radio-sm);
@@ -240,6 +241,11 @@ a { color: var(--primario-oscuro); }
 .fila-medico:hover { transform: none; }
 .fila-medico .acciones { flex-wrap: wrap; justify-content: flex-end; }
 .fila-medico.inactivo > :not(.acciones) { opacity: 0.55; }
+/* Catálogos: sin avatar, texto a la izquierda y acciones a la derecha. */
+.fila-catalogo { grid-template-columns: minmax(0, 1fr) auto; cursor: default; }
+.fila-catalogo:hover { transform: none; }
+.fila-catalogo .acciones { flex-wrap: wrap; justify-content: flex-end; }
+.fila-catalogo.inactivo > :not(.acciones) { opacity: 0.55; }
 .tarjeta-paciente.cita a:not(.boton) { color: inherit; text-decoration: none; }
 .tarjeta-paciente.cita a:not(.boton):hover { text-decoration: underline; }
 .hora { display: grid; place-items: center; min-width: 64px; padding: 8px 10px; border-radius: 14px; font-weight: 700; font-variant-numeric: tabular-nums; background: linear-gradient(140deg, #c9edef, #a6dbe0); color: var(--primario-oscuro); }
@@ -355,5 +361,7 @@ button.dosis:focus-visible { outline: 2px solid var(--primario); outline-offset:
   .tarjeta-paciente:not(.cita) > :last-child { display: none; }
   .tarjeta-paciente.cita > :last-child { grid-column: 1 / -1; }
   .tarjeta-paciente.fila-medico > :last-child { display: flex; grid-column: 1 / -1; justify-content: flex-start; }
+  .tarjeta-paciente.fila-catalogo { grid-template-columns: minmax(0, 1fr); }
+  .tarjeta-paciente.fila-catalogo > :last-child { display: flex; justify-content: flex-start; }
   .login-intro, .login-form, .panel { padding: 22px; }
 }

@@ -88,6 +88,14 @@ export const PUERTOS = {
 //     cambiarEstadoRecepcionista(id, activo) → Recepcionista (y su usuario)
 //     Cada método es opcional: el laboratorio trae listar, actualizar y
 //     cambiar estado de sus médicos referentes, que no inician sesión.
+//   catalogosAdmin: { [clave]: { listar, crear, actualizar, cambiarEstado } }
+//                 catálogos que mantiene el admin (ver dominio/catalogos.js):
+//     listar()                 → Registro[] (activos e inactivos)
+//     crear(registro)          → Registro
+//     actualizar(id, cambios)  → Registro. Conflicto si cambia un dato
+//                                `historico` de un registro ya usado
+//     cambiarEstado(id, activo)→ Registro (solo catálogos con estado)
+//     Registro = { id, ...campos del catálogo, activo?, nota? }
 //   usuarios.estaActivo(usuarioId) → boolean (opcional): con él, una sesión
 //     abierta deja de servir en cuanto el usuario se desactiva.
 

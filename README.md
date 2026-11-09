@@ -187,6 +187,7 @@ ocultan los botones que no le corresponden (el backend igual lo verifica):
 | Registrar, editar, desactivar y reactivar médicos; restablecer su contraseña (en el laboratorio, médicos referentes) | | | ✅ |
 | Crear la cuenta de un médico que no la tiene (no aplica al laboratorio: sus médicos referentes no inician sesión) | | | ✅ |
 | Registrar, editar, desactivar y reactivar recepcionistas, cada una con su cuenta | | | ✅ |
+| Mantener los catálogos (ver abajo) | | | ✅ |
 
 \* En las cuatro instituciones, la recepción recibe una **vista administrativa**
 del historial (mínimo privilegio): ficha, contacto, alergias, citas y lo que se cobra
@@ -197,6 +198,24 @@ laboratorio ve qué exámenes tiene cada orden y en qué estado van, pero no los
 ni su evolución.
 El recorte se hace en el backend (`dominio/privacidad.js`), no solo en la pantalla,
 así que tampoco llega por la API. Médicos y admin ven el historial completo.
+
+**Catálogos.** El admin mantiene las listas de las que escoge el sistema, con las tablas
+y colecciones que ya existían (sin cambiar ninguna base). Qué catálogos hay depende de la
+institución (`dominio/catalogos.js`) y la pantalla se arma con esa definición:
+
+| Institución | Catálogos |
+|---|---|
+| Hospital | Habitaciones (en mantenimiento no se asignan al internar; una ocupada no se toca), medicamentos, especialidades, departamentos |
+| Odontológica | Procedimientos (con su costo), medicamentos |
+| Pediátrico | Servicios (con su precio), medicamentos |
+| Laboratorio | Tipos de examen (datos generales y precio; los nuevos, con sus parámetros, se cargan con la semilla), medicamentos |
+
+Nada se borra: lo que tiene estado se desactiva y deja de ofrecerse. Cambiar un precio no
+altera lo ya cobrado (cada cobro guarda su precio). En PostgreSQL y MySQL, donde recetas y
+cobros muestran el nombre leyéndolo del catálogo, un medicamento ya recetado o un servicio
+ya cobrado no cambia de nombre; en Firestore y MongoDB cada receta u orden guarda su
+propia copia. Los medicamentos, especialidades y departamentos del hospital no se
+desactivan porque su tabla no tiene estado.
 
 Un médico nunca se borra: se desactiva (él y su usuario) y solo si no tiene citas
 pendientes ni pacientes internados a su cargo. Una sesión abierta deja de servir en
@@ -323,6 +342,11 @@ Todas las rutas (salvo login) requieren `Authorization: Bearer <token>`.
 | PATCH  | `/api/personal/medicos/:id`        | Editar `{ nombres?, apellidos?, numeroColegiado?, especialidad?, telefono? }` (admin). El correo no se edita: es la cuenta |
 | POST   | `/api/personal/medicos/:id/cuenta` | Crear la cuenta `{ correo, password }` de un médico activo que está en el catálogo sin usuario (admin; hospital, odontológica y pediátrico) |
 | POST   | `/api/personal/medicos/:id/password` | Nueva contraseña `{ password }` para un médico que olvidó la suya (admin) |
+| GET    | `/api/admin/catalogos`             | Catálogos que mantiene el admin de la institución, con sus campos (admin) |
+| GET    | `/api/admin/catalogos/:clave`      | Registros de un catálogo, activos e inactivos (admin) |
+| POST   | `/api/admin/catalogos/:clave`      | Registro nuevo con los campos del catálogo (admin) |
+| PATCH  | `/api/admin/catalogos/:clave/:id`  | Editar (admin). Los campos que solo se ponen al crear no cambian; un dato ya usado en recetas o cobros tampoco (PostgreSQL y MySQL) |
+| POST   | `/api/admin/catalogos/:clave/:id/estado` | `{ activo }` (admin), en los catálogos con estado |
 | GET    | `/api/personal/recepcionistas`     | Recepcionistas activas e inactivas, con su correo (admin; las cuatro instituciones) |
 | POST   | `/api/personal/recepcionistas`     | Alta con su usuario `{ nombres, apellidos, telefono?, correo, password }` (admin). Correo del dominio de la institución |
 | PATCH  | `/api/personal/recepcionistas/:id` | Editar `{ nombres?, apellidos?, telefono? }` (admin). El correo no se edita |
